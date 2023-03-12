@@ -3,6 +3,7 @@ package com.signomix.core.adapter.in;
 import java.nio.charset.StandardCharsets;
 
 import javax.enterprise.context.ApplicationScoped;
+import javax.inject.Inject;
 
 import org.eclipse.microprofile.reactive.messaging.Incoming;
 import org.jboss.logging.Logger;
@@ -10,14 +11,15 @@ import org.jboss.logging.Logger;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.signomix.common.EventEnvelope;
+import com.signomix.core.application.port.CommandPort;
 
 @ApplicationScoped
 public class MqClient {
 
     private static final Logger LOG = Logger.getLogger(MqClient.class);
 
-    //@Inject
-    //MailingUC processMessageUseCase;
+    @Inject
+    CommandPort commandPort;
 
     @Incoming("events_db")
     public void processDbEvent(byte[] bytes) {
@@ -31,7 +33,14 @@ public class MqClient {
             LOG.error(ex.getMessage());
             return;
         }
-        LOG.info(wrapper.type + " " + wrapper.uuid + " " + wrapper.payload);
+        switch(wrapper.payload.toLowerCase()){
+            case "backup":
+                commandPort.runBackup();
+            default:
+                LOG.warn("Unknown command "+wrapper.payload);
+                
+        }
+        LOG.debug(wrapper.type + " " + wrapper.uuid + " " + wrapper.payload);
     }
 
     @Incoming("events_device")

@@ -7,6 +7,7 @@ import javax.enterprise.event.Observes;
 import javax.inject.Inject;
 
 import org.eclipse.microprofile.config.inject.ConfigProperty;
+import org.jboss.logging.Logger;
 
 import com.signomix.common.User;
 import com.signomix.common.db.AuthDao;
@@ -24,6 +25,7 @@ import io.quarkus.runtime.StartupEvent;
 
 @ApplicationScoped
 public class DatabaseUC {
+    private static final Logger LOG = Logger.getLogger(DatabaseUC.class);
 
     @Inject
     @DataSource("auth")
@@ -61,6 +63,10 @@ public class DatabaseUC {
         dataDao.setDatasource(iotDataSource);
         userDao = new UserDao();
         userDao.setDatasource(userDataSource);
+    }
+
+    public void doBackup(){
+        LOG.info("doBackup");
     }
 
     public void clearData() {

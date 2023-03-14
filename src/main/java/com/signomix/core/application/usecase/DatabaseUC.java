@@ -27,6 +27,10 @@ import io.quarkus.runtime.StartupEvent;
 public class DatabaseUC {
     private static final Logger LOG = Logger.getLogger(DatabaseUC.class);
 
+
+    @Inject
+    AgroalDataSource dataSource;
+
     @Inject
     @DataSource("auth")
     AgroalDataSource authDataSource;
@@ -39,9 +43,10 @@ public class DatabaseUC {
     @DataSource("user")
     AgroalDataSource userDataSource;
 
-    IotDatabaseIface dataDao;
+    //IotDatabaseIface dataDao;
     AuthDaoIface authDao;
     UserDaoIface userDao;
+    IotDatabaseIface dao;
 
     @ConfigProperty(name = "signomix.data.retention.demo", defaultValue = "1")
     int demoDataRetention;
@@ -59,14 +64,22 @@ public class DatabaseUC {
     void onStart(@Observes StartupEvent ev) {
         authDao = new AuthDao();
         authDao.setDatasource(authDataSource);
-        dataDao = new IotDatabaseDao();
-        dataDao.setDatasource(iotDataSource);
+        //dataDao = new IotDatabaseDao();
+        //dataDao.setDatasource(iotDataSource);
         userDao = new UserDao();
         userDao.setDatasource(userDataSource);
+        dao = new IotDatabaseDao();
+        dao.setDatasource(iotDataSource);
     }
 
     public void doBackup(){
         LOG.info("doBackup");
+        try {
+            dao.backupDb();
+        } catch (IotDatabaseException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
     }
 
     public void clearData() {
@@ -122,7 +135,7 @@ public class DatabaseUC {
                             tooOldPoint = tooOldPointFree;
                     }
                 }
-                dataDao.removeAlerts(user.uid, tooOldPoint);
+                dao.removeAlerts(user.uid, tooOldPoint);
                 /*
                  * devices = dataDao.getUserDevices(user.uid, -1, false);
                  * for (int j = 0; j < devices.size(); j++) {

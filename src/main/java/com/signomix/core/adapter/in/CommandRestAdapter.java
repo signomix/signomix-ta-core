@@ -1,18 +1,19 @@
 package com.signomix.core.adapter.in;
 
 import javax.inject.Inject;
-import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
+import javax.ws.rs.HeaderParam;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
-import javax.ws.rs.Produces;
-import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.Response.Status;
 
 import org.jboss.logging.Logger;
 
+import com.signomix.common.User;
 import com.signomix.common.annotation.InboundAdapter;
-import com.signomix.core.application.port.CommandPort;
+import com.signomix.core.application.port.in.AuthPort;
+import com.signomix.core.application.port.in.CommandPort;
 import com.signomix.core.domain.Command;
 
 @InboundAdapter
@@ -22,6 +23,8 @@ public class CommandRestAdapter {
 
     @Inject
     CommandPort commandPort;
+    @Inject
+    AuthPort authPort;
 
     @GET
     public Response test() {
@@ -29,7 +32,11 @@ public class CommandRestAdapter {
     }
     
     @POST
-    public Response addCommand(Command command) {
+    public Response processCommand(@HeaderParam("Authorization") String token, Command command) {
+        User user=authPort.getUser(token);
+        if(null==user || !user.role.contains("admin")){
+            return Response.status(Status.FORBIDDEN).build();
+        }
         switch(command.command().toLowerCase()){
             case "backup":
                 commandPort.runBackup();

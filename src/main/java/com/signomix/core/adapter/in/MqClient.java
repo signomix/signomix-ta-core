@@ -11,7 +11,7 @@ import org.jboss.logging.Logger;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.signomix.common.EventEnvelope;
-import com.signomix.core.application.port.CommandPort;
+import com.signomix.core.application.port.in.CommandPort;
 
 @ApplicationScoped
 public class MqClient {

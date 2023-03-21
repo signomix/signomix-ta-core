@@ -27,10 +27,6 @@ import io.quarkus.runtime.StartupEvent;
 public class DatabaseUC {
     private static final Logger LOG = Logger.getLogger(DatabaseUC.class);
 
-
-    @Inject
-    AgroalDataSource dataSource;
-
     @Inject
     @DataSource("auth")
     AgroalDataSource authDataSource;

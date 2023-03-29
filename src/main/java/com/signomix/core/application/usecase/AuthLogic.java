@@ -22,6 +22,11 @@ import io.agroal.api.AgroalDataSource;
 import io.quarkus.agroal.DataSource;
 import io.quarkus.runtime.StartupEvent;
 
+/**
+ * Klasa zawierająca logikę biznesową dotyczącą autoryzacji.
+ * 
+ * @author Grzegorz
+ */
 @ApplicationScoped
 public class AuthLogic {
     private static final Logger LOG = Logger.getLogger(AuthLogic.class);

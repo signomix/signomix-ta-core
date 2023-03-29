@@ -34,6 +34,7 @@ public class CommandRestAdapter {
     @POST
     public Response processCommand(@HeaderParam("Authorization") String token, Command command) {
         User user=authPort.getUser(token);
+        LOG.info("User:"+(null==user?"null":user.name));
         if(null==user || !user.role.contains("admin")){
             return Response.status(Status.FORBIDDEN).build();
         }

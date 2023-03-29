@@ -12,9 +12,13 @@ import org.jboss.logging.Logger;
 import com.signomix.common.User;
 import com.signomix.common.db.AuthDao;
 import com.signomix.common.db.AuthDaoIface;
+import com.signomix.common.db.CmsDao;
+import com.signomix.common.db.CmsDaoIface;
 import com.signomix.common.db.IotDatabaseDao;
 import com.signomix.common.db.IotDatabaseException;
 import com.signomix.common.db.IotDatabaseIface;
+import com.signomix.common.db.ShortenerDao;
+import com.signomix.common.db.ShortenerDaoIface;
 import com.signomix.common.db.UserDao;
 import com.signomix.common.db.UserDaoIface;
 import com.signomix.common.iot.Device;
@@ -39,10 +43,20 @@ public class DatabaseUC {
     @DataSource("user")
     AgroalDataSource userDataSource;
 
-    //IotDatabaseIface dataDao;
+    @Inject
+    @DataSource("shortener")
+    AgroalDataSource shortenerDataSource;
+
+    @Inject
+    @DataSource("cms")
+    AgroalDataSource cmsDataSource;
+
+    // IotDatabaseIface dataDao;
     AuthDaoIface authDao;
     UserDaoIface userDao;
-    IotDatabaseIface dao;
+    IotDatabaseIface iotDao;
+    CmsDaoIface cmsDao;
+    ShortenerDaoIface shortenerDao;
 
     @ConfigProperty(name = "signomix.data.retention.demo", defaultValue = "1")
     int demoDataRetention;
@@ -56,25 +70,50 @@ public class DatabaseUC {
     int primaryDataRetention;
     @ConfigProperty(name = "signomix.data.retention.super", defaultValue = "365")
     int superDataRetention;
+    
+    @ConfigProperty(name = "quarkus.datasource.auth.jdbc.url", defaultValue = "not configured")
+    String authDbUrl;
 
     void onStart(@Observes StartupEvent ev) {
+        LOG.info("Starting ...");
+        LOG.info("AUTH DB URL: "+authDbUrl);
         authDao = new AuthDao();
         authDao.setDatasource(authDataSource);
-        //dataDao = new IotDatabaseDao();
-        //dataDao.setDatasource(iotDataSource);
+        // dataDao = new IotDatabaseDao();
+        // dataDao.setDatasource(iotDataSource);
         userDao = new UserDao();
         userDao.setDatasource(userDataSource);
-        dao = new IotDatabaseDao();
-        dao.setDatasource(iotDataSource);
+        iotDao = new IotDatabaseDao();
+        iotDao.setDatasource(iotDataSource);
+        shortenerDao = new ShortenerDao();
+        shortenerDao.setDatasource(shortenerDataSource);
+        cmsDao=new CmsDao();
+        cmsDao.setDatasource(cmsDataSource);
+        //TODO: create DB structure
+        try {
+            LOG.info("test backup");
+            //shortenerDao.createStructure();
+            iotDao.backupDb();
+            authDao.backupDb();
+            cmsDao.backupDb();
+            userDao.backupDb();
+            shortenerDao.backupDb();
+        } catch (IotDatabaseException e) {
+            LOG.error(e.getMessage());
+            e.printStackTrace();
+        }
     }
 
-    public void doBackup(){
+    public void doBackup() {
         LOG.info("doBackup");
         try {
-            dao.backupDb();
+            iotDao.backupDb();
+            shortenerDao.backupDb();
+            authDao.backupDb();
+            cmsDao.backupDb();
+            userDao.backupDb();
         } catch (IotDatabaseException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
+            LOG.error(e.getMessage());
         }
     }
 
@@ -131,7 +170,7 @@ public class DatabaseUC {
                             tooOldPoint = tooOldPointFree;
                     }
                 }
-                dao.removeAlerts(user.uid, tooOldPoint);
+                iotDao.removeAlerts(user.uid, tooOldPoint);
                 /*
                  * devices = dataDao.getUserDevices(user.uid, -1, false);
                  * for (int j = 0; j < devices.size(); j++) {

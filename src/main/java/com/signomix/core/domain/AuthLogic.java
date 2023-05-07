@@ -1,4 +1,4 @@
-package com.signomix.core.application.usecase;
+package com.signomix.core.domain;
 
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -39,6 +39,10 @@ public class AuthLogic {
     @Inject
     @DataSource("auth")
     AgroalDataSource authDataSource;
+
+    @Inject
+    @DataSource("user")
+    AgroalDataSource userDataSource;
 
     AuthDaoIface authDao;
 

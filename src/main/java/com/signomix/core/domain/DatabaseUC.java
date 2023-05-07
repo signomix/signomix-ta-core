@@ -1,4 +1,4 @@
-package com.signomix.core.application.usecase;
+package com.signomix.core.domain;
 
 import java.util.List;
 
@@ -85,11 +85,18 @@ public class DatabaseUC {
         userDao.setDatasource(userDataSource);
         iotDao = new IotDatabaseDao();
         iotDao.setDatasource(iotDataSource);
+        
         shortenerDao = new ShortenerDao();
         shortenerDao.setDatasource(shortenerDataSource);
         cmsDao=new CmsDao();
         cmsDao.setDatasource(cmsDataSource);
         //TODO: create DB structure
+        try {
+            iotDao.createStructure();
+        } catch (IotDatabaseException e) {
+            LOG.error(e.getMessage());
+            e.printStackTrace();
+        }
         try {
             LOG.info("test backup");
             //shortenerDao.createStructure();

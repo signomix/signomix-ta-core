@@ -1,4 +1,4 @@
-package com.signomix.core.application.usecase;
+package com.signomix.core.domain;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.event.Observes;

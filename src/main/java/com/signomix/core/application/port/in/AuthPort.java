@@ -4,7 +4,7 @@ import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 
 import com.signomix.common.User;
-import com.signomix.core.application.usecase.AuthLogic;
+import com.signomix.core.domain.AuthLogic;
 
 @ApplicationScoped
 public class AuthPort {

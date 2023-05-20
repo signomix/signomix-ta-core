@@ -35,4 +35,8 @@ public class DevicePort {
     public void createDevice(User user, Device device) throws ServiceException{
         deviceLogic.createDevice(user, device);
     }
+
+    public void checkDevices() throws ServiceException{
+        deviceLogic.checkDevices();
+    }
 }

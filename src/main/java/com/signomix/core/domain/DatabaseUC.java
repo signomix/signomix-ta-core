@@ -97,7 +97,7 @@ public class DatabaseUC {
             LOG.error(e.getMessage());
             e.printStackTrace();
         }
-        try {
+        /* try {
             LOG.info("test backup");
             //shortenerDao.createStructure();
             iotDao.backupDb();
@@ -108,7 +108,9 @@ public class DatabaseUC {
         } catch (IotDatabaseException e) {
             LOG.error(e.getMessage());
             e.printStackTrace();
-        }
+        } */
+        setSignomixParameters();
+        setSignomixFeatures();
     }
 
     public void doBackup() {
@@ -194,5 +196,75 @@ public class DatabaseUC {
         }
 
     }
+
+    private void setSignomixParameters(){
+        try {
+            iotDao.setParameter("collectionLimit", User.DEMO, 144, ""); // 24h X 6 transmission/hour
+            iotDao.setParameter("collectionLimitMonthly", User.DEMO, 4320, "");
+            iotDao.setParameter("dataRetention", User.DEMO, 1, "");
+            iotDao.setParameter("devicesLimit", User.DEMO, 1, "");
+            iotDao.setParameter("notifications", User.DEMO, 0, "SMTP"); //SMTP,SLACK,PUSHOVER,TELEGRAM,DISCORD,WEBHOOK
+
+
+            iotDao.setParameter("collectionLimit", User.FREE, 144, ""); // 24h X 6 transmission/hour
+            iotDao.setParameter("collectionLimitMonthly", User.FREE, 4464, "");
+            iotDao.setParameter("dataRetention", User.FREE, 7, "");
+            iotDao.setParameter("devicesLimit", User.FREE, 5, "");
+            iotDao.setParameter("notifications", User.FREE, 0, "SMTP,WEBHOOK"); //SMTP,SLACK,PUSHOVER,TELEGRAM,DISCORD,WEBHOOK
+            
+            iotDao.setParameter("collectionLimit", User.EXTENDED, 144, ""); // 24h X 6 transmission/hour
+            iotDao.setParameter("collectionLimitMonthly", User.EXTENDED, 4464, "");
+            iotDao.setParameter("dataRetention", User.EXTENDED, 61, "");
+            iotDao.setParameter("devicesLimit", User.EXTENDED, 20, "");
+            iotDao.setParameter("notifications", User.EXTENDED, 0, "SMTP,WEBHOOK"); //SMTP,SLACK,PUSHOVER,TELEGRAM,DISCORD,WEBHOOK
+
+            //Standard account
+            iotDao.setParameter("collectionLimit", User.USER, 2160, ""); // 24h X 6 transmission/hour
+            iotDao.setParameter("collectionLimitMonthly", User.USER, 64800, "");
+            iotDao.setParameter("dataRetention", User.USER, 30, "");
+            iotDao.setParameter("devicesLimit", User.USER, 20, "");
+            iotDao.setParameter("notifications", User.USER, 0, "SMTP,WEBHOOK"); //SMTP,SLACK,PUSHOVER,TELEGRAM,DISCORD,WEBHOOK
+
+            //Professional account
+            iotDao.setParameter("collectionLimit", User.PRIMARY, 7200, ""); // 24h X 6 transmission/hour
+            iotDao.setParameter("collectionLimitMonthly", User.PRIMARY, 216000, "");
+            iotDao.setParameter("dataRetention", User.PRIMARY, 365, "");
+            iotDao.setParameter("devicesLimit", User.PRIMARY, 50, "");
+            iotDao.setParameter("notifications", User.PRIMARY, 0, "SMTP,WEBHOOK,SMS"); //SMTP,SLACK,PUSHOVER,TELEGRAM,DISCORD,WEBHOOK
+
+            //Superuser account
+            iotDao.setParameter("collectionLimit", User.SUPERUSER, 7200, ""); // 24h X 6 transmission/hour
+            iotDao.setParameter("collectionLimitMonthly", User.SUPERUSER, 216000, "");
+            iotDao.setParameter("dataRetention", User.SUPERUSER, 365, "");
+            iotDao.setParameter("devicesLimit", User.SUPERUSER, 50, "");
+            iotDao.setParameter("notifications", User.SUPERUSER, 0, "SMTP,WEBHOOK,SMS"); //SMTP,SLACK,PUSHOVER,TELEGRAM,DISCORD,WEBHOOK
+            
+            iotDao.setParameter("collectionLimit", User.ADMIN, 7200, ""); // 24h X 6 transmission/hour
+            iotDao.setParameter("collectionLimitMonthly", User.ADMIN, 216000, "");
+            iotDao.setParameter("dataRetention", User.ADMIN, 365, "");
+            iotDao.setParameter("devicesLimit", User.ADMIN, 50, "");
+            iotDao.setParameter("notifications", User.ADMIN, 0, "SMTP,WEBHOOK,SMS"); //SMTP,SLACK,PUSHOVER,TELEGRAM,DISCORD,WEBHOOK
+
+        } catch (IotDatabaseException e) {
+            LOG.error(e.getMessage());
+        }
+
+    }
+
+    private void setSignomixFeatures(){
+        try {
+            iotDao.setFeature("SMS", User.DEMO, false);
+            iotDao.setFeature("SMS", User.FREE, false);
+            iotDao.setFeature("SMS", User.EXTENDED, false);
+            iotDao.setFeature("SMS", User.USER, false);
+            iotDao.setFeature("SMS", User.PRIMARY, true);
+            iotDao.setFeature("SMS", User.SUPERUSER, true);
+            iotDao.setFeature("SMS", User.ADMIN, true);
+        } catch (IotDatabaseException e) {
+            LOG.error(e.getMessage());
+        }
+
+    }
+
 
 }

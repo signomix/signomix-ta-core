@@ -12,6 +12,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.signomix.common.EventEnvelope;
 import com.signomix.core.application.port.in.CommandPort;
+import com.signomix.core.application.port.in.DevicePort;
 
 @ApplicationScoped
 public class MqClient {
@@ -20,6 +21,8 @@ public class MqClient {
 
     @Inject
     CommandPort commandPort;
+    @Inject
+    DevicePort devicePort;
 
     @Incoming("events_db")
     public void processDbEvent(byte[] bytes) {
@@ -56,6 +59,13 @@ public class MqClient {
             return;
         }
         LOG.info(wrapper.type + " " + wrapper.uuid + " " + wrapper.payload);
+        switch(wrapper.payload.toLowerCase()){
+            case "check":
+                devicePort.checkDevices();
+            default:
+                LOG.warn("Unknown command "+wrapper.payload);
+                
+        }
     }
 
 }

@@ -5,6 +5,7 @@ import java.nio.charset.StandardCharsets;
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 
+import org.apache.commons.logging.Log;
 import org.eclipse.microprofile.reactive.messaging.Incoming;
 import org.jboss.logging.Logger;
 
@@ -26,7 +27,7 @@ public class MqClient {
 
     @Incoming("events_db")
     public void processDbEvent(byte[] bytes) {
-        //processMessageUseCase.processEvent(bytes);
+        // processMessageUseCase.processEvent(bytes);
         String message = new String(bytes, StandardCharsets.UTF_8);
         EventEnvelope wrapper;
         ObjectMapper objectMapper = new ObjectMapper();
@@ -36,19 +37,22 @@ public class MqClient {
             LOG.error(ex.getMessage());
             return;
         }
-        switch(wrapper.payload.toLowerCase()){
+        switch (wrapper.payload.toLowerCase()) {
             case "backup":
                 commandPort.runBackup();
+            case "clean":
+                // TODO: clean command
+                LOG.warn("Clean command is not implemented yet");
             default:
-                LOG.warn("Unknown command "+wrapper.payload);
-                
+                LOG.warn("Unknown command " + wrapper.payload);
+
         }
         LOG.debug(wrapper.type + " " + wrapper.uuid + " " + wrapper.payload);
     }
 
     @Incoming("events_device")
     public void processDeviceEvent(byte[] bytes) {
-        //processMessageUseCase.processEvent(bytes);
+        // processMessageUseCase.processEvent(bytes);
         String message = new String(bytes, StandardCharsets.UTF_8);
         EventEnvelope wrapper;
         ObjectMapper objectMapper = new ObjectMapper();
@@ -59,12 +63,12 @@ public class MqClient {
             return;
         }
         LOG.info(wrapper.type + " " + wrapper.uuid + " " + wrapper.payload);
-        switch(wrapper.payload.toLowerCase()){
+        switch (wrapper.payload.toLowerCase()) {
             case "check":
                 devicePort.checkDevices();
             default:
-                LOG.warn("Unknown command "+wrapper.payload);
-                
+                LOG.warn("Unknown command " + wrapper.payload);
+
         }
     }
 

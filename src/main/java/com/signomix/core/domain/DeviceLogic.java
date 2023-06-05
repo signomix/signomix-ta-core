@@ -62,9 +62,17 @@ public class DeviceLogic {
         }
     }
 
-    public List<Device> getUserDevices(User user, boolean withStatus) throws ServiceException {
+    /* public List<Device> getUserDevices(User user, boolean withStatus) throws ServiceException {
         try {
-            return iotDao.getUserDevices(user, withStatus);
+            return iotDao.getUserDevices(user, withStatus, null, null);
+        } catch (IotDatabaseException e) {
+            throw new ServiceException(e.getMessage(), e);
+        }
+    } */
+
+    public List<Device> getUserDevices(User user, boolean withStatus, Integer limit, Integer offset) throws ServiceException {
+        try {
+            return iotDao.getUserDevices(user, withStatus, limit, offset);
         } catch (IotDatabaseException e) {
             throw new ServiceException(e.getMessage(), e);
         }
@@ -91,7 +99,7 @@ public class DeviceLogic {
 
     public void createDevice(User user, Device device) throws ServiceException {
         try {
-            List<Device> userDevices=iotDao.getUserDevices(user, false);
+            List<Device> userDevices=iotDao.getUserDevices(user, false, null, null);
             int deviceCount=userDevices.size();
             long maxDevices=iotDao.getParameterValue("devicesLimit", user.type);
             if (deviceCount==maxDevices){
@@ -114,34 +122,14 @@ public class DeviceLogic {
         } catch (IotDatabaseException e) {
             throw new ServiceException(e.getMessage(), e);
         }
-        // TODO: dla każdego urządzenia zweryfikować, czy jest konieczne powiadomienie o
-        // braku aktywności
-        // wygenerować zdarzenie DEVICE_LOST
-        // String[] deviceUsers;
         for (Device device : devices) {
             try {
-                // iotDao.getDevice(device.getEUI(), true);
                 if (System.currentTimeMillis() - device.getLastSeen() > device.getTransmissionInterval() * 2) {
                     if (device.getAlertStatus() < Device.ALERT_FAILURE) {
                         // send notification
                         iotDao.updateDeviceStatus(device.getEUI(), device.getTransmissionInterval(), device.getState(),
                                 Device.ALERT_FAILURE);
                         sendNotification(device, "ALERT_FAILURE");
-                        /*
-                         * sendNotification("ALERT_FAILURE", device.getUserID(), device.getEUI());
-                         * deviceUsers = device.getTeam().split(",");
-                         * for (String deviceUser : deviceUsers) {
-                         * if (deviceUser.length() > 0) {
-                         * sendNotification("ALERT_FAILURE", deviceUser, device.getEUI());
-                         * }
-                         * }
-                         * deviceUsers = device.getAdministrators().split(",");
-                         * for (String deviceUser : deviceUsers) {
-                         * if (deviceUser.length() > 0) {
-                         * sendNotification("ALERT_FAILURE", deviceUser, device.getEUI());
-                         * }
-                         * }
-                         */
                     }
                 }
             } catch (IotDatabaseException e) {
@@ -150,26 +138,6 @@ public class DeviceLogic {
             }
         }
     }
-
-    /*
-     * private void sendNotification(String type, String userId, String eui) {
-     * String messageText = "";
-     * switch (type) {
-     * case "ALERT_FAILURE":
-     * messageText = "Device is not sending data. Check if it is working properly.";
-     * break;
-     * }
-     * IotEvent event = new IotEvent();
-     * event.setGeneralMessage(messageText);
-     * event.setOrigin(userId + "\t" + eui);
-     * try {
-     * iotDao.addAlert(event);
-     * } catch (IotDatabaseException e) {
-     * LOG.error(e.getMessage());
-     * }
-     * messageService.sendNotification(event);
-     * }
-     */
 
     private void sendNotification(Device device, String type) {
         String messageText = "";

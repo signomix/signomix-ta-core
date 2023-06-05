@@ -42,7 +42,11 @@ public class DeviceRestAdapter {
 
     @GET
     @Path("/device")
-    public Response getDevices(@HeaderParam("Authentication") String token, @QueryParam("full") Boolean full) {
+    public Response getDevices(
+        @HeaderParam("Authentication") String token, 
+        @QueryParam("full") Boolean full,
+        @QueryParam("limit") Integer limit,
+        @QueryParam("offset") Integer offset) {
         User user;
         try {
             user = userPort.getUser(authPort.getUserId(token));
@@ -52,7 +56,7 @@ public class DeviceRestAdapter {
         if (null == user) {
             throw new ServiceException(unauthorizedException);
         }
-        List<Device> devices = devicePort.getUserDevices(user, full);
+        List<Device> devices = devicePort.getUserDevices(user, full, limit, offset);
         return Response.ok().entity(devices).build();
     }
 

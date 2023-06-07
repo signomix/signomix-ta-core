@@ -246,6 +246,7 @@ public class DatabaseUC {
             iotDao.setParameter("notifications", User.ADMIN, 0, "SMTP,WEBHOOK,SMS"); //SMTP,SLACK,PUSHOVER,TELEGRAM,DISCORD,WEBHOOK
 
         } catch (IotDatabaseException e) {
+            e.printStackTrace();
             LOG.error(e.getMessage());
         }
 

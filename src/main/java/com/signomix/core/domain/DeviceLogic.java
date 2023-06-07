@@ -1,6 +1,7 @@
 package com.signomix.core.domain;
 
 import java.util.List;
+import java.util.concurrent.atomic.AtomicLong;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.event.Observes;
@@ -30,11 +31,14 @@ import io.quarkus.runtime.StartupEvent;
 @ApplicationScoped
 public class DeviceLogic {
     private static final Logger LOG = Logger.getLogger(DeviceLogic.class);
+    private static AtomicLong euiSeed = new AtomicLong(System.currentTimeMillis());
 
     @ConfigProperty(name = "signomix.app.key", defaultValue = "not_configured")
     String appKey;
     @ConfigProperty(name = "signomix.auth.host", defaultValue = "not_configured")
     String authHost;
+    @ConfigProperty(name = "signomix.device.eui.prefix", defaultValue = "S-")
+    String deviceEuiPrefix;
 
     @Inject
     @DataSource("iot")
@@ -62,15 +66,19 @@ public class DeviceLogic {
         }
     }
 
-    /* public List<Device> getUserDevices(User user, boolean withStatus) throws ServiceException {
-        try {
-            return iotDao.getUserDevices(user, withStatus, null, null);
-        } catch (IotDatabaseException e) {
-            throw new ServiceException(e.getMessage(), e);
-        }
-    } */
+    /*
+     * public List<Device> getUserDevices(User user, boolean withStatus) throws
+     * ServiceException {
+     * try {
+     * return iotDao.getUserDevices(user, withStatus, null, null);
+     * } catch (IotDatabaseException e) {
+     * throw new ServiceException(e.getMessage(), e);
+     * }
+     * }
+     */
 
-    public List<Device> getUserDevices(User user, boolean withStatus, Integer limit, Integer offset) throws ServiceException {
+    public List<Device> getUserDevices(User user, boolean withStatus, Integer limit, Integer offset)
+            throws ServiceException {
         try {
             return iotDao.getUserDevices(user, withStatus, limit, offset);
         } catch (IotDatabaseException e) {
@@ -89,8 +97,16 @@ public class DeviceLogic {
     }
 
     public void updateDevice(User user, Device device) throws ServiceException {
+        Device updated = getDevice(user, device.getEUI(), false);
+        if (null == updated) {
+            throw new ServiceException("Device not found");
+        }
         try {
             iotDao.updateDevice(user, device);
+            if (!updated.getChannelsAsString().equals(device.getChannelsAsString())) {
+                iotDao.clearDeviceData(device.getEUI());
+                iotDao.updateDeviceChannels(device.getEUI(), device.getChannelsAsString());
+            }
             sendNotification(device, "UPDATED");
         } catch (IotDatabaseException e) {
             throw new ServiceException(e.getMessage(), e);
@@ -99,15 +115,21 @@ public class DeviceLogic {
 
     public void createDevice(User user, Device device) throws ServiceException {
         try {
-            List<Device> userDevices=iotDao.getUserDevices(user, false, null, null);
-            int deviceCount=userDevices.size();
-            long maxDevices=iotDao.getParameterValue("devicesLimit", user.type);
-            if (deviceCount==maxDevices){
-                throw new ServiceException("User has reached maximum number of devices: "+maxDevices);
+            List<Device> userDevices = iotDao.getUserDevices(user, false, null, null);
+            int deviceCount = userDevices.size();
+            long maxDevices = iotDao.getParameterValue("devicesLimit", user.type);
+            if (deviceCount == maxDevices) {
+                throw new ServiceException("User has reached maximum number of devices: " + maxDevices);
+            }
+            device.setEUI(device.getEUI().trim());
+            if (device.getEUI().isEmpty()) {
+                device.setEUI(createEui(deviceEuiPrefix));
             }
             iotDao.createDevice(user, device);
+            iotDao.updateDeviceChannels(device.getEUI(), device.getChannelsAsString());
+            iotDao.updateDeviceStatus(device.getEUI(), device.getTransmissionInterval(), 0.0, Device.ALERT_UNKNOWN);
             sendNotification(device, "CREATED");
-            if((deviceCount+1)==maxDevices){
+            if ((deviceCount + 1) == maxDevices) {
                 sendNotification(device, "DEVICES_LIMIT");
             }
         } catch (IotDatabaseException e) {
@@ -203,6 +225,15 @@ public class DeviceLogic {
                 messageService.sendNotification(event);
             }
         }
+    }
+
+    public String createEui(String prefix) {
+        String eui = Long.toHexString(euiSeed.getAndIncrement());
+        StringBuilder tmp = new StringBuilder(prefix).append(eui.substring(0, 2));
+        for (int i = 2; i < eui.length() - 1; i = i + 2) {
+            tmp.append("-").append(eui.substring(i, i + 2));
+        }
+        return tmp.toString();
     }
 
 }

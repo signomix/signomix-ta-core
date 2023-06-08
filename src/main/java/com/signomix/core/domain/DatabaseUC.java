@@ -14,6 +14,8 @@ import com.signomix.common.db.AuthDao;
 import com.signomix.common.db.AuthDaoIface;
 import com.signomix.common.db.CmsDao;
 import com.signomix.common.db.CmsDaoIface;
+import com.signomix.common.db.DashboardDao;
+import com.signomix.common.db.DashboardIface;
 import com.signomix.common.db.IotDatabaseDao;
 import com.signomix.common.db.IotDatabaseException;
 import com.signomix.common.db.IotDatabaseIface;
@@ -57,6 +59,7 @@ public class DatabaseUC {
     IotDatabaseIface iotDao;
     CmsDaoIface cmsDao;
     ShortenerDaoIface shortenerDao;
+    DashboardIface dashboardDao;
 
     @ConfigProperty(name = "signomix.data.retention.demo", defaultValue = "1")
     int demoDataRetention;
@@ -85,6 +88,8 @@ public class DatabaseUC {
         userDao.setDatasource(userDataSource);
         iotDao = new IotDatabaseDao();
         iotDao.setDatasource(iotDataSource);
+        dashboardDao = new DashboardDao();
+        dashboardDao.setDatasource(iotDataSource);
         
         shortenerDao = new ShortenerDao();
         shortenerDao.setDatasource(shortenerDataSource);
@@ -93,6 +98,7 @@ public class DatabaseUC {
         //TODO: create DB structure
         try {
             iotDao.createStructure();
+            dashboardDao.createStructure();
         } catch (IotDatabaseException e) {
             LOG.error(e.getMessage());
             e.printStackTrace();
@@ -117,6 +123,7 @@ public class DatabaseUC {
         LOG.info("doBackup");
         try {
             iotDao.backupDb();
+            dashboardDao.backupDb();
             shortenerDao.backupDb();
             authDao.backupDb();
             cmsDao.backupDb();

@@ -18,6 +18,7 @@ import com.signomix.common.event.IotEvent;
 import com.signomix.common.iot.Device;
 import com.signomix.core.adapter.out.MessageService;
 import com.signomix.core.application.exception.ServiceException;
+import com.signomix.core.application.port.in.DashboardPort;
 import com.signomix.core.application.port.in.UserPort;
 
 import io.agroal.api.AgroalDataSource;
@@ -51,6 +52,9 @@ public class DeviceLogic {
 
     @Inject
     UserPort userPort;
+
+    @Inject
+    DashboardPort dashboardPort;
 
     void onStart(@Observes StartupEvent ev) {
         iotDao = new IotDatabaseDao();
@@ -128,6 +132,7 @@ public class DeviceLogic {
             iotDao.createDevice(user, device);
             iotDao.updateDeviceChannels(device.getEUI(), device.getChannelsAsString());
             iotDao.updateDeviceStatus(device.getEUI(), device.getTransmissionInterval(), 0.0, Device.ALERT_UNKNOWN);
+            dashboardPort.addDefaultDashboard(device);
             sendNotification(device, "CREATED");
             if ((deviceCount + 1) == maxDevices) {
                 sendNotification(device, "DEVICES_LIMIT");

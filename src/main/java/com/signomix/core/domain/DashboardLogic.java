@@ -2,6 +2,7 @@ package com.signomix.core.domain;
 
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.event.Observes;
@@ -96,6 +97,15 @@ public class DashboardLogic {
 
         try {
             dashboardDao.addDashboard(dashboard);
+        } catch (IotDatabaseException e) {
+            logger.error(e.getMessage());
+            throw new ServiceException(e.getMessage(), e);
+        }
+    }
+
+    public List<Dashboard> getUserDashboards(String userId, Integer limit, Integer offset)throws ServiceException{
+        try {
+            return dashboardDao.getUserDashboards(userId, limit, offset);
         } catch (IotDatabaseException e) {
             logger.error(e.getMessage());
             throw new ServiceException(e.getMessage(), e);

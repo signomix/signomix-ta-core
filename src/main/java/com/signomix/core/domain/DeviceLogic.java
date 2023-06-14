@@ -125,7 +125,7 @@ public class DeviceLogic {
             if (deviceCount == maxDevices) {
                 throw new ServiceException("User has reached maximum number of devices: " + maxDevices);
             }
-            device.setEUI(device.getEUI().trim());
+            device.setEUI(removeNonAlphanumeric(device.getEUI()));
             if (device.getEUI().isEmpty()) {
                 device.setEUI(createEui(deviceEuiPrefix));
             }
@@ -140,6 +140,11 @@ public class DeviceLogic {
         } catch (IotDatabaseException e) {
             throw new ServiceException(e.getMessage(), e);
         }
+    }
+
+    private String removeNonAlphanumeric(String str) {
+        str = str.replaceAll("[^a-zA-Z0-9]", "");
+        return str;
     }
 
     public void checkDevices() throws ServiceException {

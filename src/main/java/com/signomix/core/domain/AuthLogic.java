@@ -22,6 +22,7 @@ import io.agroal.api.AgroalDataSource;
 import io.quarkus.agroal.DataSource;
 import io.quarkus.runtime.StartupEvent;
 
+
 /**
  * Klasa zawierająca logikę biznesową dotyczącą autoryzacji.
  * 

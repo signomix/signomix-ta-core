@@ -23,4 +23,8 @@ public class DashboardPort {
     public List<Dashboard> getUserDashboards(User user, Boolean withStatus, Integer limit, Integer offset)throws ServiceException{
         return dashboardLogic.getUserDashboards(user, limit, offset);
     }
+
+    public Dashboard getUserDashboard(User user, String dashboardId) throws ServiceException {
+        return dashboardLogic.getDashboard(user, dashboardId);
+    }
 }

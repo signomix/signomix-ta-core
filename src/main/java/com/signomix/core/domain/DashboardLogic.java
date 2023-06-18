@@ -1,5 +1,6 @@
 package com.signomix.core.domain;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -10,10 +11,12 @@ import javax.inject.Inject;
 
 import org.jboss.logging.Logger;
 
+import com.signomix.common.User;
 import com.signomix.common.db.DashboardDao;
 import com.signomix.common.db.DashboardIface;
 import com.signomix.common.db.IotDatabaseException;
 import com.signomix.common.gui.Dashboard;
+import com.signomix.common.gui.DashboardItem;
 import com.signomix.common.gui.DashboardTemplate;
 import com.signomix.common.gui.Widget;
 import com.signomix.common.iot.Channel;
@@ -23,6 +26,7 @@ import com.signomix.core.application.exception.ServiceException;
 import io.agroal.api.AgroalDataSource;
 import io.quarkus.agroal.DataSource;
 import io.quarkus.runtime.StartupEvent;
+
 
 @ApplicationScoped
 public class DashboardLogic {
@@ -103,9 +107,31 @@ public class DashboardLogic {
         }
     }
 
-    public List<Dashboard> getUserDashboards(String userId, Integer limit, Integer offset)throws ServiceException{
+    public List<Dashboard> getUserDashboards(User user, Integer limit, Integer offset)throws ServiceException{
         try {
-            return dashboardDao.getUserDashboards(userId, limit, offset);
+            return dashboardDao.getUserDashboards(user.uid, limit, offset);
+        } catch (IotDatabaseException e) {
+            logger.error(e.getMessage());
+            throw new ServiceException(e.getMessage(), e);
+        }
+    }
+
+    public Dashboard getDashboard(User user, String dashboardId)throws ServiceException{
+        try {
+            Dashboard dashboard = dashboardDao.getDashboard(dashboardId);
+            if (null != dashboard) {
+                if (!dashboard.getUserID().equals(user.uid)) {
+                    throw new ServiceException("Dashboard not found");
+                }
+            } else {
+                throw new ServiceException("Dashboard not found");
+            }
+            if(null==dashboard.getItems() || dashboard.getItems().isEmpty()){
+                ArrayList<DashboardItem> items = new ArrayList<>();
+                items.add(new DashboardItem());
+                dashboard.setItems(items);
+            }
+            return dashboard;
         } catch (IotDatabaseException e) {
             logger.error(e.getMessage());
             throw new ServiceException(e.getMessage(), e);

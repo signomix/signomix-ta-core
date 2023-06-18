@@ -6,6 +6,7 @@ import javax.inject.Inject;
 import javax.ws.rs.GET;
 import javax.ws.rs.HeaderParam;
 import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Response;
 
@@ -35,8 +36,8 @@ public class DashboardRestAdapter {
     String unauthorizedException;
 
     @GET
-    @Path("/v2/dashboard")
-    public Response getDevices(
+    @Path("/v2/dashboards")
+    public Response getDashboards(
         @HeaderParam("Authentication") String token, 
         @QueryParam("full") Boolean full,
         @QueryParam("limit") Integer limit,
@@ -50,8 +51,26 @@ public class DashboardRestAdapter {
         if (null == user) {
             throw new ServiceException(unauthorizedException);
         }
-        List<Dashboard> devices = dashboardPort.getUserDashboards(user, full, limit, offset);
-        return Response.ok().entity(devices).build();
+        List<Dashboard> dashboards = dashboardPort.getUserDashboards(user, full, limit, offset);
+        return Response.ok().entity(dashboards).build();
+    }
+
+    @GET
+    @Path("/v2/dashboards/{id}")
+    public Response getDashboard(
+        @HeaderParam("Authentication") String token, 
+        @PathParam("id") String id) {
+        User user;
+        try {
+            user = userPort.getUser(authPort.getUserId(token));
+        } catch (IotDatabaseException e) {
+            throw new ServiceException(unauthorizedException);
+        }
+        if (null == user) {
+            throw new ServiceException(unauthorizedException);
+        }
+        Dashboard dashboards = dashboardPort.getUserDashboard(user, id);
+        return Response.ok().entity(dashboards).build();
     }
     
 }

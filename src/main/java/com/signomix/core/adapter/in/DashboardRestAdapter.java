@@ -3,8 +3,10 @@ package com.signomix.core.adapter.in;
 import java.util.List;
 
 import javax.inject.Inject;
+import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.HeaderParam;
+import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.QueryParam;
@@ -71,6 +73,42 @@ public class DashboardRestAdapter {
         }
         Dashboard dashboards = dashboardPort.getUserDashboard(user, id);
         return Response.ok().entity(dashboards).build();
+    }
+
+    @PUT
+    @Path("/v2/dashboards/{id}")
+    public Response updateDashboard(
+        @HeaderParam("Authentication") String token, 
+        @PathParam("id") String id, Dashboard dashboard) {
+        User user;
+        try {
+            user = userPort.getUser(authPort.getUserId(token));
+        } catch (IotDatabaseException e) {
+            throw new ServiceException(unauthorizedException);
+        }
+        if (null == user) {
+            throw new ServiceException(unauthorizedException);
+        }
+        dashboardPort.updateDashboard(user, dashboard);
+        return Response.ok().entity("ok").build();
+    }
+
+    @DELETE
+    @Path("/v2/dashboards/{id}")
+    public Response removeDashboard(
+        @HeaderParam("Authentication") String token, 
+        @PathParam("id") String id) {
+        User user;
+        try {
+            user = userPort.getUser(authPort.getUserId(token));
+        } catch (IotDatabaseException e) {
+            throw new ServiceException(unauthorizedException);
+        }
+        if (null == user) {
+            throw new ServiceException(unauthorizedException);
+        }
+        dashboardPort.removeDashboard(user, id);
+        return Response.ok().entity("ok").build();
     }
     
 }

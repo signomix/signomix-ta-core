@@ -3,6 +3,7 @@ package com.signomix.core.domain;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
 
 import javax.enterprise.context.ApplicationScoped;
@@ -10,6 +11,8 @@ import javax.enterprise.event.Observes;
 import javax.inject.Inject;
 
 import org.jboss.logging.Logger;
+import org.jsoup.Jsoup;
+import org.jsoup.safety.Safelist;
 
 import com.signomix.common.User;
 import com.signomix.common.db.DashboardDao;
@@ -88,6 +91,7 @@ public class DashboardLogic {
                 widget.setDescription("");
                 widget.setUnitName(guessChannelUnit(chnl.getName()));
                 dashboard.addWidget(widget);
+                dashboard.addItem(new DashboardItem(0, i, i%10, (i/10)));
                 i++;
             }
         }
@@ -128,10 +132,69 @@ public class DashboardLogic {
             }
             if(null==dashboard.getItems() || dashboard.getItems().isEmpty()){
                 ArrayList<DashboardItem> items = new ArrayList<>();
-                items.add(new DashboardItem());
+                ArrayList widgets = dashboard.getWidgets();
+                for(int i=0;i<widgets.size();i++){
+                    items.add(new DashboardItem(0, i, i%10, (i/10)));
+                }
                 dashboard.setItems(items);
+                dashboard.setVersion(1);
+            }else{
+                dashboard.setVersion(2);
             }
             return dashboard;
+        } catch (IotDatabaseException e) {
+            logger.error(e.getMessage());
+            throw new ServiceException(e.getMessage(), e);
+        }
+    }
+
+    public Dashboard updateDashboard(User user, Dashboard updatedDashboard) throws ServiceException{
+        try {
+            Dashboard dashboard = dashboardDao.getDashboard(updatedDashboard.getId());
+            if (null != dashboard) {
+                if (!dashboard.getUserID().equals(user.uid)) {
+                    throw new ServiceException("Dashboard not found");
+                }
+            } else {
+                throw new ServiceException("Dashboard not found");
+            }
+            dashboardDao.updateDashboard(sanitizeWidgets(updatedDashboard));
+            return dashboard;
+        } catch (IotDatabaseException e) {
+            logger.error(e.getMessage());
+            throw new ServiceException(e.getMessage(), e);
+        }
+    }
+
+    public Dashboard saveDashboard(User user, Dashboard newdDashboard) throws ServiceException{
+        try {
+            Dashboard dashboard = dashboardDao.getDashboard(newdDashboard.getId());
+            if (null != dashboard) {
+                if (!dashboard.getUserID().equals(user.uid)) {
+                    throw new ServiceException("Dashboard not found");
+                }
+            } else {
+                throw new ServiceException("Dashboard not found");
+            }
+            dashboardDao.addDashboard(sanitizeWidgets(newdDashboard));
+            return dashboard;
+        } catch (IotDatabaseException e) {
+            logger.error(e.getMessage());
+            throw new ServiceException(e.getMessage(), e);
+        }
+    }
+
+    public void removeDashboard(User user, String dashboardId) throws ServiceException{
+        try {
+            Dashboard dashboard = dashboardDao.getDashboard(dashboardId);
+            if (null != dashboard) {
+                if (!dashboard.getUserID().equals(user.uid)) {
+                    throw new ServiceException("Dashboard not found");
+                }
+            } else {
+                throw new ServiceException("Dashboard not found");
+            }
+            dashboardDao.removeDashboard(dashboardId);
         } catch (IotDatabaseException e) {
             logger.error(e.getMessage());
             throw new ServiceException(e.getMessage(), e);
@@ -183,5 +246,26 @@ public class DashboardLogic {
                 break;
         }
         return unitName;
+    }
+
+    private Dashboard sanitizeWidgets(Dashboard dashboard) {
+        //return dashboard;
+        ArrayList widgets = dashboard.getWidgets();
+        System.out.println("widgets "+widgets.getClass().getName());
+        System.out.println("widgets.size() = " + widgets.size());
+        //Widget widget;
+        LinkedHashMap map;
+        String description;
+        for (int i=0; i<widgets.size(); i++) {
+            System.out.println("widgets.get(i) = " + widgets.get(i).getClass().getName());
+            map = (LinkedHashMap) widgets.get(i);
+            description=(String)map.get("description");
+            if (null != description && !description.isEmpty()) {
+                String safe = Jsoup.clean(description, Safelist.basic());
+                map.put("description",safe);
+            }
+            widgets.set(i,map);
+        }
+        return dashboard;
     }
 }

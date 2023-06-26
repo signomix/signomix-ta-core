@@ -27,4 +27,12 @@ public class DashboardPort {
     public Dashboard getUserDashboard(User user, String dashboardId) throws ServiceException {
         return dashboardLogic.getDashboard(user, dashboardId);
     }
+
+    public void updateDashboard(User user, Dashboard dashboard) throws ServiceException {
+        dashboardLogic.updateDashboard(user, dashboard);
+    }
+
+    public void removeDashboard(User user, String dashboardId) throws ServiceException {
+        dashboardLogic.removeDashboard(user, dashboardId);
+    }
 }

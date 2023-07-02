@@ -30,7 +30,6 @@ import io.agroal.api.AgroalDataSource;
 import io.quarkus.agroal.DataSource;
 import io.quarkus.runtime.StartupEvent;
 
-
 @ApplicationScoped
 public class DashboardLogic {
 
@@ -48,11 +47,11 @@ public class DashboardLogic {
         dashboardDao.setDatasource(dataSource);
     }
 
-    public void addDefaultDashboard(Device device) throws ServiceException{
+    public void addDefaultDashboard(Device device) throws ServiceException {
         Dashboard dashboard = null;
         try {
-            dashboard=dashboardDao.getDashboard(device.getEUI());
-            if(null!=dashboard){
+            dashboard = dashboardDao.getDashboard(device.getEUI());
+            if (null != dashboard) {
                 dashboard.setUserID(device.getUserID());
                 dashboardDao.updateDashboard(dashboard);
                 return;
@@ -91,7 +90,7 @@ public class DashboardLogic {
                 widget.setDescription("");
                 widget.setUnitName(guessChannelUnit(chnl.getName()));
                 dashboard.addWidget(widget);
-                dashboard.addItem(new DashboardItem(0, i, i%10, (i/10)));
+                dashboard.addItem(new DashboardItem(0, i, i % 10, (i / 10)));
                 i++;
             }
         }
@@ -111,7 +110,7 @@ public class DashboardLogic {
         }
     }
 
-    public List<Dashboard> getUserDashboards(User user, Integer limit, Integer offset)throws ServiceException{
+    public List<Dashboard> getUserDashboards(User user, Integer limit, Integer offset) throws ServiceException {
         try {
             return dashboardDao.getUserDashboards(user.uid, limit, offset);
         } catch (IotDatabaseException e) {
@@ -120,7 +119,7 @@ public class DashboardLogic {
         }
     }
 
-    public Dashboard getDashboard(User user, String dashboardId)throws ServiceException{
+    public Dashboard getDashboard(User user, String dashboardId) throws ServiceException {
         try {
             Dashboard dashboard = dashboardDao.getDashboard(dashboardId);
             if (null != dashboard) {
@@ -130,15 +129,15 @@ public class DashboardLogic {
             } else {
                 throw new ServiceException("Dashboard not found");
             }
-            if(null==dashboard.getItems() || dashboard.getItems().isEmpty()){
+            if (null == dashboard.getItems() || dashboard.getItems().isEmpty()) {
                 ArrayList<DashboardItem> items = new ArrayList<>();
                 ArrayList widgets = dashboard.getWidgets();
-                for(int i=0;i<widgets.size();i++){
-                    items.add(new DashboardItem(0, i, i%10, (i/10)));
+                for (int i = 0; i < widgets.size(); i++) {
+                    items.add(new DashboardItem(0, i, i % 10, (i / 10)));
                 }
                 dashboard.setItems(items);
                 dashboard.setVersion(1);
-            }else{
+            } else {
                 dashboard.setVersion(2);
             }
             return dashboard;
@@ -148,7 +147,7 @@ public class DashboardLogic {
         }
     }
 
-    public Dashboard updateDashboard(User user, Dashboard updatedDashboard) throws ServiceException{
+    public Dashboard updateDashboard(User user, Dashboard updatedDashboard) throws ServiceException {
         try {
             Dashboard dashboard = dashboardDao.getDashboard(updatedDashboard.getId());
             if (null != dashboard) {
@@ -166,7 +165,7 @@ public class DashboardLogic {
         }
     }
 
-    public Dashboard saveDashboard(User user, Dashboard newdDashboard) throws ServiceException{
+    public Dashboard saveDashboard(User user, Dashboard newdDashboard) throws ServiceException {
         try {
             Dashboard dashboard = dashboardDao.getDashboard(newdDashboard.getId());
             if (null != dashboard) {
@@ -184,7 +183,7 @@ public class DashboardLogic {
         }
     }
 
-    public void removeDashboard(User user, String dashboardId) throws ServiceException{
+    public void removeDashboard(User user, String dashboardId) throws ServiceException {
         try {
             Dashboard dashboard = dashboardDao.getDashboard(dashboardId);
             if (null != dashboard) {
@@ -249,22 +248,22 @@ public class DashboardLogic {
     }
 
     private Dashboard sanitizeWidgets(Dashboard dashboard) {
-        //return dashboard;
+        // return dashboard;
         ArrayList widgets = dashboard.getWidgets();
-        System.out.println("widgets "+widgets.getClass().getName());
+        System.out.println("widgets " + widgets.getClass().getName());
         System.out.println("widgets.size() = " + widgets.size());
-        //Widget widget;
+        // Widget widget;
         LinkedHashMap map;
         String description;
-        for (int i=0; i<widgets.size(); i++) {
+        for (int i = 0; i < widgets.size(); i++) {
             System.out.println("widgets.get(i) = " + widgets.get(i).getClass().getName());
             map = (LinkedHashMap) widgets.get(i);
-            description=(String)map.get("description");
+            description = (String) map.get("description");
             if (null != description && !description.isEmpty()) {
                 String safe = Jsoup.clean(description, Safelist.basic());
-                map.put("description",safe);
+                map.put("description", safe);
             }
-            widgets.set(i,map);
+            widgets.set(i, map);
         }
         return dashboard;
     }

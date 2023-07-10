@@ -42,6 +42,9 @@ public class DashboardLogic {
 
     DashboardIface dashboardDao;
 
+    @Inject
+    DeviceLogic deviceLogic;
+
     void onStart(@Observes StartupEvent ev) {
         dashboardDao = new DashboardDao();
         dashboardDao.setDatasource(dataSource);
@@ -169,12 +172,9 @@ public class DashboardLogic {
         try {
             Dashboard dashboard = dashboardDao.getDashboard(newdDashboard.getId());
             if (null != dashboard) {
-                if (!dashboard.getUserID().equals(user.uid)) {
-                    throw new ServiceException("Dashboard not found");
-                }
-            } else {
-                throw new ServiceException("Dashboard not found");
+                throw new ServiceException("Dashboard already exists");
             }
+            newdDashboard.setId(deviceLogic.createEui("S-"));
             dashboardDao.addDashboard(sanitizeWidgets(newdDashboard));
             return dashboard;
         } catch (IotDatabaseException e) {

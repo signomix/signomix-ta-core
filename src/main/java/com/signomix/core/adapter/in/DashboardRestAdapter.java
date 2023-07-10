@@ -6,6 +6,7 @@ import javax.inject.Inject;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.HeaderParam;
+import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
@@ -40,10 +41,10 @@ public class DashboardRestAdapter {
     @GET
     @Path("/v2/dashboards")
     public Response getDashboards(
-        @HeaderParam("Authentication") String token, 
-        @QueryParam("full") Boolean full,
-        @QueryParam("limit") Integer limit,
-        @QueryParam("offset") Integer offset) {
+            @HeaderParam("Authentication") String token,
+            @QueryParam("full") Boolean full,
+            @QueryParam("limit") Integer limit,
+            @QueryParam("offset") Integer offset) {
         User user;
         try {
             user = userPort.getUser(authPort.getUserId(token));
@@ -60,8 +61,8 @@ public class DashboardRestAdapter {
     @GET
     @Path("/v2/dashboards/{id}")
     public Response getDashboard(
-        @HeaderParam("Authentication") String token, 
-        @PathParam("id") String id) {
+            @HeaderParam("Authentication") String token,
+            @PathParam("id") String id) {
         User user;
         try {
             user = userPort.getUser(authPort.getUserId(token));
@@ -78,8 +79,8 @@ public class DashboardRestAdapter {
     @PUT
     @Path("/v2/dashboards/{id}")
     public Response updateDashboard(
-        @HeaderParam("Authentication") String token, 
-        @PathParam("id") String id, Dashboard dashboard) {
+            @HeaderParam("Authentication") String token,
+            @PathParam("id") String id, Dashboard dashboard) {
         User user;
         try {
             user = userPort.getUser(authPort.getUserId(token));
@@ -93,11 +94,29 @@ public class DashboardRestAdapter {
         return Response.ok().entity("ok").build();
     }
 
+    @POST
+    @Path("/v2/dashboards")
+    public Response addDashboard(
+            @HeaderParam("Authentication") String token,
+            Dashboard dashboard) {
+        User user;
+        try {
+            user = userPort.getUser(authPort.getUserId(token));
+        } catch (IotDatabaseException e) {
+            throw new ServiceException(unauthorizedException);
+        }
+        if (null == user) {
+            throw new ServiceException(unauthorizedException);
+        }
+        dashboardPort.addDashboard(user, dashboard);
+        return Response.ok().entity("ok").build();
+    }
+
     @DELETE
     @Path("/v2/dashboards/{id}")
     public Response removeDashboard(
-        @HeaderParam("Authentication") String token, 
-        @PathParam("id") String id) {
+            @HeaderParam("Authentication") String token,
+            @PathParam("id") String id) {
         User user;
         try {
             user = userPort.getUser(authPort.getUserId(token));
@@ -110,5 +129,5 @@ public class DashboardRestAdapter {
         dashboardPort.removeDashboard(user, id);
         return Response.ok().entity("ok").build();
     }
-    
+
 }

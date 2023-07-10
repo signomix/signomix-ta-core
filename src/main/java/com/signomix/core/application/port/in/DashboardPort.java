@@ -32,6 +32,10 @@ public class DashboardPort {
         dashboardLogic.updateDashboard(user, dashboard);
     }
 
+    public void addDashboard(User user, Dashboard dashboard) throws ServiceException {
+        dashboardLogic.saveDashboard(user, dashboard);
+    }
+
     public void removeDashboard(User user, String dashboardId) throws ServiceException {
         dashboardLogic.removeDashboard(user, dashboardId);
     }

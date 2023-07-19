@@ -168,15 +168,16 @@ public class DashboardLogic {
         }
     }
 
-    public Dashboard saveDashboard(User user, Dashboard newdDashboard) throws ServiceException {
+    public Dashboard saveDashboard(User user, Dashboard newDashboard) throws ServiceException {
         try {
-            Dashboard dashboard = dashboardDao.getDashboard(newdDashboard.getId());
+            Dashboard dashboard = dashboardDao.getDashboard(newDashboard.getId());
             if (null != dashboard) {
                 throw new ServiceException("Dashboard already exists");
             }
-            newdDashboard.setId(deviceLogic.createEui("S-"));
-            dashboardDao.addDashboard(sanitizeWidgets(newdDashboard));
-            return dashboard;
+            newDashboard.setId(deviceLogic.createEui("S-"));
+            newDashboard.setUserID(user.uid);
+            dashboardDao.addDashboard(sanitizeWidgets(newDashboard));
+            return newDashboard;
         } catch (IotDatabaseException e) {
             logger.error(e.getMessage());
             throw new ServiceException(e.getMessage(), e);

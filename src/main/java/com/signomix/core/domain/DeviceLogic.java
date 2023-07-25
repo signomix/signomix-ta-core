@@ -147,6 +147,11 @@ public class DeviceLogic {
         return str;
     }
 
+    /**
+     * Check if devices are sending data. If not, send notification.
+     * 
+     * @throws ServiceException
+     */
     public void checkDevices() throws ServiceException {
         List<Device> devices;
         try {
@@ -156,7 +161,8 @@ public class DeviceLogic {
         }
         for (Device device : devices) {
             try {
-                if (System.currentTimeMillis() - device.getLastSeen() > device.getTransmissionInterval() * 2) {
+                if (device.getTransmissionInterval() > 0 && (System.currentTimeMillis()
+                        - device.getLastSeen() > device.getTransmissionInterval() * 1.5)) {
                     if (device.getAlertStatus() < Device.ALERT_FAILURE) {
                         // send notification
                         iotDao.updateDeviceStatus(device.getEUI(), device.getTransmissionInterval(), device.getState(),

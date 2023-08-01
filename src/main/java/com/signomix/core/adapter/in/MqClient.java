@@ -1,6 +1,7 @@
 package com.signomix.core.adapter.in;
 
 import java.nio.charset.StandardCharsets;
+import java.util.concurrent.Executors;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
@@ -40,9 +41,11 @@ public class MqClient {
         switch (wrapper.payload.toLowerCase()) {
             case "backup":
                 commandPort.runBackup();
+                break;
             case "clean":
                 // TODO: clean command
                 LOG.warn("Clean command is not implemented yet");
+                break;
             default:
                 LOG.warn("Unknown command " + wrapper.payload);
 
@@ -62,10 +65,11 @@ public class MqClient {
             LOG.error(ex.getMessage());
             return;
         }
-        LOG.info(wrapper.type + " " + wrapper.uuid + " " + wrapper.payload);
+        LOG.info("Handling message "+wrapper.type + " " + wrapper.uuid + " " + wrapper.payload);
         switch (wrapper.payload.toLowerCase()) {
             case "check":
                 devicePort.checkDevices();
+                break;
             default:
                 LOG.warn("Unknown command " + wrapper.payload);
 

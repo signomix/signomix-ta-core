@@ -54,7 +54,7 @@ public class DashboardRestAdapter {
         if (null == user) {
             throw new ServiceException(unauthorizedException);
         }
-        List<Dashboard> dashboards = dashboardPort.getUserDashboards(user, full, limit, offset);
+        List<Dashboard> dashboards = dashboardPort.getUserDashboards(user, full, true, isAdmin(user),limit, offset);
         return Response.ok().entity(dashboards).build();
     }
 
@@ -128,6 +128,10 @@ public class DashboardRestAdapter {
         }
         dashboardPort.removeDashboard(user, id);
         return Response.ok().entity("ok").build();
+    }
+
+    private boolean isAdmin(User user) {
+        return user.type==User.ADMIN || user.role.contains("admin") ;
     }
 
 }

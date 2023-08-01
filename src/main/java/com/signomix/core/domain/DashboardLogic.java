@@ -113,9 +113,10 @@ public class DashboardLogic {
         }
     }
 
-    public List<Dashboard> getUserDashboards(User user, Integer limit, Integer offset) throws ServiceException {
+    public List<Dashboard> getUserDashboards(User user, Boolean withShared, Boolean isAdmin, Integer limit,
+            Integer offset) throws ServiceException {
         try {
-            return dashboardDao.getUserDashboards(user.uid, limit, offset);
+            return dashboardDao.getUserDashboards(user.uid, withShared, isAdmin, limit, offset);
         } catch (IotDatabaseException e) {
             logger.error(e.getMessage());
             throw new ServiceException(e.getMessage(), e);
@@ -126,7 +127,7 @@ public class DashboardLogic {
         try {
             Dashboard dashboard = dashboardDao.getDashboard(dashboardId);
             if (null != dashboard) {
-                if (!dashboard.getUserID().equals(user.uid)) {
+                if (!hasAccessToDashboard(user, dashboard, false)) {
                     throw new ServiceException("Dashboard not found");
                 }
             } else {
@@ -150,11 +151,30 @@ public class DashboardLogic {
         }
     }
 
+    private boolean hasAccessToDashboard(User user, Dashboard dashboard, boolean writeAccess) {
+        //TODO: Organization access
+        if(user.type==User.OWNER){ // platform administator
+            return true;
+        }
+        if (dashboard.getUserID().equals(user.uid)) {
+            return true;
+        }
+        if (dashboard.getAdministrators().contains("," + user.uid + ",")) {
+            return true;
+        }
+        if (!writeAccess) {
+            if (dashboard.getTeam().contains("," + user.uid + ",")) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     public Dashboard updateDashboard(User user, Dashboard updatedDashboard) throws ServiceException {
         try {
             Dashboard dashboard = dashboardDao.getDashboard(updatedDashboard.getId());
             if (null != dashboard) {
-                if (!dashboard.getUserID().equals(user.uid)) {
+                if (!hasAccessToDashboard(user, dashboard, true)) {
                     throw new ServiceException("Dashboard not found");
                 }
             } else {
@@ -188,7 +208,7 @@ public class DashboardLogic {
         try {
             Dashboard dashboard = dashboardDao.getDashboard(dashboardId);
             if (null != dashboard) {
-                if (!dashboard.getUserID().equals(user.uid)) {
+                if (!hasAccessToDashboard(user, dashboard, true)) {
                     throw new ServiceException("Dashboard not found");
                 }
             } else {

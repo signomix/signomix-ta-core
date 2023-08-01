@@ -1,6 +1,7 @@
 package com.signomix.core.domain;
 
 import java.util.List;
+import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicLong;
 
 import javax.enterprise.context.ApplicationScoped;
@@ -20,6 +21,7 @@ import com.signomix.core.adapter.out.MessageService;
 import com.signomix.core.application.exception.ServiceException;
 import com.signomix.core.application.port.in.DashboardPort;
 import com.signomix.core.application.port.in.UserPort;
+import com.signomix.core.application.port.out.DeviceChecker;
 
 import io.agroal.api.AgroalDataSource;
 import io.quarkus.agroal.DataSource;
@@ -55,6 +57,9 @@ public class DeviceLogic {
 
     @Inject
     DashboardPort dashboardPort;
+
+    @Inject
+    Logger logger;
 
     void onStart(@Observes StartupEvent ev) {
         iotDao = new IotDatabaseDao();
@@ -153,28 +158,8 @@ public class DeviceLogic {
      * @throws ServiceException
      */
     public void checkDevices() throws ServiceException {
-        List<Device> devices;
-        try {
-            devices = iotDao.getInactiveDevices();
-        } catch (IotDatabaseException e) {
-            throw new ServiceException(e.getMessage(), e);
-        }
-        for (Device device : devices) {
-            try {
-                if (device.getTransmissionInterval() > 0 && (System.currentTimeMillis()
-                        - device.getLastSeen() > device.getTransmissionInterval() * 1.5)) {
-                    if (device.getAlertStatus() < Device.ALERT_FAILURE) {
-                        // send notification
-                        iotDao.updateDeviceStatus(device.getEUI(), device.getTransmissionInterval(), device.getState(),
-                                Device.ALERT_FAILURE);
-                        sendNotification(device, "ALERT_FAILURE");
-                    }
-                }
-            } catch (IotDatabaseException e) {
-                LOG.error(e.getMessage());
-                e.printStackTrace();
-            }
-        }
+        logger.info("Checking devices...");
+        Executors.newSingleThreadExecutor().execute(new DeviceChecker(iotDao, messageService));
     }
 
     private void sendNotification(Device device, String type) {

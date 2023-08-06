@@ -2,11 +2,8 @@ package com.signomix.core.application.port.out;
 
 import java.util.List;
 
-import javax.inject.Inject;
-
 import org.jboss.logging.Logger;
 
-import com.signomix.common.db.IotDatabaseDao;
 import com.signomix.common.db.IotDatabaseException;
 import com.signomix.common.db.IotDatabaseIface;
 import com.signomix.common.event.IotEvent;
@@ -14,9 +11,9 @@ import com.signomix.common.iot.Device;
 import com.signomix.core.adapter.out.MessageService;
 import com.signomix.core.application.exception.ServiceException;
 
-public class DeviceChecker implements Runnable{
+public class DeviceChecker implements Runnable {
 
-    Logger logger=Logger.getLogger(DeviceChecker.class);
+    Logger logger = Logger.getLogger(DeviceChecker.class);
 
     IotDatabaseIface iotDao;
     MessageService messageService;
@@ -53,7 +50,7 @@ public class DeviceChecker implements Runnable{
             }
         }
         long end = System.currentTimeMillis();
-        logger.info("DeviceChecker finished "+(end-start)+" ms");
+        logger.info("DeviceChecker finished " + (end - start) + " ms");
     }
 
     private void sendNotification(Device device, String type) {
@@ -121,5 +118,5 @@ public class DeviceChecker implements Runnable{
             }
         }
     }
-    
+
 }

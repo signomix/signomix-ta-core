@@ -103,6 +103,12 @@ public class DatabaseUC {
             LOG.error(e.getMessage());
             e.printStackTrace();
         }
+        try {
+            userDao.createStructure();
+        } catch (IotDatabaseException e) {
+            LOG.error(e.getMessage());
+            e.printStackTrace();
+        }
         /* try {
             LOG.info("test backup");
             //shortenerDao.createStructure();

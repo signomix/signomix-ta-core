@@ -20,7 +20,7 @@ public class DashboardPort {
         dashboardLogic.addDefaultDashboard(device);
     }
 
-    public List<Dashboard> getUserDashboards(User user, Boolean withStatus, Boolean withShared, Boolean isAdmin, Integer limit, Integer offset)throws ServiceException{
+    public List<Dashboard> getUserDashboards(User user, Boolean withShared, Boolean isAdmin, Integer limit, Integer offset)throws ServiceException{
         return dashboardLogic.getUserDashboards(user, withShared, isAdmin, limit, offset);
     }
 

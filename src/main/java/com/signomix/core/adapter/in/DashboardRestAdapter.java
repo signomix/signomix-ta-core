@@ -42,7 +42,7 @@ public class DashboardRestAdapter {
     @Path("/v2/dashboards")
     public Response getDashboards(
             @HeaderParam("Authentication") String token,
-            @QueryParam("full") Boolean full,
+            @QueryParam("shared") Boolean includeShared,
             @QueryParam("limit") Integer limit,
             @QueryParam("offset") Integer offset) {
         User user;
@@ -54,7 +54,7 @@ public class DashboardRestAdapter {
         if (null == user) {
             throw new ServiceException(unauthorizedException);
         }
-        List<Dashboard> dashboards = dashboardPort.getUserDashboards(user, full, true, isAdmin(user),limit, offset);
+        List<Dashboard> dashboards = dashboardPort.getUserDashboards(user, includeShared, isAdmin(user),limit, offset);
         return Response.ok().entity(dashboards).build();
     }
 

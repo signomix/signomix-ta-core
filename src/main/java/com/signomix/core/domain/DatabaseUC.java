@@ -258,6 +258,8 @@ public class DatabaseUC {
             iotDao.setParameter("devicesLimit", User.ADMIN, 50, "");
             iotDao.setParameter("notifications", User.ADMIN, 0, "SMTP,WEBHOOK,SMS"); //SMTP,SLACK,PUSHOVER,TELEGRAM,DISCORD,WEBHOOK
 
+            iotDao.setParameter("system.default.organization", User.ANY, 0, "");
+            
         } catch (IotDatabaseException e) {
             e.printStackTrace();
             LOG.error(e.getMessage());

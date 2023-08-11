@@ -17,6 +17,7 @@ import org.jsoup.safety.Safelist;
 import com.signomix.common.User;
 import com.signomix.common.db.DashboardDao;
 import com.signomix.common.db.DashboardIface;
+import com.signomix.common.db.IotDatabaseDao;
 import com.signomix.common.db.IotDatabaseException;
 import com.signomix.common.gui.Dashboard;
 import com.signomix.common.gui.DashboardItem;
@@ -41,13 +42,23 @@ public class DashboardLogic {
     AgroalDataSource dataSource;
 
     DashboardIface dashboardDao;
+    IotDatabaseDao iotDao;
 
     @Inject
     DeviceLogic deviceLogic;
 
+    long defaultOrganizationId = 0;
+
     void onStart(@Observes StartupEvent ev) {
         dashboardDao = new DashboardDao();
         dashboardDao.setDatasource(dataSource);
+        iotDao = new IotDatabaseDao();
+        iotDao.setDatasource(dataSource);
+        try {
+            defaultOrganizationId = iotDao.getParameterValue("system.default.organization", User.ANY);
+        } catch (IotDatabaseException e) {
+            logger.error("Unable to get default organization id: " + e.getMessage());
+        }
     }
 
     public void addDefaultDashboard(Device device) throws ServiceException {
@@ -116,7 +127,11 @@ public class DashboardLogic {
     public List<Dashboard> getUserDashboards(User user, Boolean withShared, Boolean isAdmin, Integer limit,
             Integer offset) throws ServiceException {
         try {
-            return dashboardDao.getUserDashboards(user.uid, withShared, isAdmin, limit, offset);
+            if (user.organization != defaultOrganizationId) {
+                return dashboardDao.getOrganizationDashboards(defaultOrganizationId, limit, offset);
+            } else {
+                return dashboardDao.getUserDashboards(user.uid, withShared, isAdmin, limit, offset);
+            }
         } catch (IotDatabaseException e) {
             logger.error(e.getMessage());
             throw new ServiceException(e.getMessage(), e);
@@ -152,8 +167,8 @@ public class DashboardLogic {
     }
 
     private boolean hasAccessToDashboard(User user, Dashboard dashboard, boolean writeAccess) {
-        //TODO: Organization access
-        if(user.type==User.OWNER){ // platform administator
+        // TODO: Organization access
+        if (user.type == User.OWNER) { // platform administator
             return true;
         }
         if (dashboard.getUserID().equals(user.uid)) {
@@ -166,6 +181,16 @@ public class DashboardLogic {
             if (dashboard.getTeam().contains("," + user.uid + ",")) {
                 return true;
             }
+            if (dashboard.getOrganizationId() != defaultOrganizationId
+                    && user.organization == dashboard.getOrganizationId()
+                    && user.type == User.ADMIN) {
+                return true;
+            }
+        } else {
+             if(dashboard.getOrganizationId()!=defaultOrganizationId
+              && user.organization==dashboard.getOrganizationId()){
+              return true;
+              }
         }
         return false;
     }

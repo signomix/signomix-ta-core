@@ -10,6 +10,7 @@ import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.event.Observes;
 import javax.inject.Inject;
 
+import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.jboss.logging.Logger;
 import org.jsoup.Jsoup;
 import org.jsoup.safety.Safelist;
@@ -45,9 +46,15 @@ public class DashboardLogic {
     IotDatabaseDao iotDao;
 
     @Inject
+    UserLogic userLogic;
+
+    @Inject
     DeviceLogic deviceLogic;
 
     long defaultOrganizationId = 0;
+
+    @ConfigProperty(name = "signomix.exception.api.unauthorized", defaultValue = "")
+    String exceptionApiUnauthorized;
 
     void onStart(@Observes StartupEvent ev) {
         dashboardDao = new DashboardDao();
@@ -115,6 +122,7 @@ public class DashboardLogic {
         dashboard.setShared(false);
         dashboard.setTeam(device.getTeam());
         dashboard.setAdministrators(device.getAdministrators());
+        dashboard.setOrganizationId(device.getOrganizationId());
 
         try {
             dashboardDao.addDashboard(dashboard);
@@ -142,11 +150,11 @@ public class DashboardLogic {
         try {
             Dashboard dashboard = dashboardDao.getDashboard(dashboardId);
             if (null != dashboard) {
-                if (!hasAccessToDashboard(user, dashboard, false)) {
-                    throw new ServiceException("Dashboard not found");
+                if (!userLogic.hasObjectAccess(user, false, defaultOrganizationId, dashboard)) {
+                    throw new ServiceException(exceptionApiUnauthorized);
                 }
             } else {
-                throw new ServiceException("Dashboard not found");
+                throw new ServiceException(exceptionApiUnauthorized);
             }
             if (null == dashboard.getItems() || dashboard.getItems().isEmpty()) {
                 ArrayList<DashboardItem> items = new ArrayList<>();
@@ -166,44 +174,15 @@ public class DashboardLogic {
         }
     }
 
-    private boolean hasAccessToDashboard(User user, Dashboard dashboard, boolean writeAccess) {
-        // TODO: Organization access
-        if (user.type == User.OWNER) { // platform administator
-            return true;
-        }
-        if (dashboard.getUserID().equals(user.uid)) {
-            return true;
-        }
-        if (dashboard.getAdministrators().contains("," + user.uid + ",")) {
-            return true;
-        }
-        if (!writeAccess) {
-            if (dashboard.getTeam().contains("," + user.uid + ",")) {
-                return true;
-            }
-            if (dashboard.getOrganizationId() != defaultOrganizationId
-                    && user.organization == dashboard.getOrganizationId()
-                    && user.type == User.ADMIN) {
-                return true;
-            }
-        } else {
-             if(dashboard.getOrganizationId()!=defaultOrganizationId
-              && user.organization==dashboard.getOrganizationId()){
-              return true;
-              }
-        }
-        return false;
-    }
-
     public Dashboard updateDashboard(User user, Dashboard updatedDashboard) throws ServiceException {
         try {
             Dashboard dashboard = dashboardDao.getDashboard(updatedDashboard.getId());
             if (null != dashboard) {
-                if (!hasAccessToDashboard(user, dashboard, true)) {
-                    throw new ServiceException("Dashboard not found");
+                if (!userLogic.hasObjectAccess(user, true, defaultOrganizationId, dashboard)) {
+                    throw new ServiceException(exceptionApiUnauthorized);
                 }
             } else {
-                throw new ServiceException("Dashboard not found");
+                throw new ServiceException(exceptionApiUnauthorized);
             }
             dashboardDao.updateDashboard(sanitizeWidgets(updatedDashboard));
             return dashboard;
@@ -221,6 +200,7 @@ public class DashboardLogic {
             }
             newDashboard.setId(deviceLogic.createEui("S-"));
             newDashboard.setUserID(user.uid);
+            newDashboard.setOrganizationId(user.organization);
             dashboardDao.addDashboard(sanitizeWidgets(newDashboard));
             return newDashboard;
         } catch (IotDatabaseException e) {
@@ -233,11 +213,11 @@ public class DashboardLogic {
         try {
             Dashboard dashboard = dashboardDao.getDashboard(dashboardId);
             if (null != dashboard) {
-                if (!hasAccessToDashboard(user, dashboard, true)) {
-                    throw new ServiceException("Dashboard not found");
+                if (!userLogic.hasObjectAccess(user, true, defaultOrganizationId, dashboard)) {
+                    throw new ServiceException(exceptionApiUnauthorized);
                 }
             } else {
-                throw new ServiceException("Dashboard not found");
+                throw new ServiceException(exceptionApiUnauthorized);
             }
             dashboardDao.removeDashboard(dashboardId);
         } catch (IotDatabaseException e) {

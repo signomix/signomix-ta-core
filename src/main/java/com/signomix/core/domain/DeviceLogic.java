@@ -42,6 +42,8 @@ public class DeviceLogic {
     String authHost;
     @ConfigProperty(name = "signomix.device.eui.prefix", defaultValue = "S-")
     String deviceEuiPrefix;
+    @ConfigProperty(name = "signomix.exception.api.unauthorized", defaultValue = "")
+    String exceptionApiUnauthorized;
 
     @Inject
     @DataSource("iot")
@@ -56,40 +58,48 @@ public class DeviceLogic {
     UserPort userPort;
 
     @Inject
+    UserLogic userLogic;
+
+    @Inject
     DashboardPort dashboardPort;
 
     @Inject
     Logger logger;
 
+    long defaultOrganizationId;
+
     void onStart(@Observes StartupEvent ev) {
         iotDao = new IotDatabaseDao();
         iotDao.setDatasource(deviceDataSource);
+        try {
+            defaultOrganizationId = iotDao.getParameterValue("system.default.organization", User.ANY);
+        } catch (IotDatabaseException e) {
+            logger.error("Unable to get default organization id: " + e.getMessage());
+        }
     }
 
     // TODO: add organizationId to all methods
     public Device getDevice(User user, String eui, boolean withStatus) throws ServiceException {
         try {
-            return iotDao.getDevice(user, eui, true, withStatus);
+            Device device = iotDao.getDevice(eui, withStatus);
+            if (userLogic.hasObjectAccess(user, false, defaultOrganizationId, device)) {
+                return device;
+            } else {
+                throw new ServiceException(exceptionApiUnauthorized);
+            }
         } catch (IotDatabaseException e) {
             throw new ServiceException(e.getMessage(), e);
         }
     }
 
-    /*
-     * public List<Device> getUserDevices(User user, boolean withStatus) throws
-     * ServiceException {
-     * try {
-     * return iotDao.getUserDevices(user, withStatus, null, null);
-     * } catch (IotDatabaseException e) {
-     * throw new ServiceException(e.getMessage(), e);
-     * }
-     * }
-     */
-
     public List<Device> getUserDevices(User user, boolean withStatus, Integer limit, Integer offset)
             throws ServiceException {
         try {
-            return iotDao.getUserDevices(user, withStatus, limit, offset);
+            if (user.organization != defaultOrganizationId) {
+                return iotDao.getUserDevices(user, withStatus, limit, offset);
+            } else {
+                return iotDao.getOrganizationDevices(user.organization, withStatus, limit, offset);
+            }
         } catch (IotDatabaseException e) {
             throw new ServiceException(e.getMessage(), e);
         }
@@ -97,9 +107,16 @@ public class DeviceLogic {
 
     public void deleteDevice(User user, String eui) throws ServiceException {
         Device device = getDevice(user, eui, false);
+        if (null == device) {
+            throw new ServiceException("Device not found");
+        }
         try {
-            iotDao.deleteDevice(user, eui);
-            sendNotification(device, "DELETED");
+            if (userLogic.hasObjectAccess(user, true, defaultOrganizationId, device)) {
+                iotDao.deleteDevice(user, eui);
+                sendNotification(device, "DELETED");
+            } else {
+                throw new ServiceException(exceptionApiUnauthorized);
+            }
         } catch (IotDatabaseException e) {
             throw new ServiceException(e.getMessage(), e);
         }
@@ -111,12 +128,16 @@ public class DeviceLogic {
             throw new ServiceException("Device not found");
         }
         try {
-            iotDao.updateDevice(user, device);
-            if (!updated.getChannelsAsString().equals(device.getChannelsAsString())) {
-                iotDao.clearDeviceData(device.getEUI());
-                iotDao.updateDeviceChannels(device.getEUI(), device.getChannelsAsString());
+            if (userLogic.hasObjectAccess(user, true, defaultOrganizationId, device)) {
+                iotDao.updateDevice(user, device);
+                if (!updated.getChannelsAsString().equals(device.getChannelsAsString())) {
+                    iotDao.clearDeviceData(device.getEUI());
+                    iotDao.updateDeviceChannels(device.getEUI(), device.getChannelsAsString());
+                }
+                sendNotification(device, "UPDATED");
+            } else {
+                throw new ServiceException(exceptionApiUnauthorized);
             }
-            sendNotification(device, "UPDATED");
         } catch (IotDatabaseException e) {
             throw new ServiceException(e.getMessage(), e);
         }
@@ -134,6 +155,7 @@ public class DeviceLogic {
             if (device.getEUI().isEmpty()) {
                 device.setEUI(createEui(deviceEuiPrefix));
             }
+            device.setOrganizationId(user.organization);
             iotDao.createDevice(user, device);
             iotDao.updateDeviceChannels(device.getEUI(), device.getChannelsAsString());
             iotDao.updateDeviceStatus(device.getEUI(), device.getTransmissionInterval(), 0.0, Device.ALERT_UNKNOWN);
@@ -237,4 +259,41 @@ public class DeviceLogic {
         return tmp.toString();
     }
 
+    /**
+     * Check if user has access to device.
+     * 
+     * @param user        User
+     * @param device      Device
+     * @param writeAccess true if write access is required
+     * @return true if user has access to device
+     */
+    @Deprecated
+    private boolean hasAccessToDevice(User user, Device device, boolean writeAccess) {
+        // TODO: Organization access
+        if (user.type == User.OWNER) { // platform administator
+            return true;
+        }
+        if (device.getUserID().equals(user.uid)) {
+            return true;
+        }
+        if (device.getAdministrators().contains("," + user.uid + ",")) {
+            return true;
+        }
+        if (!writeAccess) {
+            if (device.getTeam().contains("," + user.uid + ",")) {
+                return true;
+            }
+            if (device.getOrganizationId() != defaultOrganizationId
+                    && user.organization == device.getOrganizationId()
+                    && user.type == User.ADMIN) {
+                return true;
+            }
+        } else {
+            if (device.getOrganizationId() != defaultOrganizationId
+                    && user.organization == device.getOrganizationId()) {
+                return true;
+            }
+        }
+        return false;
+    }
 }

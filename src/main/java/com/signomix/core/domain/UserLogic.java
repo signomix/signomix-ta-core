@@ -13,6 +13,8 @@ import com.signomix.common.User;
 import com.signomix.common.db.IotDatabaseException;
 import com.signomix.common.db.UserDao;
 import com.signomix.common.db.UserDaoIface;
+import com.signomix.common.gui.Dashboard;
+import com.signomix.common.iot.Device;
 import com.signomix.core.application.exception.ServiceException;
 
 import io.agroal.api.AgroalDataSource;
@@ -120,5 +122,70 @@ public class UserLogic {
      */
     public boolean isOrganizationMember(User user, long organizationId) {
         return user != null && user.organization == organizationId;
+    }
+
+    /**
+     * Checks user access to object (Device, Dashboard)
+     * 
+     * @param user
+     * @param writeAccess
+     * @param defaultOrganizationId
+     * @param accessedObject
+     * @return
+     */
+    public boolean hasObjectAccess(
+            User user,
+            boolean writeAccess,
+            long defaultOrganizationId,
+            Object accessedObject
+            ) {
+        // Platfor administrator has access to all objects
+        if (user.type == User.OWNER) {
+            return true;
+        }
+        String owner=null;
+            String team=null;
+            String admins=null;
+            long organizationId=0;
+        if(accessedObject instanceof Dashboard){
+            Dashboard dashboard=(Dashboard)accessedObject;
+            team=dashboard.getTeam();
+            admins=dashboard.getAdministrators();
+            owner=dashboard.getUserID();
+            organizationId=dashboard.getOrganizationId();
+        }else if(accessedObject instanceof Device){
+            Device device=(Device)accessedObject;
+            team=device.getTeam();
+            admins=device.getAdministrators();
+            owner=device.getUserID();
+            organizationId=device.getOrganizationId();
+        }else{
+            return false;
+        }
+
+        // object owner has read/write access
+        if (owner.equals(user.uid))
+            return true;
+        // access depands on organization
+        if (user.organization == defaultOrganizationId) {
+            if (admins.contains("," + user.uid + ","))
+                return true;
+            if (!writeAccess) {
+                if (team.contains("," + user.uid + ","))
+                    return true;
+            }
+        } else {
+            if (!writeAccess) {
+                if (user.organization == organizationId)
+                    return true;
+            } else {
+                if (user.organization == organizationId && user.type == User.ADMIN) {
+                    return true;
+                } else {
+                    return false;
+                }
+            }
+        }
+        return false;
     }
 }

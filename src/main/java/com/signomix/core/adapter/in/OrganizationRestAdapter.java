@@ -50,7 +50,7 @@ public class OrganizationRestAdapter {
 
         User user;
         try {
-            user = userPort.getUser(authPort.getUserId(token));
+            user = userPort.getAuthorizing(authPort.getUserId(token));
         } catch (IotDatabaseException e) {
             throw new ServiceException(unauthorizedException);
         }
@@ -68,7 +68,7 @@ public class OrganizationRestAdapter {
             @QueryParam("full") Boolean full) {
         User user;
         try {
-            user = userPort.getUser(authPort.getUserId(token));
+            user = userPort.getAuthorizing(authPort.getUserId(token));
         } catch (IotDatabaseException e) {
             throw new ServiceException(unauthorizedException);
         }
@@ -85,7 +85,7 @@ public class OrganizationRestAdapter {
     public Response delete(@HeaderParam("Authentication") String token, @PathParam("id") long id) {
         User user;
         try {
-            user = userPort.getUser(authPort.getUserId(token));
+            user = userPort.getAuthorizing(authPort.getUserId(token));
         } catch (IotDatabaseException e) {
             throw new ServiceException(unauthorizedException);
         }
@@ -102,7 +102,7 @@ public class OrganizationRestAdapter {
             Organization organization) {
         User user;
         try {
-            user = userPort.getUser(authPort.getUserId(token));
+            user = userPort.getAuthorizing(authPort.getUserId(token));
         } catch (IotDatabaseException e) {
             LOG.warn(e.getMessage());
             throw new ServiceException(unauthorizedException);
@@ -130,7 +130,7 @@ public class OrganizationRestAdapter {
     public Response addOrganization(@HeaderParam("Authentication") String token, Organization organization) {
         User user;
         try {
-            user = userPort.getUser(authPort.getUserId(token));
+            user = userPort.getAuthorizing(authPort.getUserId(token));
         } catch (IotDatabaseException e) {
             throw new ServiceException(unauthorizedException);
         }

@@ -50,7 +50,7 @@ public class ApplicationRestAdapter {
 
         User user;
         try {
-            user = userPort.getUser(authPort.getUserId(token));
+            user = userPort.getAuthorizing(authPort.getUserId(token));
         } catch (IotDatabaseException e) {
             throw new ServiceException(unauthorizedException);
         }
@@ -67,7 +67,7 @@ public class ApplicationRestAdapter {
     public Response getApplication(@HeaderParam("Authentication") String token, @PathParam("id") long id) {
         User user;
         try {
-            user = userPort.getUser(authPort.getUserId(token));
+            user = userPort.getAuthorizing(authPort.getUserId(token));
         } catch (IotDatabaseException e) {
             throw new ServiceException(unauthorizedException);
         }
@@ -83,7 +83,7 @@ public class ApplicationRestAdapter {
     public Response getApplicationByName(@HeaderParam("Authentication") String token, @QueryParam("name") String name) {
         User user;
         try {
-            user = userPort.getUser(authPort.getUserId(token));
+            user = userPort.getAuthorizing(authPort.getUserId(token));
         } catch (IotDatabaseException e) {
             throw new ServiceException(unauthorizedException);
         }
@@ -99,7 +99,7 @@ public class ApplicationRestAdapter {
     public Response delete(@HeaderParam("Authentication") String token, @PathParam("id") long id) {
         User user;
         try {
-            user = userPort.getUser(authPort.getUserId(token));
+            user = userPort.getAuthorizing(authPort.getUserId(token));
         } catch (IotDatabaseException e) {
             throw new ServiceException(unauthorizedException);
         }
@@ -116,7 +116,7 @@ public class ApplicationRestAdapter {
             Application application) {
         User user;
         try {
-            user = userPort.getUser(authPort.getUserId(token));
+            user = userPort.getAuthorizing(authPort.getUserId(token));
         } catch (IotDatabaseException e) {
             LOG.warn(e.getMessage());
             throw new ServiceException(unauthorizedException);
@@ -144,7 +144,7 @@ public class ApplicationRestAdapter {
     public Response addApplication(@HeaderParam("Authentication") String token, Application application) {
         User user;
         try {
-            user = userPort.getUser(authPort.getUserId(token));
+            user = userPort.getAuthorizing(authPort.getUserId(token));
         } catch (IotDatabaseException e) {
             throw new ServiceException(unauthorizedException);
         }

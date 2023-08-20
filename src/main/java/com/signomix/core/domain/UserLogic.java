@@ -6,11 +6,14 @@ import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.event.Observes;
 import javax.inject.Inject;
 
+import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.jboss.logging.Logger;
 
 import com.signomix.common.Organization;
 import com.signomix.common.User;
+import com.signomix.common.db.IotDatabaseDao;
 import com.signomix.common.db.IotDatabaseException;
+import com.signomix.common.db.IotDatabaseIface;
 import com.signomix.common.db.UserDao;
 import com.signomix.common.db.UserDaoIface;
 import com.signomix.common.gui.Dashboard;
@@ -28,17 +31,34 @@ import io.quarkus.runtime.StartupEvent;
  */
 @ApplicationScoped
 public class UserLogic {
-    private static final Logger LOG = Logger.getLogger(UserLogic.class);
+    @Inject
+    Logger logger;
 
     @Inject
     @DataSource("user")
     AgroalDataSource userDataSource;
+    @Inject
+    @DataSource("iot")
+    AgroalDataSource deviceDataSource;
 
     UserDaoIface userDao;
+    IotDatabaseIface iotDao;
+
+    @ConfigProperty(name = "signomix.exception.api.unauthorized")
+    String userNotAuthorizedException;
+
+    private long defaultOrganizationId = 0;
 
     void onStart(@Observes StartupEvent ev) {
         userDao = new UserDao();
         userDao.setDatasource(userDataSource);
+                iotDao = new IotDatabaseDao();
+        iotDao.setDatasource(deviceDataSource);
+        try {
+            defaultOrganizationId = iotDao.getParameterValue("system.default.organization", User.ANY);
+        } catch (IotDatabaseException e) {
+            logger.error("Unable to get default organization id: " + e.getMessage());
+        }
     }
 
     /**
@@ -48,7 +68,19 @@ public class UserLogic {
      * @return
      * @throws IotDatabaseException
      */
-    public User getUser(String uid) throws IotDatabaseException {
+    public User getUser(User user, String uid) throws IotDatabaseException {
+        if(user==null){
+            throw new ServiceException(userNotAuthorizedException);
+        }
+        User result=userDao.getUser(uid);
+        if(isSystemAdmin(user)||user.uid.equals(uid)){
+            return result;
+        }else{
+            throw new ServiceException(userNotAuthorizedException);
+        }
+    }
+
+    public User getAuthorizingUser(String uid) throws IotDatabaseException {
         return userDao.getUser(uid);
     }
 

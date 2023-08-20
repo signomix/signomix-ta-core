@@ -13,7 +13,11 @@ public class UserPort {
     UserLogic userLogic;
 
 
-    public User getUser(String uid) throws IotDatabaseException {
-        return userLogic.getUser(uid);
+    public User getAuthorizing(String uid) throws IotDatabaseException {
+        return userLogic.getAuthorizingUser(uid);
+    }
+    
+    public User getUser(User user, String uid) throws IotDatabaseException {
+        return userLogic.getUser(user, uid);
     }
 }

@@ -49,7 +49,7 @@ public class DeviceRestAdapter {
         @QueryParam("offset") Integer offset) {
         User user;
         try {
-            user = userPort.getUser(authPort.getUserId(token));
+            user = userPort.getAuthorizing(authPort.getUserId(token));
         } catch (IotDatabaseException e) {
             throw new ServiceException(unauthorizedException);
         }
@@ -66,7 +66,7 @@ public class DeviceRestAdapter {
             @QueryParam("full") Boolean full) {
         User user;
         try {
-            user = userPort.getUser(authPort.getUserId(token));
+            user = userPort.getAuthorizing(authPort.getUserId(token));
         } catch (IotDatabaseException e) {
             throw new ServiceException(unauthorizedException);
         }
@@ -82,7 +82,7 @@ public class DeviceRestAdapter {
     public Response delete(@HeaderParam("Authentication") String token, @PathParam("eui") String eui) {
         User user;
         try {
-            user = userPort.getUser(authPort.getUserId(token));
+            user = userPort.getAuthorizing(authPort.getUserId(token));
         } catch (IotDatabaseException e) {
             throw new ServiceException(unauthorizedException);
         }
@@ -99,7 +99,7 @@ public class DeviceRestAdapter {
             Device device) {
         User user;
         try {
-            user = userPort.getUser(authPort.getUserId(token));
+            user = userPort.getAuthorizing(authPort.getUserId(token));
         } catch (IotDatabaseException e) {
             LOG.warn(e.getMessage());
             throw new ServiceException(unauthorizedException);
@@ -129,7 +129,7 @@ public class DeviceRestAdapter {
     public Response addDevice(@HeaderParam("Authentication") String token, Device device) {
         User user;
         try {
-            user = userPort.getUser(authPort.getUserId(token));
+            user = userPort.getAuthorizing(authPort.getUserId(token));
         } catch (IotDatabaseException e) {
             throw new ServiceException(unauthorizedException);
         }

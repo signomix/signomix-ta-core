@@ -47,7 +47,7 @@ public class DashboardRestAdapter {
             @QueryParam("offset") Integer offset) {
         User user;
         try {
-            user = userPort.getUser(authPort.getUserId(token));
+            user = userPort.getAuthorizing(authPort.getUserId(token));
         } catch (IotDatabaseException e) {
             throw new ServiceException(unauthorizedException);
         }
@@ -65,7 +65,7 @@ public class DashboardRestAdapter {
             @PathParam("id") String id) {
         User user;
         try {
-            user = userPort.getUser(authPort.getUserId(token));
+            user = userPort.getAuthorizing(authPort.getUserId(token));
         } catch (IotDatabaseException e) {
             throw new ServiceException(unauthorizedException);
         }
@@ -83,7 +83,7 @@ public class DashboardRestAdapter {
             @PathParam("id") String id, Dashboard dashboard) {
         User user;
         try {
-            user = userPort.getUser(authPort.getUserId(token));
+            user = userPort.getAuthorizing(authPort.getUserId(token));
         } catch (IotDatabaseException e) {
             throw new ServiceException(unauthorizedException);
         }
@@ -101,7 +101,7 @@ public class DashboardRestAdapter {
             Dashboard dashboard) {
         User user;
         try {
-            user = userPort.getUser(authPort.getUserId(token));
+            user = userPort.getAuthorizing(authPort.getUserId(token));
         } catch (IotDatabaseException e) {
             throw new ServiceException(unauthorizedException);
         }
@@ -119,7 +119,7 @@ public class DashboardRestAdapter {
             @PathParam("id") String id) {
         User user;
         try {
-            user = userPort.getUser(authPort.getUserId(token));
+            user = userPort.getAuthorizing(authPort.getUserId(token));
         } catch (IotDatabaseException e) {
             throw new ServiceException(unauthorizedException);
         }

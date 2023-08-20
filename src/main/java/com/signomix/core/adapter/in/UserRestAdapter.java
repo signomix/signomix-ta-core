@@ -47,18 +47,15 @@ public class UserRestAdapter {
         @PathParam("uid") String uid) {
             LOG.info("Handling getUser request for uid: " + uid);
         User user;
+        User authorizingUser;
         try {
-            user = userPort.getUser(authPort.getUserId(token));
+            authorizingUser = userPort.getAuthorizing(authPort.getUserId(token));
         } catch (IotDatabaseException e) {
             e.printStackTrace();
             throw new ServiceException(unauthorizedException);
         }
-        if (null == user || !user.uid.equals(uid)) {
-            LOG.warn("User uid not match: " + uid + " != " + user.uid);
-            throw new ServiceException(unauthorizedException);
-        }
         try {
-            user = userPort.getUser(uid);
+            user = userPort.getUser(authorizingUser, uid);
         } catch (IotDatabaseException e) {
             e.printStackTrace();
             throw new ServiceException(userDatabaseException);

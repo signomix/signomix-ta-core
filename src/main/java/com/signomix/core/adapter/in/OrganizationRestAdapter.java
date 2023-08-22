@@ -64,19 +64,23 @@ public class OrganizationRestAdapter {
 
     @GET
     @Path("/organization/{id}")
-    public Response getOrganization(@HeaderParam("Authentication") String token, @PathParam("id") long id,
-            @QueryParam("full") Boolean full) {
+    public Response getOrganization(@HeaderParam("Authentication") String token, @PathParam("id") long id) {
         User user;
         try {
             user = userPort.getAuthorizing(authPort.getUserId(token));
         } catch (IotDatabaseException e) {
+            e.printStackTrace();
             throw new ServiceException(unauthorizedException);
         }
         if (null == user) {
             throw new ServiceException(unauthorizedException);
         }
         Organization organization = null;
+        try{
         organization = organizationPort.getOrganization(user, id);
+        }catch(Exception e){
+            e.printStackTrace();
+        }
         return Response.ok().entity(organization).build();
     }
 

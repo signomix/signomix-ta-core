@@ -96,6 +96,7 @@ public class UserLogic {
         try {
             return userDao.getOrganization(organizationId);
         } catch (IotDatabaseException e) {
+            e.printStackTrace();
             throw new ServiceException(e.getMessage());
         }
     }
@@ -153,6 +154,9 @@ public class UserLogic {
      * @return
      */
     public boolean isOrganizationMember(User user, long organizationId) {
+        logger.info("user "+user);
+        logger.info("user.organization: "+user.organization);
+        logger.info("organizationId: "+organizationId);
         return user != null && user.organization == organizationId;
     }
 

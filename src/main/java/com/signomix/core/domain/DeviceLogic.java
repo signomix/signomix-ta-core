@@ -95,7 +95,7 @@ public class DeviceLogic {
     public List<Device> getUserDevices(User user, boolean withStatus, Integer limit, Integer offset)
             throws ServiceException {
         try {
-            if (user.organization != defaultOrganizationId) {
+            if (user.organization == defaultOrganizationId) {
                 return iotDao.getUserDevices(user, withStatus, limit, offset);
             } else {
                 return iotDao.getOrganizationDevices(user.organization, withStatus, limit, offset);
@@ -155,6 +155,7 @@ public class DeviceLogic {
             if (device.getEUI().isEmpty()) {
                 device.setEUI(createEui(deviceEuiPrefix));
             }
+            logger.info("Creating device: " + device.getEUI());
             device.setOrganizationId(user.organization);
             iotDao.createDevice(user, device);
             iotDao.updateDeviceChannels(device.getEUI(), device.getChannelsAsString());
@@ -170,8 +171,7 @@ public class DeviceLogic {
     }
 
     private String removeNonAlphanumeric(String str) {
-        str = str.replaceAll("[^a-zA-Z0-9]", "");
-        return str;
+        return str.trim().replaceAll("[^a-zA-Z0-9]", "");
     }
 
     /**

@@ -37,6 +37,9 @@ public class DeviceRestAdapter {
     @Inject
     DevicePort devicePort;
 
+    @Inject
+    Logger logger;
+
     @ConfigProperty(name = "signomix.exception.api.unauthorized")
     String unauthorizedException;
 
@@ -56,6 +59,7 @@ public class DeviceRestAdapter {
         if (null == user) {
             throw new ServiceException(unauthorizedException);
         }
+        logger.info("getDevices limit:"+limit+" offset:"+offset+" full:"+full);
         List<Device> devices = devicePort.getUserDevices(user, full, limit, offset);
         return Response.ok().entity(devices).build();
     }

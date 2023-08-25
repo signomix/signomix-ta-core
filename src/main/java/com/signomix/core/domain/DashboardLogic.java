@@ -136,7 +136,7 @@ public class DashboardLogic {
             Integer offset) throws ServiceException {
         try {
             if (user.organization != defaultOrganizationId) {
-                return dashboardDao.getOrganizationDashboards(defaultOrganizationId, limit, offset);
+                return dashboardDao.getOrganizationDashboards(user.organization, limit, offset);
             } else {
                 return dashboardDao.getUserDashboards(user.uid, withShared, isAdmin, limit, offset);
             }

@@ -52,7 +52,7 @@ public class UserLogic {
     void onStart(@Observes StartupEvent ev) {
         userDao = new UserDao();
         userDao.setDatasource(userDataSource);
-                iotDao = new IotDatabaseDao();
+        iotDao = new IotDatabaseDao();
         iotDao.setDatasource(deviceDataSource);
         try {
             defaultOrganizationId = iotDao.getParameterValue("system.default.organization", User.ANY);
@@ -69,13 +69,13 @@ public class UserLogic {
      * @throws IotDatabaseException
      */
     public User getUser(User user, String uid) throws IotDatabaseException {
-        if(user==null){
+        if (user == null) {
             throw new ServiceException(userNotAuthorizedException);
         }
-        User result=userDao.getUser(uid);
-        if(isSystemAdmin(user)||user.uid.equals(uid)){
+        User result = userDao.getUser(uid);
+        if (isSystemAdmin(user) || user.uid.equals(uid)) {
             return result;
-        }else{
+        } else {
             throw new ServiceException(userNotAuthorizedException);
         }
     }
@@ -154,9 +154,9 @@ public class UserLogic {
      * @return
      */
     public boolean isOrganizationMember(User user, long organizationId) {
-        logger.info("user "+user);
-        logger.info("user.organization: "+user.organization);
-        logger.info("organizationId: "+organizationId);
+        logger.info("user " + user);
+        logger.info("user.organization: " + user.organization);
+        logger.info("organizationId: " + organizationId);
         return user != null && user.organization == organizationId;
     }
 
@@ -173,29 +173,28 @@ public class UserLogic {
             User user,
             boolean writeAccess,
             long defaultOrganizationId,
-            Object accessedObject
-            ) {
+            Object accessedObject) {
         // Platfor administrator has access to all objects
         if (user.type == User.OWNER) {
             return true;
         }
-        String owner=null;
-            String team=null;
-            String admins=null;
-            long organizationId=0;
-        if(accessedObject instanceof Dashboard){
-            Dashboard dashboard=(Dashboard)accessedObject;
-            team=dashboard.getTeam();
-            admins=dashboard.getAdministrators();
-            owner=dashboard.getUserID();
-            organizationId=dashboard.getOrganizationId();
-        }else if(accessedObject instanceof Device){
-            Device device=(Device)accessedObject;
-            team=device.getTeam();
-            admins=device.getAdministrators();
-            owner=device.getUserID();
-            organizationId=device.getOrganizationId();
-        }else{
+        String owner = null;
+        String team = null;
+        String admins = null;
+        long organizationId = 0;
+        if (accessedObject instanceof Dashboard) {
+            Dashboard dashboard = (Dashboard) accessedObject;
+            team = dashboard.getTeam();
+            admins = dashboard.getAdministrators();
+            owner = dashboard.getUserID();
+            organizationId = dashboard.getOrganizationId();
+        } else if (accessedObject instanceof Device) {
+            Device device = (Device) accessedObject;
+            team = device.getTeam();
+            admins = device.getAdministrators();
+            owner = device.getUserID();
+            organizationId = device.getOrganizationId();
+        } else {
             return false;
         }
 

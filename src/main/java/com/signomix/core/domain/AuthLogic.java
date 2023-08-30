@@ -17,6 +17,8 @@ import com.signomix.common.User;
 import com.signomix.common.application.port.out.UserServiceClient;
 import com.signomix.common.db.AuthDao;
 import com.signomix.common.db.AuthDaoIface;
+import com.signomix.common.db.UserDao;
+import com.signomix.common.db.UserDaoIface;
 
 import io.agroal.api.AgroalDataSource;
 import io.quarkus.agroal.DataSource;
@@ -32,10 +34,11 @@ import io.quarkus.runtime.StartupEvent;
 public class AuthLogic {
     private static final Logger LOG = Logger.getLogger(AuthLogic.class);
 
-    @ConfigProperty(name = "signomix.app.key", defaultValue = "not_configured")
+    /* @ConfigProperty(name = "signomix.app.key", defaultValue = "not_configured")
     String appKey;
     @ConfigProperty(name = "signomix.auth.host", defaultValue = "not_configured")
     String authHost;
+    */
 
     @Inject
     @DataSource("auth")
@@ -46,10 +49,13 @@ public class AuthLogic {
     AgroalDataSource userDataSource;
 
     AuthDaoIface authDao;
+    UserDaoIface userDao;
 
     void onStart(@Observes StartupEvent ev) {
         authDao = new AuthDao();
         authDao.setDatasource(authDataSource);
+        userDao = new UserDao();
+        userDao.setDatasource(userDataSource);
     }
 
     public String getUserId(String token) {
@@ -57,6 +63,16 @@ public class AuthLogic {
     }
 
     public User getUser(String uid) {
+        User user = null;
+        try {
+            user = userDao.getUser(uid);
+        } catch (Exception e) {
+            LOG.error(e.getMessage());
+        }
+        return user;
+    }
+
+    /* public User getUser(String uid) {
         if(null==uid){
             return null;
         }
@@ -81,6 +97,6 @@ public class AuthLogic {
             // TODO: notyfikacja użytkownika o błędzie
         }
         return completedUser;
-    }
+    } */
 
 }

@@ -1,14 +1,10 @@
 package com.signomix.core.adapter.in;
 
 import javax.inject.Inject;
-import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.HeaderParam;
-import javax.ws.rs.POST;
-import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
-import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Response;
 
 import org.eclipse.microprofile.config.inject.ConfigProperty;
@@ -17,7 +13,6 @@ import org.jboss.logging.Logger;
 import com.signomix.common.User;
 import com.signomix.common.annotation.InboundAdapter;
 import com.signomix.common.db.IotDatabaseException;
-import com.signomix.common.iot.Device;
 import com.signomix.core.application.exception.ServiceException;
 import com.signomix.core.application.port.in.AuthPort;
 import com.signomix.core.application.port.in.DevicePort;

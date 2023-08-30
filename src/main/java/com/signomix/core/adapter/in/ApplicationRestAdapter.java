@@ -48,6 +48,8 @@ public class ApplicationRestAdapter {
             @QueryParam("limit") Integer limit,
             @QueryParam("offset") Integer offset) {
 
+        int appLimit = limit == null ? 1000 : limit;
+        int appOffset = offset == null ? 0 : offset;
         User user;
         try {
             user = userPort.getAuthorizing(authPort.getUserId(token));
@@ -58,7 +60,7 @@ public class ApplicationRestAdapter {
             throw new ServiceException(unauthorizedException);
         }
         List<Application> applications = null;
-        applications = applicationPort.getApplications(user, limit, offset);
+        applications = applicationPort.getApplications(user, appLimit, appOffset);
         return Response.ok().entity(applications).build();
     }
 

@@ -36,8 +36,8 @@ public class DeviceLogic {
     private static final Logger LOG = Logger.getLogger(DeviceLogic.class);
     private static AtomicLong euiSeed = new AtomicLong(System.currentTimeMillis());
 
-    @ConfigProperty(name = "signomix.app.key", defaultValue = "not_configured")
-    String appKey;
+    /* @ConfigProperty(name = "signomix.app.key", defaultValue = "not_configured")
+    String appKey; */
     @ConfigProperty(name = "signomix.auth.host", defaultValue = "not_configured")
     String authHost;
     @ConfigProperty(name = "signomix.device.eui.prefix", defaultValue = "S-")

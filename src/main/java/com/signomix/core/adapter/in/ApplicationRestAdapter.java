@@ -42,26 +42,38 @@ public class ApplicationRestAdapter {
     @ConfigProperty(name = "signomix.exception.api.unauthorized")
     String unauthorizedException;
 
+    @GET
     @Path("/application")
     public Response getApplications(
             @HeaderParam("Authentication") String token,
+            /* @QueryParam("name") String name, */
             @QueryParam("limit") Integer limit,
             @QueryParam("offset") Integer offset) {
-
-        int appLimit = limit == null ? 1000 : limit;
-        int appOffset = offset == null ? 0 : offset;
-        User user;
         try {
-            user = userPort.getAuthorizing(authPort.getUserId(token));
-        } catch (IotDatabaseException e) {
-            throw new ServiceException(unauthorizedException);
+            String name = null;
+            int appLimit = limit == null ? 1000 : limit;
+            int appOffset = offset == null ? 0 : offset;
+            User user;
+            try {
+                user = userPort.getAuthorizing(authPort.getUserId(token));
+            } catch (IotDatabaseException e) {
+                throw new ServiceException(unauthorizedException);
+            }
+            if (null == user) {
+                throw new ServiceException(unauthorizedException);
+            }
+            if (null == name || "*".equals(name)) {
+                List<Application> applications = null;
+                applications = applicationPort.getApplications(user, appLimit, appOffset);
+                return Response.ok().entity(applications).build();
+            } else {
+                Application application = applicationPort.getApplicationByName(user, name);
+                return Response.ok().entity(application).build();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            return Response.serverError().entity(e.getMessage()).build();
         }
-        if (null == user) {
-            throw new ServiceException(unauthorizedException);
-        }
-        List<Application> applications = null;
-        applications = applicationPort.getApplications(user, appLimit, appOffset);
-        return Response.ok().entity(applications).build();
     }
 
     @GET

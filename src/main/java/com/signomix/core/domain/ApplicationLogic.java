@@ -99,10 +99,14 @@ public class ApplicationLogic {
             e.printStackTrace();
             throw new ServiceException(e.getMessage());
         }
-        if (userLogic.isOrganizationMember(user, application.organization) || userLogic.isSystemAdmin(user)) {
-            return application;
+        if (null != application) {
+            if (userLogic.isOrganizationMember(user, application.organization) || userLogic.isSystemAdmin(user)) {
+                return application;
+            } else {
+                throw new ServiceException(userNotAuthorizedException);
+            }
         } else {
-            throw new ServiceException(userNotAuthorizedException);
+            return null;
         }
     }
 

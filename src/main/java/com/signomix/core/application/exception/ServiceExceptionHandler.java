@@ -20,6 +20,9 @@ public class ServiceExceptionHandler implements ExceptionMapper<ServiceException
     @ConfigProperty(name ="signomix.exception.api.unauthorized")
     String userNotAuthorizedException;
 
+    @ConfigProperty(name ="signomix.exception.dashboard.database")
+    String dashboardDatabaseExcepption;
+
 
     @Override
     public Response toResponse(ServiceException e) {
@@ -39,6 +42,9 @@ public class ServiceExceptionHandler implements ExceptionMapper<ServiceException
                         .build();
             case "signomix.exception.api.unauthorized":
                 return Response.status(Response.Status.FORBIDDEN).entity(new ErrorMessage(e.getMessage()))
+                        .build();
+            case "signomix.exception.dashboard.database":
+                return Response.status(Response.Status.BAD_REQUEST).entity(new ErrorMessage(e.getMessage()))
                         .build();
             default:
                 return Response.status(Response.Status.BAD_REQUEST).entity(new ErrorMessage(e.getMessage()))

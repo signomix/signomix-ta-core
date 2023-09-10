@@ -2,6 +2,7 @@ package com.signomix.core.domain;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.sql.DatabaseMetaData;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.event.Observes;
@@ -21,6 +22,7 @@ import com.signomix.common.db.UserDao;
 import com.signomix.common.db.UserDaoIface;
 
 import io.agroal.api.AgroalDataSource;
+import io.netty.util.internal.logging.Log4JLoggerFactory;
 import io.quarkus.agroal.DataSource;
 import io.quarkus.runtime.StartupEvent;
 
@@ -59,6 +61,17 @@ public class AuthLogic {
     }
 
     public String getUserId(String token) {
+        LOG.info("getUserId: "+token);
+        try {
+            DatabaseMetaData metadata = authDao.getDataSource().getConnection().getMetaData();
+            System.out.println("Connected to " + metadata.getDatabaseProductName() + " " + metadata.getDatabaseProductVersion());
+            System.out.println(metadata.getDriverName() + " " + metadata.getDriverVersion());
+            System.out.println(metadata.getURL());
+            System.out.println(metadata.getUserName());
+        } catch (Exception ex) {
+            LOG.error("DB connection problem.");
+            ex.printStackTrace();
+        }
         return authDao.getUser(token);
     }
 

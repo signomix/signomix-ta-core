@@ -62,7 +62,7 @@ public class AuthLogic {
 
     public String getUserId(String token) {
         LOG.info("getUserId: "+token);
-        try {
+       /*  try {
             DatabaseMetaData metadata = authDao.getDataSource().getConnection().getMetaData();
             System.out.println("Connected to " + metadata.getDatabaseProductName() + " " + metadata.getDatabaseProductVersion());
             System.out.println(metadata.getDriverName() + " " + metadata.getDriverVersion());
@@ -71,7 +71,7 @@ public class AuthLogic {
         } catch (Exception ex) {
             LOG.error("DB connection problem.");
             ex.printStackTrace();
-        }
+        } */
         return authDao.getUser(token);
     }
 

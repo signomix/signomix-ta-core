@@ -14,6 +14,7 @@ import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Response;
 
 import org.eclipse.microprofile.config.inject.ConfigProperty;
+import org.jboss.logging.Logger;
 
 import com.signomix.common.User;
 import com.signomix.common.annotation.InboundAdapter;
@@ -28,6 +29,8 @@ import com.signomix.core.application.port.in.UserPort;
 @Path("/api/core")
 public class DashboardRestAdapter {
 
+    @Inject
+    Logger logger;
     @Inject
     AuthPort authPort;
     @Inject
@@ -54,7 +57,7 @@ public class DashboardRestAdapter {
         if (null == user) {
             throw new ServiceException(unauthorizedException);
         }
-        List<Dashboard> dashboards = dashboardPort.getUserDashboards(user, includeShared, isAdmin(user),limit, offset);
+        List<Dashboard> dashboards = dashboardPort.getUserDashboards(user, includeShared, isAdmin(user), limit, offset);
         return Response.ok().entity(dashboards).build();
     }
 
@@ -72,8 +75,8 @@ public class DashboardRestAdapter {
         if (null == user) {
             throw new ServiceException(unauthorizedException);
         }
-        Dashboard dashboards = dashboardPort.getUserDashboard(user, id);
-        return Response.ok().entity(dashboards).build();
+        Dashboard dashboard = dashboardPort.getUserDashboard(user, id);
+        return Response.ok().entity(dashboard).build();
     }
 
     @PUT
@@ -131,7 +134,7 @@ public class DashboardRestAdapter {
     }
 
     private boolean isAdmin(User user) {
-        return user.type==User.ADMIN || user.role.contains("admin") ;
+        return user.type == User.ADMIN || user.role.contains("admin");
     }
 
 }

@@ -5,6 +5,8 @@ import java.util.List;
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 
+import org.jboss.logging.Logger;
+
 import com.signomix.common.User;
 import com.signomix.common.gui.Dashboard;
 import com.signomix.common.iot.Device;
@@ -13,6 +15,9 @@ import com.signomix.core.domain.DashboardLogic;
 
 @ApplicationScoped
 public class DashboardPort {
+    @Inject
+    Logger logger;
+
     @Inject
     DashboardLogic dashboardLogic;
 

@@ -185,7 +185,7 @@ public class DashboardLogic {
                 throw new ServiceException(exceptionApiUnauthorized);
             }
             dashboardDao.updateDashboard(sanitizeWidgets(updatedDashboard));
-            return dashboard;
+            return updatedDashboard;
         } catch (IotDatabaseException e) {
             logger.error(e.getMessage());
             throw new ServiceException(e.getMessage(), e);

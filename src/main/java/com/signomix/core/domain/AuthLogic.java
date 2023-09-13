@@ -1,31 +1,20 @@
 package com.signomix.core.domain;
 
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.sql.DatabaseMetaData;
-
 import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.event.Observes;
 import javax.inject.Inject;
-import javax.ws.rs.ProcessingException;
-import javax.ws.rs.WebApplicationException;
 
-import org.eclipse.microprofile.config.inject.ConfigProperty;
-import org.eclipse.microprofile.rest.client.RestClientBuilder;
 import org.jboss.logging.Logger;
 
 import com.signomix.common.User;
-import com.signomix.common.application.port.out.UserServiceClient;
 import com.signomix.common.db.AuthDao;
 import com.signomix.common.db.AuthDaoIface;
 import com.signomix.common.db.UserDao;
 import com.signomix.common.db.UserDaoIface;
 
 import io.agroal.api.AgroalDataSource;
-import io.netty.util.internal.logging.Log4JLoggerFactory;
 import io.quarkus.agroal.DataSource;
 import io.quarkus.runtime.StartupEvent;
-
 
 /**
  * Klasa zawierająca logikę biznesową dotyczącą autoryzacji.
@@ -36,11 +25,16 @@ import io.quarkus.runtime.StartupEvent;
 public class AuthLogic {
     private static final Logger LOG = Logger.getLogger(AuthLogic.class);
 
-    /* @ConfigProperty(name = "signomix.app.key", defaultValue = "not_configured")
-    String appKey;
-    @ConfigProperty(name = "signomix.auth.host", defaultValue = "not_configured")
-    String authHost;
-    */
+    /*
+     * @ConfigProperty(name = "signomix.app.key", defaultValue = "not_configured")
+     * String appKey;
+     * 
+     * @ConfigProperty(name = "signomix.auth.host", defaultValue = "not_configured")
+     * String authHost;
+     */
+    // TODO: move to config
+    private long sessionTokenLifetime = 30; // minutes
+    private long permanentTokenLifetime = 10 * 365 * 24 * 60; // 10 years in minutes
 
     @Inject
     @DataSource("auth")
@@ -61,18 +55,23 @@ public class AuthLogic {
     }
 
     public String getUserId(String token) {
-        LOG.info("getUserId: "+token);
-       /*  try {
-            DatabaseMetaData metadata = authDao.getDataSource().getConnection().getMetaData();
-            System.out.println("Connected to " + metadata.getDatabaseProductName() + " " + metadata.getDatabaseProductVersion());
-            System.out.println(metadata.getDriverName() + " " + metadata.getDriverVersion());
-            System.out.println(metadata.getURL());
-            System.out.println(metadata.getUserName());
-        } catch (Exception ex) {
-            LOG.error("DB connection problem.");
-            ex.printStackTrace();
-        } */
-        return authDao.getUser(token);
+        LOG.info("getUserId: " + token);
+        /*
+         * try {
+         * DatabaseMetaData metadata =
+         * authDao.getDataSource().getConnection().getMetaData();
+         * System.out.println("Connected to " + metadata.getDatabaseProductName() + " "
+         * + metadata.getDatabaseProductVersion());
+         * System.out.println(metadata.getDriverName() + " " +
+         * metadata.getDriverVersion());
+         * System.out.println(metadata.getURL());
+         * System.out.println(metadata.getUserName());
+         * } catch (Exception ex) {
+         * LOG.error("DB connection problem.");
+         * ex.printStackTrace();
+         * }
+         */
+        return authDao.getUserId(token, sessionTokenLifetime, permanentTokenLifetime);
     }
 
     public User getUser(String uid) {
@@ -85,31 +84,33 @@ public class AuthLogic {
         return user;
     }
 
-    /* public User getUser(String uid) {
-        if(null==uid){
-            return null;
-        }
-        UserServiceClient client;
-        User completedUser = null;
-        
-        try {
-            client = RestClientBuilder.newBuilder()
-                    .baseUri(new URI(authHost))
-                    .followRedirects(true)
-                    .build(UserServiceClient.class);
-            completedUser = client.getUser(uid, appKey);
-        } catch (URISyntaxException ex) {
-            LOG.error(ex.getMessage());
-            // TODO: notyfikacja użytkownika o błędzie
-        } catch (ProcessingException ex) {
-            LOG.error(ex.getMessage());
-        } catch (WebApplicationException ex) {
-            LOG.error(ex.getMessage());
-        } catch (Exception ex) {
-            LOG.error(ex.getMessage());
-            // TODO: notyfikacja użytkownika o błędzie
-        }
-        return completedUser;
-    } */
+    /*
+     * public User getUser(String uid) {
+     * if(null==uid){
+     * return null;
+     * }
+     * UserServiceClient client;
+     * User completedUser = null;
+     * 
+     * try {
+     * client = RestClientBuilder.newBuilder()
+     * .baseUri(new URI(authHost))
+     * .followRedirects(true)
+     * .build(UserServiceClient.class);
+     * completedUser = client.getUser(uid, appKey);
+     * } catch (URISyntaxException ex) {
+     * LOG.error(ex.getMessage());
+     * // TODO: notyfikacja użytkownika o błędzie
+     * } catch (ProcessingException ex) {
+     * LOG.error(ex.getMessage());
+     * } catch (WebApplicationException ex) {
+     * LOG.error(ex.getMessage());
+     * } catch (Exception ex) {
+     * LOG.error(ex.getMessage());
+     * // TODO: notyfikacja użytkownika o błędzie
+     * }
+     * return completedUser;
+     * }
+     */
 
 }

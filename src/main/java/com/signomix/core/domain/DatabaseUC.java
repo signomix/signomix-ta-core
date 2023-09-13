@@ -123,6 +123,9 @@ public class DatabaseUC {
         } */
         setSignomixParameters();
         setSignomixFeatures();
+
+        // TODO: create predefined users
+        // TODO
     }
 
     public void doBackup() {

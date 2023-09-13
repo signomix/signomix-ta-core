@@ -134,7 +134,7 @@ public class DashboardRestAdapter {
     }
 
     private boolean isAdmin(User user) {
-        return user.type == User.ADMIN || user.role.contains("admin");
+        return user.type == User.ADMIN || (user.role!=null && user.role.contains("admin"));
     }
 
 }

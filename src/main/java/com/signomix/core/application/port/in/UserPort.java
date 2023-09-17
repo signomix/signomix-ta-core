@@ -1,5 +1,7 @@
 package com.signomix.core.application.port.in;
 
+import java.util.List;
+
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 
@@ -19,5 +21,13 @@ public class UserPort {
     
     public User getUser(User user, String uid) throws IotDatabaseException {
         return userLogic.getUser(user, uid);
+    }
+
+    public void updateUser(User authorizingUser, User user) throws IotDatabaseException {
+        userLogic.updateUser(authorizingUser, user);
+    }
+
+    public List<User> getUsers(User authorizingUser, int limit, int offset) throws IotDatabaseException {
+        return userLogic.getUsers(authorizingUser, limit, offset);
     }
 }

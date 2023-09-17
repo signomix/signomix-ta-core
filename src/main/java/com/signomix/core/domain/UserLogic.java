@@ -68,20 +68,66 @@ public class UserLogic {
      * @return
      * @throws IotDatabaseException
      */
-    public User getUser(User user, String uid) throws IotDatabaseException {
-        if (user == null) {
+    public User getUser(User authorizingUser, String uid) throws IotDatabaseException {
+        if (authorizingUser == null) {
             throw new ServiceException(userNotAuthorizedException);
         }
-        User result = userDao.getUser(uid);
-        if (isSystemAdmin(user) || user.uid.equals(uid)) {
-            return result;
+        User user = userDao.getUser(uid);
+        user.password = "***";
+        if (isSystemAdmin(authorizingUser)
+                || isOrganizationAdmin(authorizingUser, user.organization)
+                || authorizingUser.uid.equals(uid)) {
+            return user;
         } else {
             throw new ServiceException(userNotAuthorizedException);
         }
     }
 
+    public void updateUser(User authorizingUser, User user) throws IotDatabaseException {
+        User actualUser = userDao.getUser(user.uid);
+        if (actualUser == null) {
+            throw new ServiceException("User not found");
+        }
+        user.number = actualUser.number;
+        user.password = actualUser.password;
+        user.sessionToken = actualUser.sessionToken;
+        user.createdAt = actualUser.createdAt;
+        // user can update only himself or if he is system admin or organization admin
+        if (!(isOrganizationAdmin(authorizingUser, actualUser.organization)
+                || isSystemAdmin(authorizingUser) || authorizingUser.uid.equals(user.uid))) {
+            throw new ServiceException(userNotAuthorizedException);
+        }
+        if (!isSystemAdmin(authorizingUser)) {
+            user.organization = actualUser.organization;
+            user.uid = actualUser.uid;
+            user.type = actualUser.type;
+            user.credits = actualUser.credits;
+            user.services = actualUser.services;
+            user.unregisterRequested = actualUser.unregisterRequested;
+        } else if (!isOrganizationAdmin(authorizingUser, actualUser.organization)) {
+            user.authStatus = actualUser.authStatus;
+            user.confirmString = actualUser.confirmString;
+            user.confirmed = actualUser.confirmed;
+            user.role = actualUser.role;
+        }
+        userDao.updateUser(user);
+    }
+
     public User getAuthorizingUser(String uid) throws IotDatabaseException {
         return userDao.getUser(uid);
+    }
+
+    public List<User> getUsers(User authorizingUser, Integer limit, Integer offset) throws IotDatabaseException {
+        if (authorizingUser == null) {
+            throw new ServiceException(userNotAuthorizedException);
+        }
+        if (isSystemAdmin(authorizingUser)) {
+            return userDao.getUsers(limit, offset);
+        } else if (isOrganizationAdmin(authorizingUser, authorizingUser.organization)) {
+            return userDao.getOrganizationUsers(authorizingUser.organization, limit, offset);
+        } else {
+            throw new ServiceException(userNotAuthorizedException);
+        }
     }
 
     public List<Organization> getOrganizations(Integer limit, Integer offset) throws ServiceException {

@@ -16,7 +16,6 @@ import com.signomix.common.db.CmsDao;
 import com.signomix.common.db.CmsDaoIface;
 import com.signomix.common.db.DashboardDao;
 import com.signomix.common.db.DashboardIface;
-import com.signomix.common.db.IotDatabaseDao;
 import com.signomix.common.db.IotDatabaseException;
 import com.signomix.common.db.IotDatabaseIface;
 import com.signomix.common.db.ShortenerDao;
@@ -42,6 +41,10 @@ public class DatabaseUC {
     AgroalDataSource iotDataSource;
 
     @Inject
+    @DataSource("oltp")
+    AgroalDataSource tsDs;
+
+    @Inject
     @DataSource("user")
     AgroalDataSource userDataSource;
 
@@ -57,6 +60,7 @@ public class DatabaseUC {
     AuthDaoIface authDao;
     UserDaoIface userDao;
     IotDatabaseIface iotDao;
+    IotDatabaseIface tsDao;
     CmsDaoIface cmsDao;
     ShortenerDaoIface shortenerDao;
     DashboardIface dashboardDao;
@@ -73,9 +77,10 @@ public class DatabaseUC {
     int primaryDataRetention;
     @ConfigProperty(name = "signomix.data.retention.super", defaultValue = "365")
     int superDataRetention;
-    
     @ConfigProperty(name = "quarkus.datasource.auth.jdbc.url", defaultValue = "not configured")
     String authDbUrl;
+    @ConfigProperty(name = "signomix.database.type")
+    String databaseType;
 
     void onStart(@Observes StartupEvent ev) {
         LOG.info("Starting ...");
@@ -86,8 +91,14 @@ public class DatabaseUC {
         // dataDao.setDatasource(iotDataSource);
         userDao = new UserDao();
         userDao.setDatasource(userDataSource);
-        iotDao = new IotDatabaseDao();
+        iotDao = new com.signomix.common.db.IotDatabaseDao();
         iotDao.setDatasource(iotDataSource);
+        if("both".equalsIgnoreCase(databaseType)){
+            tsDao = new com.signomix.common.tsdb.IotDatabaseDao();
+            tsDao.setDatasource(tsDs);
+        }else{
+            tsDao=null;
+        }
         dashboardDao = new DashboardDao();
         dashboardDao.setDatasource(iotDataSource);
         
@@ -102,6 +113,14 @@ public class DatabaseUC {
         } catch (IotDatabaseException e) {
             LOG.error(e.getMessage());
             e.printStackTrace();
+        }
+        if(null!=tsDao){
+            try {
+                tsDao.createStructure();
+            } catch (IotDatabaseException e) {
+                LOG.error(e.getMessage());
+                e.printStackTrace();
+            }
         }
         try {
             userDao.createStructure();

@@ -148,7 +148,7 @@ public class DeviceLogic {
             List<Device> userDevices = iotDao.getUserDevices(user, false, null, null);
             int deviceCount = userDevices.size();
             long maxDevices = iotDao.getParameterValue("devicesLimit", user.type);
-            if (deviceCount == maxDevices) {
+            if (deviceCount >= maxDevices) {
                 throw new ServiceException("User has reached maximum number of devices: " + maxDevices);
             }
             device.setEUI(removeNonAlphanumeric(device.getEUI()));

@@ -42,18 +42,33 @@ public class FavouritesLogic {
     @DataSource("iot")
     AgroalDataSource dataSource;
 
+    @Inject
+    @DataSource("oltp")
+    AgroalDataSource tsDs;
+
     DashboardIface dashboardDao;
     UserDaoIface userDao;
 
 
     @ConfigProperty(name = "signomix.exception.dashboard.database")
     String dashboardDatabaseExcepption;
+    @ConfigProperty(name = "signomix.database.type")
+    String databaseType;
 
     void onStart(@Observes StartupEvent ev) {
-        userDao = new UserDao();
-        userDao.setDatasource(userDataSource);
-        dashboardDao = new DashboardDao();
-        dashboardDao.setDatasource(dataSource);
+        if ("h2".equalsIgnoreCase(databaseType)) {
+            dashboardDao = new DashboardDao();
+            dashboardDao.setDatasource(dataSource);
+            userDao = new UserDao();
+            userDao.setDatasource(userDataSource);
+        } else if ("postgresql".equalsIgnoreCase(databaseType)) {
+            dashboardDao = new com.signomix.common.tsdb.DashboardDao();
+            dashboardDao.setDatasource(tsDs);
+            userDao = new com.signomix.common.tsdb.UserDao();
+            userDao.setDatasource(userDataSource);
+        } else {
+            logger.error("Unknown database type: " + databaseType);
+        }
     }
 
     public List<Dashboard> getFavouriteDashboards(User user) throws ServiceException {

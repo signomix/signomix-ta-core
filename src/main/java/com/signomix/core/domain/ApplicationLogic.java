@@ -11,6 +11,7 @@ import org.jboss.logging.Logger;
 
 import com.signomix.common.User;
 import com.signomix.common.db.ApplicationDao;
+import com.signomix.common.db.ApplicationDaoIface;
 import com.signomix.common.db.IotDatabaseException;
 import com.signomix.common.iot.Application;
 import com.signomix.core.application.exception.ServiceException;
@@ -29,8 +30,11 @@ public class ApplicationLogic {
     @Inject
     @DataSource("iot")
     AgroalDataSource deviceDataSource;
+    @Inject
+    @DataSource("oltp")
+    AgroalDataSource tsDs;
 
-    ApplicationDao applicationDao;
+    ApplicationDaoIface applicationDao;
 
     @Inject
     UserLogic userLogic;
@@ -40,10 +44,17 @@ public class ApplicationLogic {
 
     @ConfigProperty(name = "signomix.exception.api.unauthorized")
     String userNotAuthorizedException;
+    @ConfigProperty(name = "signomix.database.type")
+    String databaseType;
 
     void onStart(@Observes StartupEvent ev) {
-        applicationDao = new ApplicationDao();
-        applicationDao.setDatasource(deviceDataSource);
+        if ("h2".equalsIgnoreCase(databaseType)) {
+            applicationDao = new ApplicationDao();
+            applicationDao.setDatasource(deviceDataSource);
+        } else if ("postgresql".equalsIgnoreCase(databaseType)) {
+            applicationDao = new com.signomix.common.tsdb.ApplicationDao();
+            applicationDao.setDatasource(tsDs);
+        }
     }
 
     /**

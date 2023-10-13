@@ -4,6 +4,7 @@ import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.event.Observes;
 import javax.inject.Inject;
 
+import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.jboss.logging.Logger;
 
 import com.signomix.common.User;
@@ -43,15 +44,30 @@ public class AuthLogic {
     @Inject
     @DataSource("user")
     AgroalDataSource userDataSource;
+    
+    @Inject
+    @DataSource("oltp")
+    AgroalDataSource tsDs;
 
     AuthDaoIface authDao;
     UserDaoIface userDao;
 
+    @ConfigProperty(name = "signomix.database.type")
+    String databaseType;
+
     void onStart(@Observes StartupEvent ev) {
-        authDao = new AuthDao();
-        authDao.setDatasource(authDataSource);
-        userDao = new UserDao();
-        userDao.setDatasource(userDataSource);
+        if("h2".equalsIgnoreCase(databaseType)){
+            authDao = new AuthDao();
+            authDao.setDatasource(authDataSource);
+            userDao = new UserDao();
+            userDao.setDatasource(userDataSource);
+        }else if("postgresql".equalsIgnoreCase(databaseType)){
+            authDao = new com.signomix.common.tsdb.AuthDao();
+            authDao.setDatasource(tsDs);
+            userDao = new com.signomix.common.tsdb.UserDao();
+            userDao.setDatasource(tsDs);
+        }
+
     }
 
     public String getUserId(String token) {

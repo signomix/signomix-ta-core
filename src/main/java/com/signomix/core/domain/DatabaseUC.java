@@ -134,6 +134,8 @@ public class DatabaseUC {
             userDao.setDatasource(tsDs);
             authDao=new com.signomix.common.tsdb.AuthDao();
             authDao.setDatasource(tsDs);
+            shortenerDao = new com.signomix.common.tsdb.ShortenerDao();
+            shortenerDao.setDatasource(tsDs);
             cmsDao = new CmsDao();
             cmsDao.setDatasource(cmsDataSource);
         } else {

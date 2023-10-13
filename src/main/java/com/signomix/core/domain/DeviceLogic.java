@@ -49,6 +49,10 @@ public class DeviceLogic {
     @DataSource("iot")
     AgroalDataSource deviceDataSource;
 
+    @Inject
+    @DataSource("oltp")
+    AgroalDataSource tsDs;
+
     IotDatabaseIface iotDao;
 
     @Inject
@@ -68,14 +72,27 @@ public class DeviceLogic {
 
     long defaultOrganizationId;
 
+    @ConfigProperty(name = "signomix.database.type")
+    String databaseType;
+
     void onStart(@Observes StartupEvent ev) {
-        iotDao = new IotDatabaseDao();
-        iotDao.setDatasource(deviceDataSource);
-        try {
+        if ("h2".equalsIgnoreCase(databaseType)) {
+            iotDao = new IotDatabaseDao();
+            iotDao.setDatasource(deviceDataSource);
+            defaultOrganizationId = 0;
+        } else if ("postgresql".equalsIgnoreCase(databaseType)) {
+            iotDao = new com.signomix.common.tsdb.IotDatabaseDao();
+            iotDao.setDatasource(tsDs);
+            defaultOrganizationId =1;
+        } else {
+            logger.error("Unknown database type: " + databaseType);
+        }
+
+/*         try {
             defaultOrganizationId = iotDao.getParameterValue("system.default.organization", User.ANY);
         } catch (IotDatabaseException e) {
             logger.error("Unable to get default organization id: " + e.getMessage());
-        }
+        } */
     }
 
     // TODO: add organizationId to all methods

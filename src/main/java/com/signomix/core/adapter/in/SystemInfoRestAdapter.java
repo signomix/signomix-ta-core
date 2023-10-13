@@ -19,14 +19,30 @@ public class SystemInfoRestAdapter {
 
     @ConfigProperty(name = "signomix.release")
     String webappReleaseNumber;
-    @ConfigProperty(name = "signomix.organization.default")
-    String defaultOrganizationId;
+
+    Long defaultOrganizationId=null;
+
+    @ConfigProperty(name = "signomix.database.type")
+    String databaseType;
+
+    private long getDefaultOrganizationId(){
+        if (defaultOrganizationId==null){
+            if("postgresql".equals(databaseType)){
+                defaultOrganizationId = 1L;
+            } else if("h2".equals(databaseType)){
+                defaultOrganizationId = -1L;
+            } else {
+                LOG.error("Unknown database type: "+databaseType);
+            }
+        }
+        return defaultOrganizationId;
+    }
 
     @GET
     public Response getPlatformInfo() {
         HashMap<String,Object> info=new HashMap<>();
         //info.put("release", releaseNumber);
-        info.put("defaultOrganizationId", defaultOrganizationId);
+        info.put("defaultOrganizationId", getDefaultOrganizationId());
         info.put("webappRelease", getWebappReleaseNumber());
         //info.put("platformRelease", getPlatformReleaseNumber());
         return Response.ok().entity(info).build();

@@ -20,14 +20,15 @@ import com.signomix.common.User;
 import com.signomix.common.annotation.InboundAdapter;
 import com.signomix.common.db.IotDatabaseException;
 import com.signomix.common.gui.Dashboard;
+import com.signomix.common.iot.DeviceGroup;
 import com.signomix.core.application.exception.ServiceException;
 import com.signomix.core.application.port.in.AuthPort;
-import com.signomix.core.application.port.in.DashboardPort;
+import com.signomix.core.application.port.in.GroupPort;
 import com.signomix.core.application.port.in.UserPort;
 
 @InboundAdapter
 @Path("/api/core")
-public class DashboardRestAdapter {
+public class GroupRestAdapter {
 
     @Inject
     Logger logger;
@@ -36,14 +37,14 @@ public class DashboardRestAdapter {
     @Inject
     UserPort userPort;
     @Inject
-    DashboardPort dashboardPort;
+    GroupPort groupPort;
 
     @ConfigProperty(name = "signomix.exception.api.unauthorized")
     String unauthorizedException;
 
     @GET
-    @Path("/v2/dashboards")
-    public Response getDashboards(
+    @Path("/v2/groups")
+    public Response getGrpups(
             @HeaderParam("Authentication") String token,
             @QueryParam("shared") Boolean includeShared,
             @QueryParam("limit") Integer limit,
@@ -57,12 +58,12 @@ public class DashboardRestAdapter {
         if (null == user) {
             throw new ServiceException(unauthorizedException);
         }
-        List<Dashboard> dashboards = dashboardPort.getUserDashboards(user, includeShared, isAdmin(user), limit, offset);
-        return Response.ok().entity(dashboards).build();
+        List<DeviceGroup> groups = groupPort.getUserGroups(user, limit, offset);
+        return Response.ok().entity(groups).build();
     }
 
     @GET
-    @Path("/v2/dashboards/{id}")
+    @Path("/v2/groups/{id}")
     public Response getDashboard(
             @HeaderParam("Authentication") String token,
             @PathParam("id") String id) {
@@ -75,15 +76,15 @@ public class DashboardRestAdapter {
         if (null == user) {
             throw new ServiceException(unauthorizedException);
         }
-        Dashboard dashboard = dashboardPort.getUserDashboard(user, id);
-        return Response.ok().entity(dashboard).build();
+        DeviceGroup group = groupPort.getGroup(user, id);
+        return Response.ok().entity(group).build();
     }
 
     @PUT
-    @Path("/v2/dashboards/{id}")
-    public Response updateDashboard(
+    @Path("/v2/groups/{id}")
+    public Response updateGroup(
             @HeaderParam("Authentication") String token,
-            @PathParam("id") String id, Dashboard dashboard) {
+            @PathParam("id") String id, DeviceGroup group) {
         User user;
         try {
             user = userPort.getAuthorizing(authPort.getUserId(token));
@@ -94,9 +95,9 @@ public class DashboardRestAdapter {
             throw new ServiceException(unauthorizedException);
         }
         try{
-        dashboardPort.updateDashboard(user, dashboard);
+        groupPort.updateGroup(user, group);
         }catch(Exception e){
-            logger.error("Unable to update dashboard: "+e.getMessage());
+            logger.error("Unable to update group: "+e.getMessage());
             e.printStackTrace();
             throw new ServiceException(e.getMessage());
         }
@@ -104,10 +105,10 @@ public class DashboardRestAdapter {
     }
 
     @POST
-    @Path("/v2/dashboards")
-    public Response addDashboard(
+    @Path("/v2/groups")
+    public Response addGroup(
             @HeaderParam("Authentication") String token,
-            Dashboard dashboard) {
+            DeviceGroup group) {
         User user;
         try {
             user = userPort.getAuthorizing(authPort.getUserId(token));
@@ -117,13 +118,13 @@ public class DashboardRestAdapter {
         if (null == user) {
             throw new ServiceException(unauthorizedException);
         }
-        dashboardPort.addDashboard(user, dashboard);
+        groupPort.createGroup(user, group);
         return Response.ok().entity("ok").build();
     }
 
     @DELETE
-    @Path("/v2/dashboards/{id}")
-    public Response removeDashboard(
+    @Path("/v2/groups/{id}")
+    public Response removeGroup(
             @HeaderParam("Authentication") String token,
             @PathParam("id") String id) {
         User user;
@@ -135,7 +136,7 @@ public class DashboardRestAdapter {
         if (null == user) {
             throw new ServiceException(unauthorizedException);
         }
-        dashboardPort.removeDashboard(user, id);
+        groupPort.deleteGroup(user, id);
         return Response.ok().entity("ok").build();
     }
 

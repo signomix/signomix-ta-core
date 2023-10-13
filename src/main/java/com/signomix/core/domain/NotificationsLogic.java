@@ -31,6 +31,10 @@ public class NotificationsLogic {
     @DataSource("iot")
     AgroalDataSource deviceDataSource;
 
+    @Inject
+    @DataSource("oltp")
+    AgroalDataSource tsDs;
+
     IotDatabaseIface iotDatabaseDao;
 
     @Inject
@@ -42,9 +46,20 @@ public class NotificationsLogic {
     @ConfigProperty(name = "signomix.exception.api.unauthorized")
     String userNotAuthorizedException;
 
+    @ConfigProperty(name = "signomix.database.type")
+    String databaseType;
+
     void onStart(@Observes StartupEvent ev) {
-        iotDatabaseDao = new IotDatabaseDao();
-        iotDatabaseDao.setDatasource(deviceDataSource);
+        if ("h2".equalsIgnoreCase(databaseType)) {
+            iotDatabaseDao = new IotDatabaseDao();
+            iotDatabaseDao.setDatasource(deviceDataSource);
+        } else if ("postgresql".equalsIgnoreCase(databaseType)) {
+            iotDatabaseDao = new com.signomix.common.tsdb.IotDatabaseDao();
+            iotDatabaseDao.setDatasource(tsDs);
+        }else {
+            logger.error("Unknown database type: " + databaseType);
+        }
+
     }
 
     /**

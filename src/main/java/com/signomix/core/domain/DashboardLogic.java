@@ -20,6 +20,7 @@ import com.signomix.common.db.DashboardDao;
 import com.signomix.common.db.DashboardIface;
 import com.signomix.common.db.IotDatabaseDao;
 import com.signomix.common.db.IotDatabaseException;
+import com.signomix.common.db.IotDatabaseIface;
 import com.signomix.common.gui.Dashboard;
 import com.signomix.common.gui.DashboardItem;
 import com.signomix.common.gui.DashboardTemplate;
@@ -41,9 +42,12 @@ public class DashboardLogic {
     @Inject
     @DataSource("iot")
     AgroalDataSource dataSource;
+    @Inject
+    @DataSource("oltp")
+    AgroalDataSource tsDs;
 
     DashboardIface dashboardDao;
-    IotDatabaseDao iotDao;
+    IotDatabaseIface iotDao;
 
     @Inject
     UserLogic userLogic;
@@ -55,17 +59,30 @@ public class DashboardLogic {
 
     @ConfigProperty(name = "signomix.exception.api.unauthorized", defaultValue = "")
     String exceptionApiUnauthorized;
+    @ConfigProperty(name = "signomix.database.type")
+    String databaseType;
 
     void onStart(@Observes StartupEvent ev) {
-        dashboardDao = new DashboardDao();
-        dashboardDao.setDatasource(dataSource);
-        iotDao = new IotDatabaseDao();
-        iotDao.setDatasource(dataSource);
-        try {
+        if ("h2".equalsIgnoreCase(databaseType)) {
+            dashboardDao = new DashboardDao();
+            dashboardDao.setDatasource(dataSource);
+            iotDao = new IotDatabaseDao();
+            iotDao.setDatasource(dataSource);
+            defaultOrganizationId = 0;
+        } else if ("postgresql".equalsIgnoreCase(databaseType)) {
+            dashboardDao = new com.signomix.common.tsdb.DashboardDao();
+            dashboardDao.setDatasource(tsDs);
+            iotDao = new com.signomix.common.tsdb.IotDatabaseDao();
+            iotDao.setDatasource(tsDs);
+            defaultOrganizationId = 1;
+        } else {
+            logger.error("Unknown database type: " + databaseType);
+        }
+        /* try {
             defaultOrganizationId = iotDao.getParameterValue("system.default.organization", User.ANY);
         } catch (IotDatabaseException e) {
             logger.error("Unable to get default organization id: " + e.getMessage());
-        }
+        } */
     }
 
     public void addDefaultDashboard(Device device) throws ServiceException {

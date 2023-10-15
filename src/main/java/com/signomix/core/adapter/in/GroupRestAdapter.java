@@ -44,11 +44,12 @@ public class GroupRestAdapter {
 
     @GET
     @Path("/v2/groups")
-    public Response getGrpups(
+    public Response getGroups(
             @HeaderParam("Authentication") String token,
             @QueryParam("shared") Boolean includeShared,
             @QueryParam("limit") Integer limit,
             @QueryParam("offset") Integer offset) {
+                logger.info("getGroups");
         User user;
         try {
             user = userPort.getAuthorizing(authPort.getUserId(token));
@@ -64,7 +65,7 @@ public class GroupRestAdapter {
 
     @GET
     @Path("/v2/groups/{id}")
-    public Response getDashboard(
+    public Response getGroup(
             @HeaderParam("Authentication") String token,
             @PathParam("id") String id) {
         User user;
@@ -140,8 +141,5 @@ public class GroupRestAdapter {
         return Response.ok().entity("ok").build();
     }
 
-    private boolean isAdmin(User user) {
-        return user.type == User.ADMIN || (user.role!=null && user.role.contains("admin"));
-    }
 
 }

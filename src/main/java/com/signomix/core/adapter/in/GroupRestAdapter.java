@@ -49,7 +49,7 @@ public class GroupRestAdapter {
             @QueryParam("shared") Boolean includeShared,
             @QueryParam("limit") Integer limit,
             @QueryParam("offset") Integer offset) {
-                logger.info("getGroups");
+        logger.info("getGroups");
         User user;
         try {
             user = userPort.getAuthorizing(authPort.getUserId(token));
@@ -95,10 +95,10 @@ public class GroupRestAdapter {
         if (null == user) {
             throw new ServiceException(unauthorizedException);
         }
-        try{
-        groupPort.updateGroup(user, group);
-        }catch(Exception e){
-            logger.error("Unable to update group: "+e.getMessage());
+        try {
+            groupPort.updateGroup(user, group);
+        } catch (Exception e) {
+            logger.error("Unable to update group: " + e.getMessage());
             e.printStackTrace();
             throw new ServiceException(e.getMessage());
         }
@@ -107,20 +107,24 @@ public class GroupRestAdapter {
 
     @POST
     @Path("/v2/groups")
-    public Response addGroup(
-            @HeaderParam("Authentication") String token,
-            DeviceGroup group) {
-        User user;
+    public Response addGroup(@HeaderParam("Authentication") String token,DeviceGroup group) {
         try {
-            user = userPort.getAuthorizing(authPort.getUserId(token));
-        } catch (IotDatabaseException e) {
-            throw new ServiceException(unauthorizedException);
+            User user;
+            try {
+                user = userPort.getAuthorizing(authPort.getUserId(token));
+            } catch (IotDatabaseException e) {
+                throw new ServiceException(unauthorizedException);
+            }
+            if (null == user) {
+                throw new ServiceException(unauthorizedException);
+            }
+            groupPort.createGroup(user, group);
+            return Response.ok().entity("ok").build();
+        } catch (Exception e) {
+            logger.error("Unable to create group: " + e.getMessage());
+            e.printStackTrace();
+            throw new ServiceException(e.getMessage());
         }
-        if (null == user) {
-            throw new ServiceException(unauthorizedException);
-        }
-        groupPort.createGroup(user, group);
-        return Response.ok().entity("ok").build();
     }
 
     @DELETE
@@ -140,6 +144,5 @@ public class GroupRestAdapter {
         groupPort.deleteGroup(user, id);
         return Response.ok().entity("ok").build();
     }
-
 
 }

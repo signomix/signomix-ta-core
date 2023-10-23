@@ -43,7 +43,7 @@ public class GroupRestAdapter {
     String unauthorizedException;
 
     @GET
-    @Path("/v2/groups")
+    @Path("/group")
     public Response getGroups(
             @HeaderParam("Authentication") String token,
             @QueryParam("shared") Boolean includeShared,
@@ -64,7 +64,7 @@ public class GroupRestAdapter {
     }
 
     @GET
-    @Path("/v2/groups/{id}")
+    @Path("/group/{id}")
     public Response getGroup(
             @HeaderParam("Authentication") String token,
             @PathParam("id") String id) {
@@ -77,12 +77,18 @@ public class GroupRestAdapter {
         if (null == user) {
             throw new ServiceException(unauthorizedException);
         }
-        DeviceGroup group = groupPort.getGroup(user, id);
-        return Response.ok().entity(group).build();
+        try {
+            DeviceGroup group = groupPort.getGroup(user, id);
+            return Response.ok().entity(group).build();
+        } catch (Exception e) {
+            logger.error("Unable to get group: " + e.getMessage());
+            e.printStackTrace();
+            throw new ServiceException(e.getMessage());
+        }
     }
 
     @PUT
-    @Path("/v2/groups/{id}")
+    @Path("/group/{id}")
     public Response updateGroup(
             @HeaderParam("Authentication") String token,
             @PathParam("id") String id, DeviceGroup group) {
@@ -95,6 +101,7 @@ public class GroupRestAdapter {
         if (null == user) {
             throw new ServiceException(unauthorizedException);
         }
+
         try {
             groupPort.updateGroup(user, group);
         } catch (Exception e) {
@@ -106,8 +113,8 @@ public class GroupRestAdapter {
     }
 
     @POST
-    @Path("/v2/groups")
-    public Response addGroup(@HeaderParam("Authentication") String token,DeviceGroup group) {
+    @Path("/group")
+    public Response addGroup(@HeaderParam("Authentication") String token, DeviceGroup group) {
         try {
             User user;
             try {
@@ -128,7 +135,7 @@ public class GroupRestAdapter {
     }
 
     @DELETE
-    @Path("/v2/groups/{id}")
+    @Path("/group/{id}")
     public Response removeGroup(
             @HeaderParam("Authentication") String token,
             @PathParam("id") String id) {

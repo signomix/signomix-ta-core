@@ -18,6 +18,7 @@ import com.signomix.common.db.UserDao;
 import com.signomix.common.db.UserDaoIface;
 import com.signomix.common.gui.Dashboard;
 import com.signomix.common.iot.Device;
+import com.signomix.common.iot.DeviceGroup;
 import com.signomix.core.application.exception.ServiceException;
 
 import io.agroal.api.AgroalDataSource;
@@ -259,7 +260,14 @@ public class UserLogic {
             admins = device.getAdministrators();
             owner = device.getUserID();
             organizationId = device.getOrganizationId();
+        } else if (accessedObject instanceof DeviceGroup) {
+            DeviceGroup group = (DeviceGroup)accessedObject;
+            team = group.getTeam();
+            admins = group.getAdministrators();
+            owner = group.getUserID();
+            organizationId = group.getOrganization();
         } else {
+            logger.error("Unknown object type: " + accessedObject.getClass().getName());
             return false;
         }
 

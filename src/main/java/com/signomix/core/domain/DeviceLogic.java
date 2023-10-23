@@ -169,7 +169,7 @@ public class DeviceLogic {
                 throw new ServiceException("User has reached maximum number of devices: " + maxDevices);
             }
             device.setEUI(removeNonAlphanumeric(device.getEUI()));
-            if (device.getEUI().isEmpty()) {
+            if (device.getEUI()==null || device.getEUI().isEmpty() || device.getEUI().toLowerCase().equals("new")) {
                 device.setEUI(createEui(deviceEuiPrefix));
             }
             logger.info("Creating device: " + device.getEUI());

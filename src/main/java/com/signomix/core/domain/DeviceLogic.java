@@ -34,7 +34,6 @@ import io.quarkus.runtime.StartupEvent;
 @ApplicationScoped
 public class DeviceLogic {
     private static final Logger LOG = Logger.getLogger(DeviceLogic.class);
-    private static AtomicLong euiSeed = new AtomicLong(System.currentTimeMillis());
 
     /* @ConfigProperty(name = "signomix.app.key", defaultValue = "not_configured")
     String appKey; */
@@ -69,6 +68,9 @@ public class DeviceLogic {
 
     @Inject
     Logger logger;
+
+    @Inject
+    EuiGenerator euiGenerator;
 
     long defaultOrganizationId;
 
@@ -170,7 +172,10 @@ public class DeviceLogic {
             }
             device.setEUI(removeNonAlphanumeric(device.getEUI()));
             if (device.getEUI()==null || device.getEUI().isEmpty() || device.getEUI().toLowerCase().equals("new")) {
-                device.setEUI(createEui(deviceEuiPrefix));
+                device.setEUI(euiGenerator.createEui(deviceEuiPrefix));
+            }
+            if(device.getKey()==null || device.getKey().isEmpty()) {
+                device.setKey(euiGenerator.createEui(""));
             }
             logger.info("Creating device: " + device.getEUI());
             device.setOrganizationId(user.organization);
@@ -267,14 +272,7 @@ public class DeviceLogic {
         }
     }
 
-    public String createEui(String prefix) {
-        String eui = Long.toHexString(euiSeed.getAndIncrement());
-        StringBuilder tmp = new StringBuilder(prefix).append(eui.substring(0, 2));
-        for (int i = 2; i < eui.length() - 1; i = i + 2) {
-            tmp.append("-").append(eui.substring(i, i + 2));
-        }
-        return tmp.toString();
-    }
+
 
     /**
      * Check if user has access to device.

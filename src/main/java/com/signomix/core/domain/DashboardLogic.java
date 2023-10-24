@@ -53,7 +53,7 @@ public class DashboardLogic {
     UserLogic userLogic;
 
     @Inject
-    DeviceLogic deviceLogic;
+    EuiGenerator euiGenerator;
 
     long defaultOrganizationId = 0;
 
@@ -215,7 +215,7 @@ public class DashboardLogic {
             if (null != dashboard) {
                 throw new ServiceException("Dashboard already exists");
             }
-            newDashboard.setId(deviceLogic.createEui("S-"));
+            newDashboard.setId(euiGenerator.createEui("S-"));
             newDashboard.setUserID(user.uid);
             newDashboard.setOrganizationId(user.organization);
             dashboardDao.addDashboard(sanitizeWidgets(newDashboard));

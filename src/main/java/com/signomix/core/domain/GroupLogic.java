@@ -53,7 +53,7 @@ public class GroupLogic {
     UserLogic userLogic;
 
     @Inject
-    DeviceLogic deviceLogic;
+    EuiGenerator euiGenerator;
 
     long defaultOrganizationId = 0;
 
@@ -131,7 +131,7 @@ public class GroupLogic {
             if (null != group) {
                 throw new ServiceException("Dashboard already exists");
             }
-            newGroup.setEUI(deviceLogic.createEui("S-"));
+            newGroup.setEUI(euiGenerator.createEui("S-"));
             newGroup.setUserID(user.uid);
             newGroup.setOrganization(user.organization);
             iotDao.createGroup(newGroup);

@@ -111,13 +111,13 @@ public class DeviceLogic {
         }
     }
 
-    public List<Device> getUserDevices(User user, boolean withStatus, Integer limit, Integer offset)
+    public List<Device> getUserDevices(User user, boolean withStatus, Integer limit, Integer offset, String searchString)
             throws ServiceException {
         try {
             if (user.organization == defaultOrganizationId) {
-                return iotDao.getUserDevices(user, withStatus, limit, offset);
+                return iotDao.getUserDevices(user, withStatus, limit, offset, searchString);
             } else {
-                return iotDao.getOrganizationDevices(user.organization, withStatus, limit, offset);
+                return iotDao.getOrganizationDevices(user.organization, withStatus, limit, offset, searchString);
             }
         } catch (IotDatabaseException e) {
             throw new ServiceException(e.getMessage(), e);
@@ -164,7 +164,7 @@ public class DeviceLogic {
 
     public void createDevice(User user, Device device) throws ServiceException {
         try {
-            List<Device> userDevices = iotDao.getUserDevices(user, false, null, null);
+            List<Device> userDevices = iotDao.getUserDevices(user, false, null, null, null);
             int deviceCount = userDevices.size();
             long maxDevices = iotDao.getParameterValue("devicesLimit", user.type);
             if (deviceCount >= maxDevices) {

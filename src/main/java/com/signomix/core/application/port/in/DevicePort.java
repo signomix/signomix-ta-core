@@ -20,8 +20,8 @@ public class DevicePort {
         return deviceLogic.getDevice(user, eui, (null!=withStatus?withStatus:false));
     }
 
-    public List<Device> getUserDevices(User user, Boolean withStatus, Integer limit, Integer offset)throws ServiceException{
-        return deviceLogic.getUserDevices(user, (null!=withStatus?withStatus:false), limit, offset);
+    public List<Device> getUserDevices(User user, Boolean withStatus, Integer limit, Integer offset, String searchString)throws ServiceException{
+        return deviceLogic.getUserDevices(user, (null!=withStatus?withStatus:false), limit, offset, searchString);
     }
 
     public void deleteDevice(User user, String eui) throws ServiceException{

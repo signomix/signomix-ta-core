@@ -46,22 +46,29 @@ public class DeviceRestAdapter {
     @GET
     @Path("/device")
     public Response getDevices(
-        @HeaderParam("Authentication") String token, 
-        @QueryParam("full") Boolean full,
-        @QueryParam("limit") Integer limit,
-        @QueryParam("offset") Integer offset) {
-        User user;
+            @HeaderParam("Authentication") String token,
+            @QueryParam("full") Boolean full,
+            @QueryParam("limit") Integer limit,
+            @QueryParam("offset") Integer offset,
+            @QueryParam("search") String search) {
         try {
-            user = userPort.getAuthorizing(authPort.getUserId(token));
-        } catch (IotDatabaseException e) {
-            throw new ServiceException(unauthorizedException);
+            User user;
+            try {
+                user = userPort.getAuthorizing(authPort.getUserId(token));
+            } catch (IotDatabaseException e) {
+                throw new ServiceException(unauthorizedException);
+            }
+            if (null == user) {
+                throw new ServiceException(unauthorizedException);
+            }
+            logger.info("getDevices limit:" + limit + " offset:" + offset + " full:" + full);
+            List<Device> devices = devicePort.getUserDevices(user, full, limit, offset, search);
+            return Response.ok().entity(devices).build();
+        } catch (Exception e) {
+            logger.error("getDevices error:" + e.getMessage());
+            e.printStackTrace();
+            throw new ServiceException(e.getMessage());
         }
-        if (null == user) {
-            throw new ServiceException(unauthorizedException);
-        }
-        logger.info("getDevices limit:"+limit+" offset:"+offset+" full:"+full);
-        List<Device> devices = devicePort.getUserDevices(user, full, limit, offset);
-        return Response.ok().entity(devices).build();
     }
 
     @GET

@@ -77,12 +77,12 @@ public class GroupLogic {
     }
 
     public List<DeviceGroup> getUserGroups(User user, Integer limit,
-            Integer offset) throws ServiceException {
+            Integer offset, String searchString, boolean includeShared) throws ServiceException {
         try {
             if (user.organization != defaultOrganizationId) {
-                return iotDao.getOrganizationGroups(user.organization, limit, offset);
+                return iotDao.getOrganizationGroups(user.organization, limit, offset, searchString);
             } else {
-                return iotDao.getUserGroups(user.uid, limit, offset);
+                return iotDao.getUserGroups(user.uid, limit, offset, searchString, includeShared);
             }
         } catch (IotDatabaseException e) {
             logger.error(e.getMessage());

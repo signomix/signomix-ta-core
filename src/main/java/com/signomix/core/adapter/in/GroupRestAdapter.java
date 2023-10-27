@@ -48,19 +48,26 @@ public class GroupRestAdapter {
             @HeaderParam("Authentication") String token,
             @QueryParam("shared") Boolean includeShared,
             @QueryParam("limit") Integer limit,
-            @QueryParam("offset") Integer offset) {
-        logger.info("getGroups");
-        User user;
+            @QueryParam("offset") Integer offset,
+            @QueryParam("search") String search) {
         try {
-            user = userPort.getAuthorizing(authPort.getUserId(token));
-        } catch (IotDatabaseException e) {
-            throw new ServiceException(unauthorizedException);
+            logger.info("getGroups");
+            User user;
+            try {
+                user = userPort.getAuthorizing(authPort.getUserId(token));
+            } catch (IotDatabaseException e) {
+                throw new ServiceException(unauthorizedException);
+            }
+            if (null == user) {
+                throw new ServiceException(unauthorizedException);
+            }
+            List<DeviceGroup> groups = groupPort.getUserGroups(user, limit, offset, search, includeShared);
+            return Response.ok().entity(groups).build();
+        } catch (Exception e) {
+            e.printStackTrace();
+            logger.error("Unable to get groups: " + e.getMessage());
+            throw new ServiceException(e.getMessage());
         }
-        if (null == user) {
-            throw new ServiceException(unauthorizedException);
-        }
-        List<DeviceGroup> groups = groupPort.getUserGroups(user, limit, offset);
-        return Response.ok().entity(groups).build();
     }
 
     @GET

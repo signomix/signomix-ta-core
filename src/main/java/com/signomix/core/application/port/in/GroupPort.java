@@ -20,8 +20,8 @@ public class GroupPort {
         return groupLogic.getGroup(user, eui);
     }
 
-    public List<DeviceGroup> getUserGroups(User user, Integer limit, Integer offset, String searchString, boolean includeShared)throws ServiceException{
-        return groupLogic.getUserGroups(user, limit, offset, searchString, includeShared);
+    public List<DeviceGroup> getUserGroups(User user, Integer limit, Integer offset, String searchString)throws ServiceException{
+        return groupLogic.getUserGroups(user, limit, offset, searchString);
     }
 
     public void deleteGroup(User user, String eui) throws ServiceException{

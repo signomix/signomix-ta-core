@@ -46,7 +46,6 @@ public class GroupRestAdapter {
     @Path("/group")
     public Response getGroups(
             @HeaderParam("Authentication") String token,
-            @QueryParam("shared") Boolean includeShared,
             @QueryParam("limit") Integer limit,
             @QueryParam("offset") Integer offset,
             @QueryParam("search") String search) {
@@ -61,7 +60,7 @@ public class GroupRestAdapter {
             if (null == user) {
                 throw new ServiceException(unauthorizedException);
             }
-            List<DeviceGroup> groups = groupPort.getUserGroups(user, limit, offset, search, includeShared);
+            List<DeviceGroup> groups = groupPort.getUserGroups(user, limit, offset, search);
             return Response.ok().entity(groups).build();
         } catch (Exception e) {
             e.printStackTrace();

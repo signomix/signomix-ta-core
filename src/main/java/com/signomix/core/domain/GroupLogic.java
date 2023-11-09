@@ -78,11 +78,13 @@ public class GroupLogic {
 
     public List<DeviceGroup> getUserGroups(User user, Integer limit,
             Integer offset, String searchString) throws ServiceException {
+                int requestedLimit = limit!=null?limit:100;
+                int requestedOffset = offset!=null?offset:0;
         try {
             if (user.organization != defaultOrganizationId) {
-                return iotDao.getOrganizationGroups(user.organization, limit, offset, searchString);
+                return iotDao.getOrganizationGroups(user.organization, requestedLimit, requestedOffset, searchString);
             } else {
-                return iotDao.getUserGroups(user.uid, limit, offset, searchString);
+                return iotDao.getUserGroups(user.uid, requestedLimit, requestedOffset, searchString);
             }
         } catch (IotDatabaseException e) {
             logger.error(e.getMessage());

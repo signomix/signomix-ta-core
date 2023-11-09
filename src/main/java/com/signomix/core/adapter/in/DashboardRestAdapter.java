@@ -57,8 +57,14 @@ public class DashboardRestAdapter {
         if (null == user) {
             throw new ServiceException(unauthorizedException);
         }
-        List<Dashboard> dashboards = dashboardPort.getUserDashboards(user, includeShared, isAdmin(user), limit, offset);
-        return Response.ok().entity(dashboards).build();
+        try {
+            List<Dashboard> dashboards = dashboardPort.getUserDashboards(user, includeShared, isAdmin(user), limit,
+                    offset);
+            return Response.ok().entity(dashboards).build();
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new ServiceException(e.getMessage());
+        }
     }
 
     @GET
@@ -75,8 +81,13 @@ public class DashboardRestAdapter {
         if (null == user) {
             throw new ServiceException(unauthorizedException);
         }
-        Dashboard dashboard = dashboardPort.getUserDashboard(user, id);
-        return Response.ok().entity(dashboard).build();
+        try {
+            Dashboard dashboard = dashboardPort.getUserDashboard(user, id);
+            return Response.ok().entity(dashboard).build();
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new ServiceException(e.getMessage());
+        }
     }
 
     @PUT
@@ -93,10 +104,10 @@ public class DashboardRestAdapter {
         if (null == user) {
             throw new ServiceException(unauthorizedException);
         }
-        try{
-        dashboardPort.updateDashboard(user, dashboard);
-        }catch(Exception e){
-            logger.error("Unable to update dashboard: "+e.getMessage());
+        try {
+            dashboardPort.updateDashboard(user, dashboard);
+        } catch (Exception e) {
+            logger.error("Unable to update dashboard: " + e.getMessage());
             e.printStackTrace();
             throw new ServiceException(e.getMessage());
         }
@@ -140,10 +151,10 @@ public class DashboardRestAdapter {
     }
 
     private boolean isAdmin(User user) {
-        //return user.type == User.OWNER || (user.role!=null && user.role.contains("admin"));
+        // return user.type == User.OWNER || (user.role!=null &&
+        // user.role.contains("admin"));
         return user.type == User.OWNER;
 
     }
-
 
 }

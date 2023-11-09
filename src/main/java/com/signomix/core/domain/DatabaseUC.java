@@ -50,6 +50,10 @@ public class DatabaseUC {
     AgroalDataSource tsDs;
 
     @Inject
+    @DataSource("olap")
+    AgroalDataSource olapDs;
+
+    @Inject
     @DataSource("user")
     AgroalDataSource userDataSource;
 
@@ -111,6 +115,7 @@ public class DatabaseUC {
         } else if ("both".equalsIgnoreCase(databaseType)) {
             tsDao = new com.signomix.common.tsdb.IotDatabaseDao();
             tsDao.setDatasource(tsDs);
+            tsDao.setAnalyticDatasource(olapDs);
             tsDashboardDao = new com.signomix.common.tsdb.DashboardDao();
             tsDashboardDao.setDatasource(tsDs);
             authDao = new AuthDao();
@@ -128,6 +133,7 @@ public class DatabaseUC {
         } else if ("postgresql".equalsIgnoreCase(databaseType)){
             iotDao = new com.signomix.common.tsdb.IotDatabaseDao();
             iotDao.setDatasource(tsDs);
+            iotDao.setAnalyticDatasource(olapDs);
             dashboardDao = new com.signomix.common.tsdb.DashboardDao();
             dashboardDao.setDatasource(tsDs);
             userDao= new com.signomix.common.tsdb.UserDao();

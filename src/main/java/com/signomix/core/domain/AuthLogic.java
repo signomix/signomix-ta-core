@@ -7,6 +7,7 @@ import javax.inject.Inject;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.jboss.logging.Logger;
 
+import com.signomix.common.Token;
 import com.signomix.common.User;
 import com.signomix.common.db.AuthDao;
 import com.signomix.common.db.AuthDaoIface;
@@ -98,6 +99,16 @@ public class AuthLogic {
             LOG.error(e.getMessage());
         }
         return user;
+    }
+
+    public Token getToken(String token) {
+        Token tokenObj = null;
+        try {
+            tokenObj = authDao.getToken(token, sessionTokenLifetime, permanentTokenLifetime);
+        } catch (Exception e) {
+            LOG.error(e.getMessage());
+        }
+        return tokenObj;
     }
 
     /*

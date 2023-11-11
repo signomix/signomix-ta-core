@@ -9,6 +9,8 @@ import javax.enterprise.event.Observes;
 import javax.inject.Inject;
 
 import org.eclipse.microprofile.config.inject.ConfigProperty;
+import org.eclipse.microprofile.reactive.messaging.Channel;
+import org.eclipse.microprofile.reactive.messaging.Emitter;
 import org.jboss.logging.Logger;
 
 import com.signomix.common.User;
@@ -35,8 +37,10 @@ import io.quarkus.runtime.StartupEvent;
 public class DeviceLogic {
     private static final Logger LOG = Logger.getLogger(DeviceLogic.class);
 
-    /* @ConfigProperty(name = "signomix.app.key", defaultValue = "not_configured")
-    String appKey; */
+    /*
+     * @ConfigProperty(name = "signomix.app.key", defaultValue = "not_configured")
+     * String appKey;
+     */
     @ConfigProperty(name = "signomix.auth.host", defaultValue = "not_configured")
     String authHost;
     @ConfigProperty(name = "signomix.device.eui.prefix", defaultValue = "S-")
@@ -72,6 +76,16 @@ public class DeviceLogic {
     @Inject
     EuiGenerator euiGenerator;
 
+    @Inject
+    @Channel("device-removed")
+    Emitter<String> deviceRemovalEmitter;
+    @Inject
+    @Channel("device-created")
+    Emitter<String> deviceCreationEmitter;
+    @Inject
+    @Channel("device-updated")
+    Emitter<String> deviceModificationEmitter;
+
     long defaultOrganizationId;
 
     @ConfigProperty(name = "signomix.database.type")
@@ -85,16 +99,19 @@ public class DeviceLogic {
         } else if ("postgresql".equalsIgnoreCase(databaseType)) {
             iotDao = new com.signomix.common.tsdb.IotDatabaseDao();
             iotDao.setDatasource(tsDs);
-            defaultOrganizationId =1;
+            defaultOrganizationId = 1;
         } else {
             logger.error("Unknown database type: " + databaseType);
         }
 
-/*         try {
-            defaultOrganizationId = iotDao.getParameterValue("system.default.organization", User.ANY);
-        } catch (IotDatabaseException e) {
-            logger.error("Unable to get default organization id: " + e.getMessage());
-        } */
+        /*
+         * try {
+         * defaultOrganizationId =
+         * iotDao.getParameterValue("system.default.organization", User.ANY);
+         * } catch (IotDatabaseException e) {
+         * logger.error("Unable to get default organization id: " + e.getMessage());
+         * }
+         */
     }
 
     // TODO: add organizationId to all methods
@@ -111,7 +128,8 @@ public class DeviceLogic {
         }
     }
 
-    public List<Device> getUserDevices(User user, boolean withStatus, Integer limit, Integer offset, String searchString)
+    public List<Device> getUserDevices(User user, boolean withStatus, Integer limit, Integer offset,
+            String searchString)
             throws ServiceException {
         try {
             if (user.organization == defaultOrganizationId) {
@@ -132,6 +150,7 @@ public class DeviceLogic {
         try {
             if (userLogic.hasObjectAccess(user, true, defaultOrganizationId, device)) {
                 iotDao.deleteDevice(user, eui);
+                deviceRemovalEmitter.send(eui);
                 sendNotification(device, "DELETED");
             } else {
                 throw new ServiceException(exceptionApiUnauthorized);
@@ -153,6 +172,7 @@ public class DeviceLogic {
                     iotDao.clearDeviceData(device.getEUI());
                     iotDao.updateDeviceChannels(device.getEUI(), device.getChannelsAsString());
                 }
+                deviceModificationEmitter.send(device.getEUI());
                 sendNotification(device, "UPDATED");
             } else {
                 throw new ServiceException(exceptionApiUnauthorized);
@@ -171,10 +191,10 @@ public class DeviceLogic {
                 throw new ServiceException("User has reached maximum number of devices: " + maxDevices);
             }
             device.setEUI(removeNonAlphanumeric(device.getEUI()));
-            if (device.getEUI()==null || device.getEUI().isEmpty() || device.getEUI().toLowerCase().equals("new")) {
+            if (device.getEUI() == null || device.getEUI().isEmpty() || device.getEUI().toLowerCase().equals("new")) {
                 device.setEUI(euiGenerator.createEui(deviceEuiPrefix));
             }
-            if(device.getKey()==null || device.getKey().isEmpty()) {
+            if (device.getKey() == null || device.getKey().isEmpty()) {
                 device.setKey(euiGenerator.createEui(""));
             }
             logger.info("Creating device: " + device.getEUI());
@@ -182,6 +202,7 @@ public class DeviceLogic {
             iotDao.createDevice(user, device);
             iotDao.updateDeviceChannels(device.getEUI(), device.getChannelsAsString());
             iotDao.updateDeviceStatus(device.getEUI(), device.getTransmissionInterval(), 0.0, Device.ALERT_UNKNOWN);
+            deviceCreationEmitter.send(device.getEUI());
             dashboardPort.addDefaultDashboard(device);
             sendNotification(device, "CREATED");
             if ((deviceCount + 1) == maxDevices) {
@@ -271,8 +292,6 @@ public class DeviceLogic {
             }
         }
     }
-
-
 
     /**
      * Check if user has access to device.

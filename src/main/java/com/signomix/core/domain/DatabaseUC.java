@@ -20,6 +20,7 @@ import com.signomix.common.db.DashboardDao;
 import com.signomix.common.db.DashboardIface;
 import com.signomix.common.db.IotDatabaseException;
 import com.signomix.common.db.IotDatabaseIface;
+import com.signomix.common.db.SentinelDaoIface;
 import com.signomix.common.db.ShortenerDao;
 import com.signomix.common.db.ShortenerDaoIface;
 import com.signomix.common.db.UserDao;
@@ -74,6 +75,7 @@ public class DatabaseUC {
     ShortenerDaoIface shortenerDao;
     DashboardIface dashboardDao;
     DashboardIface tsDashboardDao;
+    SentinelDaoIface sentinelDao;
 
     @ConfigProperty(name = "signomix.data.retention.demo", defaultValue = "1")
     int demoDataRetention;
@@ -144,6 +146,8 @@ public class DatabaseUC {
             shortenerDao.setDatasource(tsDs);
             cmsDao = new CmsDao();
             cmsDao.setDatasource(cmsDataSource);
+            sentinelDao = new com.signomix.common.tsdb.SentinelDao();
+            sentinelDao.setDatasource(tsDs);
         } else {
             LOG.error("Database type not configured or not supported: " + databaseType);
         }

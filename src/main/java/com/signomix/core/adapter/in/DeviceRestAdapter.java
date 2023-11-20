@@ -91,65 +91,80 @@ public class DeviceRestAdapter {
     @DELETE
     @Path("/device/{eui}")
     public Response delete(@HeaderParam("Authentication") String token, @PathParam("eui") String eui) {
-        User user;
         try {
-            user = userPort.getAuthorizing(authPort.getUserId(token));
-        } catch (IotDatabaseException e) {
-            throw new ServiceException(unauthorizedException);
+            User user;
+            try {
+                user = userPort.getAuthorizing(authPort.getUserId(token));
+            } catch (IotDatabaseException e) {
+                throw new ServiceException(unauthorizedException);
+            }
+            if (null == user) {
+                throw new ServiceException(unauthorizedException);
+            }
+            devicePort.deleteDevice(user, eui);
+            return Response.ok().entity("OK").build();
+        } catch (Exception e) {
+            LOG.warn(e.getMessage());
+            throw new ServiceException(e.getMessage());
         }
-        if (null == user) {
-            throw new ServiceException(unauthorizedException);
-        }
-        devicePort.deleteDevice(user, eui);
-        return Response.ok().entity("OK").build();
     }
 
     @PUT
     @Path("/device/{eui}")
     public Response updateDevice(@HeaderParam("Authentication") String token, @PathParam("eui") String eui,
             Device device) {
-        User user;
         try {
-            user = userPort.getAuthorizing(authPort.getUserId(token));
-        } catch (IotDatabaseException e) {
-            LOG.warn(e.getMessage());
-            throw new ServiceException(unauthorizedException);
-        }
-        if (null == user) {
-            LOG.warn("User not found");
-            throw new ServiceException(unauthorizedException);
-        }
-        if (null == device) {
-            LOG.warn("Device is null");
-            throw new ServiceException("Device not found");
-        }
-        if (null == device.getUserID() || device.getUserID().isEmpty()) {
-            device.setUserID(user.uid);
-        }
-        try {
-            devicePort.updateDevice(user, device);
+            User user;
+            try {
+                user = userPort.getAuthorizing(authPort.getUserId(token));
+            } catch (IotDatabaseException e) {
+                LOG.warn(e.getMessage());
+                throw new ServiceException(unauthorizedException);
+            }
+            if (null == user) {
+                LOG.warn("User not found");
+                throw new ServiceException(unauthorizedException);
+            }
+            if (null == device) {
+                LOG.warn("Device is null");
+                throw new ServiceException("Device not found");
+            }
+            if (null == device.getUserID() || device.getUserID().isEmpty()) {
+                device.setUserID(user.uid);
+            }
+            try {
+                devicePort.updateDevice(user, device);
+            } catch (Exception e) {
+                LOG.warn(e.getMessage());
+                throw new ServiceException(e.getMessage());
+            }
+            return Response.ok().entity("OK").build();
         } catch (Exception e) {
             LOG.warn(e.getMessage());
             throw new ServiceException(e.getMessage());
         }
-        return Response.ok().entity("OK").build();
     }
 
     @POST
     @Path("/device")
     public Response addDevice(@HeaderParam("Authentication") String token, Device device) {
-        User user;
         try {
-            user = userPort.getAuthorizing(authPort.getUserId(token));
-        } catch (IotDatabaseException e) {
-            throw new ServiceException(unauthorizedException);
+            User user;
+            try {
+                user = userPort.getAuthorizing(authPort.getUserId(token));
+            } catch (IotDatabaseException e) {
+                throw new ServiceException(unauthorizedException);
+            }
+            if (null == user) {
+                throw new ServiceException(unauthorizedException);
+            }
+            device.setUserID(user.uid);
+            devicePort.createDevice(user, device);
+            return Response.ok().entity("OK").build();
+        } catch (Exception e) {
+            LOG.warn(e.getMessage());
+            throw new ServiceException(e.getMessage());
         }
-        if (null == user) {
-            throw new ServiceException(unauthorizedException);
-        }
-        device.setUserID(user.uid);
-        devicePort.createDevice(user, device);
-        return Response.ok().entity("OK").build();
     }
 
 }

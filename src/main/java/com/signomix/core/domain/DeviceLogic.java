@@ -2,7 +2,6 @@ package com.signomix.core.domain;
 
 import java.util.List;
 import java.util.concurrent.Executors;
-import java.util.concurrent.atomic.AtomicLong;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.event.Observes;
@@ -13,6 +12,7 @@ import org.eclipse.microprofile.reactive.messaging.Channel;
 import org.eclipse.microprofile.reactive.messaging.Emitter;
 import org.jboss.logging.Logger;
 
+import com.signomix.common.Tag;
 import com.signomix.common.User;
 import com.signomix.common.db.IotDatabaseDao;
 import com.signomix.common.db.IotDatabaseException;
@@ -119,6 +119,12 @@ public class DeviceLogic {
         try {
             Device device = iotDao.getDevice(eui, withStatus);
             if (userLogic.hasObjectAccess(user, false, defaultOrganizationId, device)) {
+                List<Tag> tags=iotDao.getDeviceTags(device.getEUI());
+                String tagString="";
+                for (Tag tag : tags) {
+                    tagString+=tag.name+":"+tag.value+",";
+                }
+                device.setTags(tagString.substring(0, tagString.length()-1));
                 return device;
             } else {
                 throw new ServiceException(exceptionApiUnauthorized);
@@ -150,6 +156,13 @@ public class DeviceLogic {
         try {
             if (userLogic.hasObjectAccess(user, true, defaultOrganizationId, device)) {
                 iotDao.deleteDevice(user, eui);
+                String[] tags = device.getTags().split(",");
+                for (String tag : tags) {
+                    String[] tagParts = tag.split(":");
+                    if (tagParts.length > 0) {
+                        iotDao.removeDeviceTag(user, device.getEUI(), tagParts[0]);
+                    }
+                }
                 deviceRemovalEmitter.send(eui);
                 sendNotification(device, "DELETED");
             } else {
@@ -171,6 +184,22 @@ public class DeviceLogic {
                 if (!updated.getChannelsAsString().equals(device.getChannelsAsString())) {
                     iotDao.clearDeviceData(device.getEUI());
                     iotDao.updateDeviceChannels(device.getEUI(), device.getChannelsAsString());
+                }
+                String[] tags = updated.getTags().split(",");
+                for (String tag : tags) {
+                    String[] tagParts = tag.split(":");
+                    if (tagParts.length > 0) {
+                        iotDao.removeDeviceTag(user, device.getEUI(), tagParts[0]);
+                    }
+                }
+                tags = device.getTags().split(",");
+                for (String tag : tags) {
+                    if (tag.length() > 0) {
+                        String[] tagParts = tag.split(":");
+                        if (tagParts.length > 1) {
+                            iotDao.addDeviceTag(user, device.getEUI(), tagParts[0], tagParts[1]);
+                        }
+                   }
                 }
                 deviceModificationEmitter.send(device.getEUI());
                 sendNotification(device, "UPDATED");
@@ -202,6 +231,15 @@ public class DeviceLogic {
             iotDao.createDevice(user, device);
             iotDao.updateDeviceChannels(device.getEUI(), device.getChannelsAsString());
             iotDao.updateDeviceStatus(device.getEUI(), device.getTransmissionInterval(), 0.0, Device.ALERT_UNKNOWN);
+            String[] tags = device.getTags().split(",");
+            for (String tag : tags) {
+                if (tag.length() > 0) {
+                    String[] tagParts = tag.split(":");
+                    if (tagParts.length > 1) {
+                        iotDao.addDeviceTag(user, device.getEUI(), tagParts[0], tagParts[1]);
+                    }
+                }
+            }
             deviceCreationEmitter.send(device.getEUI());
             dashboardPort.addDefaultDashboard(device);
             sendNotification(device, "CREATED");

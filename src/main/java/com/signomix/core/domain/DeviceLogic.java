@@ -124,7 +124,10 @@ public class DeviceLogic {
                 for (Tag tag : tags) {
                     tagString+=tag.name+":"+tag.value+",";
                 }
-                device.setTags(tagString.substring(0, tagString.length()-1));
+                if(tagString.length()>0 && tagString.charAt(tagString.length()-1)==',') {
+                    tagString=tagString.substring(0, tagString.length()-1);
+                }
+                device.setTags(tagString);
                 return device;
             } else {
                 throw new ServiceException(exceptionApiUnauthorized);

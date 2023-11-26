@@ -219,7 +219,7 @@ public class DeviceLogic {
             List<Device> userDevices = iotDao.getUserDevices(user, false, null, null, null);
             int deviceCount = userDevices.size();
             long maxDevices = iotDao.getParameterValue("devicesLimit", user.type);
-            if (deviceCount >= maxDevices) {
+            if (deviceCount >= maxDevices && user.type != User.SUPERUSER) {
                 throw new ServiceException("User has reached maximum number of devices: " + maxDevices);
             }
             device.setEUI(removeNonAlphanumeric(device.getEUI()));
@@ -254,6 +254,12 @@ public class DeviceLogic {
         }
     }
 
+    /**
+     * Removes all non-alphanumeric characters from a given string.
+     *
+     * @param str the string to remove non-alphanumeric characters from
+     * @return the string with non-alphanumeric characters removed
+     */
     private String removeNonAlphanumeric(String str) {
         return str.trim().replaceAll("[^a-zA-Z0-9]", "");
     }

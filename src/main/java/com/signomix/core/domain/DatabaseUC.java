@@ -11,7 +11,8 @@ import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.jboss.logging.Logger;
 
 import com.signomix.common.User;
-import com.signomix.common.cms.Document;
+import com.signomix.common.db.ApplicationDao;
+import com.signomix.common.db.ApplicationDaoIface;
 import com.signomix.common.db.AuthDao;
 import com.signomix.common.db.AuthDaoIface;
 import com.signomix.common.db.CmsDao;
@@ -69,6 +70,7 @@ public class DatabaseUC {
 
     // IotDatabaseIface dataDao;
     AuthDaoIface authDao;
+    ApplicationDaoIface applicationDao;
     UserDaoIface userDao;
     IotDatabaseIface iotDao;
     IotDatabaseIface tsDao;
@@ -106,6 +108,8 @@ public class DatabaseUC {
             tsDao = null;
             authDao = new AuthDao();
             authDao.setDatasource(authDataSource);
+            applicationDao = new ApplicationDao();
+            applicationDao.setDatasource(iotDataSource);
             userDao = new UserDao();
             userDao.setDatasource(userDataSource);
             iotDao = new com.signomix.common.db.IotDatabaseDao();
@@ -124,6 +128,8 @@ public class DatabaseUC {
             tsDashboardDao.setDatasource(tsDs);
             authDao = new AuthDao();
             authDao.setDatasource(authDataSource);
+            applicationDao = new ApplicationDao();
+            applicationDao.setDatasource(iotDataSource);
             userDao = new UserDao();
             userDao.setDatasource(userDataSource);
             iotDao = new com.signomix.common.db.IotDatabaseDao();
@@ -144,6 +150,8 @@ public class DatabaseUC {
             userDao.setDatasource(tsDs);
             authDao=new com.signomix.common.tsdb.AuthDao();
             authDao.setDatasource(tsDs);
+            applicationDao = new com.signomix.common.tsdb.ApplicationDao();
+            applicationDao.setDatasource(tsDs);
             shortenerDao = new com.signomix.common.tsdb.ShortenerDao();
             shortenerDao.setDatasource(tsDs);
             cmsDao = new CmsDao();
@@ -177,6 +185,12 @@ public class DatabaseUC {
         }
         try {
             authDao.createStructure();
+        } catch (IotDatabaseException e) {
+            LOG.error(e.getMessage());
+            e.printStackTrace();
+        }
+        try {
+            applicationDao.createStructure();
         } catch (IotDatabaseException e) {
             LOG.error(e.getMessage());
             e.printStackTrace();
@@ -318,11 +332,14 @@ public class DatabaseUC {
     public void doBackup() {
         LOG.info("doBackup");
         try {
+            authDao.backupDb();
+            applicationDao.backupDb();
             iotDao.backupDb();
             dashboardDao.backupDb();
+            sentinelDao.backupDb();
             shortenerDao.backupDb();
-            authDao.backupDb();
-            cmsDao.backupDb();
+            signalDao.backupDb();
+            //cmsDao.backupDb();
             userDao.backupDb();
         } catch (IotDatabaseException e) {
             LOG.error(e.getMessage());

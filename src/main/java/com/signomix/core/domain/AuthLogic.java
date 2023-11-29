@@ -101,10 +101,30 @@ public class AuthLogic {
         return user;
     }
 
+    /**
+     * Returns user token
+     * @param token
+     * @return
+     */
     public Token getToken(String token) {
         Token tokenObj = null;
         try {
             tokenObj = authDao.getToken(token, sessionTokenLifetime, permanentTokenLifetime);
+        } catch (Exception e) {
+            LOG.error(e.getMessage());
+        }
+        return tokenObj;
+    }
+
+    /**
+     * Updates token lifetime and returns user token
+     * @param token
+     * @return
+     */
+    public Token updateToken(String token) {
+        Token tokenObj = null;
+        try {
+            tokenObj = authDao.updateToken(token, sessionTokenLifetime, permanentTokenLifetime);
         } catch (Exception e) {
             LOG.error(e.getMessage());
         }

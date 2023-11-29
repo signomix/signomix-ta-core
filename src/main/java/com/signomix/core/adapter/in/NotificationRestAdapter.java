@@ -53,7 +53,7 @@ public class NotificationRestAdapter {
             int nOffset = offset == null ? 0 : offset;
             User user;
             try {
-                user = userPort.getAuthorizing(authPort.getUserId(token));
+                user = userPort.getAuthorizing(authPort.updateUserId(token));
             } catch (IotDatabaseException e) {
                 throw new ServiceException(unauthorizedException);
             }
@@ -77,7 +77,7 @@ public class NotificationRestAdapter {
         try {
             User user;
             try {
-                user = userPort.getAuthorizing(authPort.getUserId(token));
+                user = userPort.getAuthorizing(authPort.updateUserId(token));
             } catch (IotDatabaseException e) {
                 throw new ServiceException(unauthorizedException);
             }

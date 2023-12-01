@@ -1,13 +1,13 @@
 package com.signomix.core.application.port.in;
 
-import javax.enterprise.context.ApplicationScoped;
-import javax.inject.Inject;
-
 import org.jboss.logging.Logger;
 
 import com.signomix.common.Token;
 import com.signomix.common.User;
 import com.signomix.core.domain.AuthLogic;
+
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
 
 @ApplicationScoped
 public class AuthPort {

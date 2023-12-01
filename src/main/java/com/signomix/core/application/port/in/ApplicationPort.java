@@ -2,14 +2,13 @@ package com.signomix.core.application.port.in;
 
 import java.util.List;
 
-import javax.enterprise.context.ApplicationScoped;
-import javax.inject.Inject;
-
-import com.signomix.common.Organization;
 import com.signomix.common.User;
 import com.signomix.common.iot.Application;
 import com.signomix.core.application.exception.ServiceException;
 import com.signomix.core.domain.ApplicationLogic;
+
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
 
 @ApplicationScoped
 public class ApplicationPort {

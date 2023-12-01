@@ -2,14 +2,9 @@ package com.signomix.core.domain;
 
 import java.util.List;
 
-import javax.enterprise.context.ApplicationScoped;
-import javax.enterprise.event.Observes;
-import javax.inject.Inject;
-
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.jboss.logging.Logger;
 
-import com.signomix.common.Organization;
 import com.signomix.common.User;
 import com.signomix.common.db.DashboardDao;
 import com.signomix.common.db.DashboardIface;
@@ -17,12 +12,14 @@ import com.signomix.common.db.IotDatabaseException;
 import com.signomix.common.db.UserDao;
 import com.signomix.common.db.UserDaoIface;
 import com.signomix.common.gui.Dashboard;
-import com.signomix.common.iot.Device;
 import com.signomix.core.application.exception.ServiceException;
 
 import io.agroal.api.AgroalDataSource;
 import io.quarkus.agroal.DataSource;
 import io.quarkus.runtime.StartupEvent;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.event.Observes;
+import jakarta.inject.Inject;
 
 /**
  * Klasa zawierająca logikę biznesową dotyczącą autoryzacji.

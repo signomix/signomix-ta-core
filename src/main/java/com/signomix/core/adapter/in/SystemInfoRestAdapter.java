@@ -3,14 +3,14 @@ package com.signomix.core.adapter.in;
 import java.util.Base64;
 import java.util.HashMap;
 
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.core.Response;
-
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.jboss.logging.Logger;
 
 import com.signomix.common.annotation.InboundAdapter;
+
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.core.Response;
 
 @InboundAdapter
 @Path("/api/core/info")

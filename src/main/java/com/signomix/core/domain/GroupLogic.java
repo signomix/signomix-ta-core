@@ -1,38 +1,23 @@
 package com.signomix.core.domain;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
 import java.util.List;
-
-import javax.enterprise.context.ApplicationScoped;
-import javax.enterprise.event.Observes;
-import javax.inject.Inject;
 
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.jboss.logging.Logger;
-import org.jsoup.Jsoup;
-import org.jsoup.safety.Safelist;
 
 import com.signomix.common.User;
-import com.signomix.common.db.DashboardDao;
-import com.signomix.common.db.DashboardIface;
 import com.signomix.common.db.IotDatabaseDao;
 import com.signomix.common.db.IotDatabaseException;
 import com.signomix.common.db.IotDatabaseIface;
-import com.signomix.common.gui.Dashboard;
-import com.signomix.common.gui.DashboardItem;
-import com.signomix.common.gui.DashboardTemplate;
-import com.signomix.common.gui.Widget;
-import com.signomix.common.iot.Channel;
-import com.signomix.common.iot.Device;
 import com.signomix.common.iot.DeviceGroup;
 import com.signomix.core.application.exception.ServiceException;
 
 import io.agroal.api.AgroalDataSource;
 import io.quarkus.agroal.DataSource;
 import io.quarkus.runtime.StartupEvent;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.event.Observes;
+import jakarta.inject.Inject;
 
 @ApplicationScoped
 public class GroupLogic {

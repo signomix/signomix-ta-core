@@ -1,7 +1,5 @@
 package com.signomix.core.adapter.out;
 
-import javax.enterprise.context.ApplicationScoped;
-
 import org.eclipse.microprofile.reactive.messaging.Channel;
 import org.eclipse.microprofile.reactive.messaging.Emitter;
 import org.jboss.logging.Logger;
@@ -14,6 +12,8 @@ import com.signomix.common.MessageEnvelope;
 import com.signomix.common.User;
 import com.signomix.common.event.IotEvent;
 import com.signomix.common.event.MessageServiceIface;
+
+import jakarta.enterprise.context.ApplicationScoped;
 
 @ApplicationScoped
 public class MessageService implements MessageServiceIface {

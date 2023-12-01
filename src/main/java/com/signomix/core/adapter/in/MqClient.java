@@ -1,12 +1,7 @@
 package com.signomix.core.adapter.in;
 
 import java.nio.charset.StandardCharsets;
-import java.util.concurrent.Executors;
 
-import javax.enterprise.context.ApplicationScoped;
-import javax.inject.Inject;
-
-import org.apache.commons.logging.Log;
 import org.eclipse.microprofile.reactive.messaging.Incoming;
 import org.jboss.logging.Logger;
 
@@ -15,6 +10,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.signomix.common.EventEnvelope;
 import com.signomix.core.application.port.in.CommandPort;
 import com.signomix.core.application.port.in.DevicePort;
+
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
 
 @ApplicationScoped
 public class MqClient {

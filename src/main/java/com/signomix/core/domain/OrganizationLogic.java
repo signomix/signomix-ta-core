@@ -2,17 +2,12 @@ package com.signomix.core.domain;
 
 import java.util.List;
 
-import javax.enterprise.context.ApplicationScoped;
-import javax.enterprise.event.Observes;
-import javax.inject.Inject;
-
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.jboss.logging.Logger;
 
 import com.signomix.common.Organization;
 import com.signomix.common.User;
 import com.signomix.common.db.IotDatabaseDao;
-import com.signomix.common.db.IotDatabaseException;
 import com.signomix.common.db.IotDatabaseIface;
 import com.signomix.core.application.exception.ServiceException;
 import com.signomix.core.application.port.in.UserPort;
@@ -20,6 +15,9 @@ import com.signomix.core.application.port.in.UserPort;
 import io.agroal.api.AgroalDataSource;
 import io.quarkus.agroal.DataSource;
 import io.quarkus.runtime.StartupEvent;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.event.Observes;
+import jakarta.inject.Inject;
 
 @ApplicationScoped
 public class OrganizationLogic {

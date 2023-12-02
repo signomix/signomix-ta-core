@@ -149,14 +149,15 @@ public class DashboardLogic {
     }
 
     public List<Dashboard> getUserDashboards(User user, Boolean withShared, Boolean isAdmin, Integer limit,
-            Integer offset) throws ServiceException {
+            Integer offset, String searchString) throws ServiceException {
                 int limitInt = limit!=null?limit:100;
                 int offsetInt = offset!=null?offset:0;
         try {
             if (user.organization != defaultOrganizationId) {
                 return dashboardDao.getOrganizationDashboards(user.organization, limitInt, offsetInt);
             } else {
-                return dashboardDao.getUserDashboards(user.uid, withShared!=null?withShared:true, isAdmin, limitInt, offsetInt);
+                logger.info("geUserDashboards searchString=" + searchString);
+                return dashboardDao.getUserDashboards(user.uid, withShared!=null?withShared:true, isAdmin, limitInt, offsetInt, searchString);
             }
         } catch (IotDatabaseException e) {
             logger.error(e.getMessage());

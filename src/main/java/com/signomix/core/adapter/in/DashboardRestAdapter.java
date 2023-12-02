@@ -47,7 +47,8 @@ public class DashboardRestAdapter {
             @HeaderParam("Authentication") String token,
             @QueryParam("shared") Boolean includeShared,
             @QueryParam("limit") Integer limit,
-            @QueryParam("offset") Integer offset) {
+            @QueryParam("offset") Integer offset,
+            @QueryParam("search") String searchString) {
         User user;
         try {
             user = userPort.getAuthorizing(authPort.getUserId(token));
@@ -59,7 +60,7 @@ public class DashboardRestAdapter {
         }
         try {
             List<Dashboard> dashboards = dashboardPort.getUserDashboards(user, includeShared, isAdmin(user), limit,
-                    offset);
+                    offset, searchString);
             return Response.ok().entity(dashboards).build();
         } catch (Exception e) {
             e.printStackTrace();

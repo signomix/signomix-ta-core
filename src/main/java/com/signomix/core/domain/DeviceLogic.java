@@ -118,13 +118,13 @@ public class DeviceLogic {
         try {
             Device device = iotDao.getDevice(eui, withStatus);
             if (userLogic.hasObjectAccess(user, false, defaultOrganizationId, device)) {
-                List<Tag> tags=iotDao.getDeviceTags(device.getEUI());
-                String tagString="";
+                List<Tag> tags = iotDao.getDeviceTags(device.getEUI());
+                String tagString = "";
                 for (Tag tag : tags) {
-                    tagString+=tag.name+":"+tag.value+",";
+                    tagString += tag.name + ":" + tag.value + ",";
                 }
-                if(tagString.length()>0 && tagString.charAt(tagString.length()-1)==',') {
-                    tagString=tagString.substring(0, tagString.length()-1);
+                if (tagString.length() > 0 && tagString.charAt(tagString.length() - 1) == ',') {
+                    tagString = tagString.substring(0, tagString.length() - 1);
                 }
                 device.setTags(tagString);
                 return device;
@@ -201,7 +201,7 @@ public class DeviceLogic {
                         if (tagParts.length > 1) {
                             iotDao.addDeviceTag(user, device.getEUI(), tagParts[0], tagParts[1]);
                         }
-                   }
+                    }
                 }
                 deviceModificationEmitter.send(device.getEUI());
                 sendNotification(device, "UPDATED");
@@ -243,7 +243,9 @@ public class DeviceLogic {
                 }
             }
             deviceCreationEmitter.send(device.getEUI());
-            dashboardPort.addDefaultDashboard(device);
+            if (device.isDashboard()) {
+                dashboardPort.addDefaultDashboard(device);
+            }
             sendNotification(device, "CREATED");
             if ((deviceCount + 1) == maxDevices) {
                 sendNotification(device, "DEVICES_LIMIT");

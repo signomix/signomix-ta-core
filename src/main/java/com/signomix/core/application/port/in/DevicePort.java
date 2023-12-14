@@ -28,8 +28,8 @@ public class DevicePort {
         deviceLogic.deleteDevice(user, eui);
     }
 
-    public void updateDevice(User user, Device device) throws ServiceException{
-        deviceLogic.updateDevice(user, device);
+    public void updateDevice(User user, String eui, Device device) throws ServiceException{
+        deviceLogic.updateDevice(user, eui, device);
     }
 
     public void createDevice(User user, Device device) throws ServiceException{

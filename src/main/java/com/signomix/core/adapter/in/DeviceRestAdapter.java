@@ -133,7 +133,7 @@ public class DeviceRestAdapter {
                 device.setUserID(user.uid);
             }
             try {
-                devicePort.updateDevice(user, device);
+                devicePort.updateDevice(user, eui, device);
             } catch (Exception e) {
                 LOG.warn(e.getMessage());
                 throw new ServiceException(e.getMessage());

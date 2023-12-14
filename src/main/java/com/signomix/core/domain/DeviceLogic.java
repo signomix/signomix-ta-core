@@ -175,13 +175,16 @@ public class DeviceLogic {
         }
     }
 
-    public void updateDevice(User user, Device device) throws ServiceException {
-        Device updated = getDevice(user, device.getEUI(), false);
+    public void updateDevice(User user, String eui, Device device) throws ServiceException {
+        Device updated = getDevice(user, eui, false);
         if (null == updated) {
             throw new ServiceException("Device not found");
         }
         try {
             if (userLogic.hasObjectAccess(user, true, defaultOrganizationId, device)) {
+                if (eui!=null && !eui.toUpperCase().equals(device.getEUI().toUpperCase())) {
+                    iotDao.changeDeviceEui(eui, device.getEUI());
+                }
                 iotDao.updateDevice(user, device);
                 if (!updated.getChannelsAsString().equals(device.getChannelsAsString())) {
                     iotDao.clearDeviceData(device.getEUI());
@@ -203,12 +206,18 @@ public class DeviceLogic {
                         }
                     }
                 }
+                if (eui!=null && !eui.toUpperCase().equals(device.getEUI().toUpperCase())) {
+                    deviceModificationEmitter.send(eui);
+                    sendNotification(updated, "DELETED");
+                }
                 deviceModificationEmitter.send(device.getEUI());
                 sendNotification(device, "UPDATED");
             } else {
                 throw new ServiceException(exceptionApiUnauthorized);
             }
-        } catch (IotDatabaseException e) {
+        } catch (
+
+        IotDatabaseException e) {
             throw new ServiceException(e.getMessage(), e);
         }
     }

@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.concurrent.Executors;
 
 import org.eclipse.microprofile.config.inject.ConfigProperty;
+import org.eclipse.microprofile.openapi.models.parameters.Parameter.In;
 import org.eclipse.microprofile.reactive.messaging.Channel;
 import org.eclipse.microprofile.reactive.messaging.Emitter;
 import org.jboss.logging.Logger;
@@ -140,10 +141,24 @@ public class DeviceLogic {
             String searchString)
             throws ServiceException {
         try {
-            if (user.organization == defaultOrganizationId) {
-                return iotDao.getUserDevices(user, withStatus, limit, offset, searchString);
+            Integer searchOffset = null;
+            Integer searchLimit = null;
+            searchLimit=limit==null?10000:limit;
+            searchOffset=offset==null?0:offset;
+            String[] searchParams;
+            if (searchString != null) {
+                searchParams = searchString.split(":");
             } else {
-                return iotDao.getOrganizationDevices(user.organization, withStatus, limit, offset, searchString);
+                searchParams = new String[0];
+            }
+            if (user.organization == defaultOrganizationId) {
+                if (searchParams.length == 3) {
+                    return iotDao.getUserDevicesByTag(user,searchParams[1], searchParams[2], searchLimit, searchOffset);
+                } else {
+                    return iotDao.getUserDevices(user, withStatus, searchLimit, searchOffset, searchString);
+                }
+            } else {
+                return iotDao.getOrganizationDevices(user.organization, withStatus, searchLimit, searchOffset, searchString);
             }
         } catch (IotDatabaseException e) {
             throw new ServiceException(e.getMessage(), e);
@@ -182,7 +197,7 @@ public class DeviceLogic {
         }
         try {
             if (userLogic.hasObjectAccess(user, true, defaultOrganizationId, device)) {
-                if (eui!=null && !eui.toUpperCase().equals(device.getEUI().toUpperCase())) {
+                if (eui != null && !eui.toUpperCase().equals(device.getEUI().toUpperCase())) {
                     iotDao.changeDeviceEui(eui, device.getEUI());
                 }
                 iotDao.updateDevice(user, device);
@@ -206,7 +221,7 @@ public class DeviceLogic {
                         }
                     }
                 }
-                if (eui!=null && !eui.toUpperCase().equals(device.getEUI().toUpperCase())) {
+                if (eui != null && !eui.toUpperCase().equals(device.getEUI().toUpperCase())) {
                     deviceModificationEmitter.send(eui);
                     sendNotification(updated, "DELETED");
                 }

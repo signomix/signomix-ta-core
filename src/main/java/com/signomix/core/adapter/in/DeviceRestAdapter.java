@@ -136,11 +136,13 @@ public class DeviceRestAdapter {
                 devicePort.updateDevice(user, eui, device);
             } catch (Exception e) {
                 LOG.warn(e.getMessage());
+                e.printStackTrace();
                 throw new ServiceException(e.getMessage());
             }
             return Response.ok().entity("OK").build();
         } catch (Exception e) {
             LOG.warn(e.getMessage());
+            e.printStackTrace();
             throw new ServiceException(e.getMessage());
         }
     }

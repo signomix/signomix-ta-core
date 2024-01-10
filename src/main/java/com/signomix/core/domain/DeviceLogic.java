@@ -152,11 +152,11 @@ public class DeviceLogic {
                 searchParams = new String[0];
             }
             if (user.organization == defaultOrganizationId) {
-                if (searchParams.length == 3) {
-                    return iotDao.getUserDevicesByTag(user,searchParams[1], searchParams[2], searchLimit, searchOffset);
-                } else {
+                //if (searchParams.length == 3) {
+                //    return iotDao.getUserDevicesByTag(user,searchParams[1], searchParams[2], searchLimit, searchOffset);
+                //} else {
                     return iotDao.getUserDevices(user, withStatus, searchLimit, searchOffset, searchString);
-                }
+                //}
             } else {
                 return iotDao.getOrganizationDevices(user.organization, withStatus, searchLimit, searchOffset, searchString);
             }
@@ -230,9 +230,8 @@ public class DeviceLogic {
             } else {
                 throw new ServiceException(exceptionApiUnauthorized);
             }
-        } catch (
-
-        IotDatabaseException e) {
+        } catch (IotDatabaseException e) {
+            e.printStackTrace();
             throw new ServiceException(e.getMessage(), e);
         }
     }

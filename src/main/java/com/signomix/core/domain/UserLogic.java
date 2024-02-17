@@ -150,44 +150,46 @@ public class UserLogic {
     }
 
     public List<Organization> getOrganizations(Integer limit, Integer offset) throws ServiceException {
-        try {
+        return null;
+/*         try {
             return userDao.getOrganizations(limit, offset);
         } catch (IotDatabaseException e) {
             throw new ServiceException(e.getMessage());
-        }
+        } */
     }
 
     public Organization getOrganization(long organizationId) throws ServiceException {
-        try {
+        return null;
+/*         try {
             return userDao.getOrganization(organizationId);
         } catch (IotDatabaseException e) {
             e.printStackTrace();
             throw new ServiceException(e.getMessage());
-        }
+        } */
     }
 
     public void addOrganization(Organization organization) throws ServiceException {
-        try {
+/*         try {
             userDao.addOrganization(organization);
         } catch (IotDatabaseException e) {
             throw new ServiceException(e.getMessage());
-        }
+        } */
     }
 
     public void updateOrganization(Organization organization) throws ServiceException {
-        try {
+/*         try {
             userDao.updateOrganization(organization);
         } catch (IotDatabaseException e) {
             throw new ServiceException(e.getMessage());
-        }
+        } */
     }
 
     public void deleteOrganization(long organizationId) throws ServiceException {
-        try {
+/*         try {
             userDao.deleteOrganization(organizationId);
         } catch (IotDatabaseException e) {
             throw new ServiceException(e.getMessage());
-        }
+        } */
     }
 
     /**

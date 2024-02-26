@@ -4,7 +4,6 @@ import java.util.List;
 import java.util.concurrent.Executors;
 
 import org.eclipse.microprofile.config.inject.ConfigProperty;
-import org.eclipse.microprofile.openapi.models.parameters.Parameter.In;
 import org.eclipse.microprofile.reactive.messaging.Channel;
 import org.eclipse.microprofile.reactive.messaging.Emitter;
 import org.jboss.logging.Logger;
@@ -200,6 +199,9 @@ public class DeviceLogic {
                 if (eui != null && !eui.toUpperCase().equals(device.getEUI().toUpperCase())) {
                     iotDao.changeDeviceEui(eui, device.getEUI());
                 }
+                if(device.getOrganizationId()==defaultOrganizationId){
+                    device.setOrganzationPath("");
+                }
                 iotDao.updateDevice(user, device);
                 if (!updated.getChannelsAsString().equals(device.getChannelsAsString())) {
                     iotDao.clearDeviceData(device.getEUI());
@@ -253,6 +255,9 @@ public class DeviceLogic {
             }
             logger.info("Creating device: " + device.getEUI());
             device.setOrganizationId(user.organization);
+            if(device.getOrganizationId()==defaultOrganizationId){
+                device.setOrganzationPath("");
+            }
             iotDao.createDevice(user, device);
             iotDao.updateDeviceChannels(device.getEUI(), device.getChannelsAsString());
             iotDao.updateDeviceStatus(device.getEUI(), device.getTransmissionInterval(), 0.0, Device.ALERT_UNKNOWN);

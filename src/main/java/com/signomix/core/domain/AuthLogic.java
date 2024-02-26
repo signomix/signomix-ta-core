@@ -131,6 +131,40 @@ public class AuthLogic {
         return tokenObj;
     }
 
+    public void modifyToken(Token token){
+        try{
+            User issUser = userDao.getUser(token.getIssuer());
+            if(null==issUser){
+                LOG.error("User not found: "+token.getIssuer());
+                return;
+            }
+            authDao.modifyToken(token);
+        }catch(Exception e){
+            LOG.error(e.getMessage());
+        }
+    }
+    public void saveToken(Token token){
+        try{
+            User issUser = userDao.getUser(token.getIssuer());
+            if(null==issUser){
+                LOG.error("User not found: "+token.getIssuer());
+                return;
+            }
+            authDao.createTokenForUser(issUser, token.getUid(), token.getLifetime(), token.isPermanent(), token.getType(), token.getPayload());
+        }catch(Exception e){
+            LOG.error(e.getMessage());
+        }
+    }
+
+    public void removeToken(String token){
+        try{
+            authDao.removeToken(token);
+        }catch(Exception e){
+            LOG.error(e.getMessage());
+        }
+    }
+
+
     /*
      * public User getUser(String uid) {
      * if(null==uid){

@@ -20,8 +20,9 @@ import jakarta.inject.Inject;
  *
  */
 @ApplicationScoped
+@Deprecated
 public class CmsLogic {
-    private static final Logger LOG = Logger.getLogger(CmsLogic.class);
+    /* private static final Logger LOG = Logger.getLogger(CmsLogic.class);
 
     @Inject
     @DataSource("cms")
@@ -36,18 +37,12 @@ public class CmsLogic {
         cmsDao=new CmsDao();
         cmsDao.setDatasource(cmsDataSource);
     }
-
-    /**
-     * Cleanup database
-     * 
-     * @throws IotDatabaseException
-     */
     public void doCleanup() {
         try {
             cmsDao.doCleanup();
         } catch (IotDatabaseException e) {
             LOG.error("Error while cleaning up database", e);
         }
-    }
+    } */
 
 }

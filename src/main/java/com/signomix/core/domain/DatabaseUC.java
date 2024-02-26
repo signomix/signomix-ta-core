@@ -64,9 +64,9 @@ public class DatabaseUC {
     @DataSource("shortener")
     AgroalDataSource shortenerDataSource;
 
-    @Inject
-    @DataSource("cms")
-    AgroalDataSource cmsDataSource;
+    //@Inject
+    //@DataSource("cms")
+    //AgroalDataSource cmsDataSource;
 
     // IotDatabaseIface dataDao;
     AuthDaoIface authDao;
@@ -74,7 +74,7 @@ public class DatabaseUC {
     UserDaoIface userDao;
     IotDatabaseIface iotDao;
     IotDatabaseIface tsDao;
-    CmsDaoIface cmsDao;
+    //CmsDaoIface cmsDao;
     ShortenerDaoIface shortenerDao;
     DashboardIface dashboardDao;
     DashboardIface tsDashboardDao;
@@ -119,8 +119,8 @@ public class DatabaseUC {
             dashboardDao.setDatasource(iotDataSource);
             shortenerDao = new ShortenerDao();
             shortenerDao.setDatasource(shortenerDataSource);
-            cmsDao = new CmsDao();
-            cmsDao.setDatasource(cmsDataSource);
+            //cmsDao = new CmsDao();
+            //cmsDao.setDatasource(cmsDataSource);
         } else if ("both".equalsIgnoreCase(databaseType)) {
             tsDao = new com.signomix.common.tsdb.IotDatabaseDao();
             tsDao.setDatasource(tsDs);
@@ -139,8 +139,8 @@ public class DatabaseUC {
             dashboardDao.setDatasource(iotDataSource);
             shortenerDao = new ShortenerDao();
             shortenerDao.setDatasource(shortenerDataSource);
-            cmsDao = new CmsDao();
-            cmsDao.setDatasource(cmsDataSource);
+            //cmsDao = new CmsDao();
+            //cmsDao.setDatasource(cmsDataSource);
         } else if ("postgresql".equalsIgnoreCase(databaseType)){
             iotDao = new com.signomix.common.tsdb.IotDatabaseDao();
             iotDao.setDatasource(tsDs);
@@ -155,8 +155,8 @@ public class DatabaseUC {
             applicationDao.setDatasource(tsDs);
             shortenerDao = new com.signomix.common.tsdb.ShortenerDao();
             shortenerDao.setDatasource(tsDs);
-            cmsDao = new CmsDao();
-            cmsDao.setDatasource(cmsDataSource);
+            //cmsDao = new CmsDao();
+            //cmsDao.setDatasource(cmsDataSource);
             sentinelDao = new com.signomix.common.tsdb.SentinelDao();
             sentinelDao.setDatasource(tsDs);
             signalDao = new com.signomix.common.tsdb.SignalDao();

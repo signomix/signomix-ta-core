@@ -2,6 +2,7 @@ package com.signomix.core.domain;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -11,18 +12,19 @@ import org.jboss.logging.Logger;
 import org.jsoup.Jsoup;
 import org.jsoup.safety.Safelist;
 
+import com.signomix.common.Token;
+import com.signomix.common.TokenType;
 import com.signomix.common.User;
 import com.signomix.common.db.DashboardDao;
 import com.signomix.common.db.DashboardIface;
-import com.signomix.common.db.IotDatabaseDao;
 import com.signomix.common.db.IotDatabaseException;
-import com.signomix.common.db.IotDatabaseIface;
 import com.signomix.common.gui.Dashboard;
 import com.signomix.common.gui.DashboardItem;
 import com.signomix.common.gui.DashboardTemplate;
 import com.signomix.common.gui.Widget;
 import com.signomix.common.iot.Channel;
 import com.signomix.common.iot.Device;
+import com.signomix.common.iot.DeviceGroup;
 import com.signomix.core.application.exception.ServiceException;
 
 import io.agroal.api.AgroalDataSource;
@@ -46,10 +48,19 @@ public class DashboardLogic {
     AgroalDataSource tsDs;
 
     DashboardIface dashboardDao;
-    IotDatabaseIface iotDao;
+    // IotDatabaseIface iotDao;
 
     @Inject
     UserLogic userLogic;
+
+    @Inject
+    AuthLogic authLogic;
+
+    @Inject
+    DeviceLogic deviceLogic;
+
+    @Inject
+    GroupLogic groupLogic;
 
     @Inject
     EuiGenerator euiGenerator;
@@ -65,23 +76,26 @@ public class DashboardLogic {
         if ("h2".equalsIgnoreCase(databaseType)) {
             dashboardDao = new DashboardDao();
             dashboardDao.setDatasource(dataSource);
-            iotDao = new IotDatabaseDao();
-            iotDao.setDatasource(dataSource);
+            // iotDao = new IotDatabaseDao();
+            // iotDao.setDatasource(dataSource);
             defaultOrganizationId = 0;
         } else if ("postgresql".equalsIgnoreCase(databaseType)) {
             dashboardDao = new com.signomix.common.tsdb.DashboardDao();
             dashboardDao.setDatasource(tsDs);
-            iotDao = new com.signomix.common.tsdb.IotDatabaseDao();
-            iotDao.setDatasource(tsDs);
+            // iotDao = new com.signomix.common.tsdb.IotDatabaseDao();
+            // iotDao.setDatasource(tsDs);
             defaultOrganizationId = 1;
         } else {
             logger.error("Unknown database type: " + databaseType);
         }
-        /* try {
-            defaultOrganizationId = iotDao.getParameterValue("system.default.organization", User.ANY);
-        } catch (IotDatabaseException e) {
-            logger.error("Unable to get default organization id: " + e.getMessage());
-        } */
+        /*
+         * try {
+         * defaultOrganizationId =
+         * iotDao.getParameterValue("system.default.organization", User.ANY);
+         * } catch (IotDatabaseException e) {
+         * logger.error("Unable to get default organization id: " + e.getMessage());
+         * }
+         */
     }
 
     public void addDefaultDashboard(Device device) throws ServiceException {
@@ -150,14 +164,15 @@ public class DashboardLogic {
 
     public List<Dashboard> getUserDashboards(User user, Boolean withShared, Boolean isAdmin, Integer limit,
             Integer offset, String searchString) throws ServiceException {
-                int limitInt = limit!=null?limit:100;
-                int offsetInt = offset!=null?offset:0;
+        int limitInt = limit != null ? limit : 100;
+        int offsetInt = offset != null ? offset : 0;
         try {
             if (user.organization != defaultOrganizationId) {
                 return dashboardDao.getOrganizationDashboards(user.organization, limitInt, offsetInt);
             } else {
                 logger.info("geUserDashboards searchString=" + searchString);
-                return dashboardDao.getUserDashboards(user.uid, withShared!=null?withShared:true, isAdmin, limitInt, offsetInt, searchString);
+                return dashboardDao.getUserDashboards(user.uid, withShared != null ? withShared : true, isAdmin,
+                        limitInt, offsetInt, searchString);
             }
         } catch (IotDatabaseException e) {
             logger.error(e.getMessage());
@@ -203,7 +218,9 @@ public class DashboardLogic {
             } else {
                 throw new ServiceException(exceptionApiUnauthorized);
             }
+            updatedDashboard = updateToken(updatedDashboard, user);
             dashboardDao.updateDashboard(sanitizeWidgets(updatedDashboard));
+            updateDevicesAndGroups(updatedDashboard);
             return updatedDashboard;
         } catch (IotDatabaseException e) {
             logger.error(e.getMessage());
@@ -220,7 +237,9 @@ public class DashboardLogic {
             newDashboard.setId(euiGenerator.createEui("S-"));
             newDashboard.setUserID(user.uid);
             newDashboard.setOrganizationId(user.organization);
+            newDashboard = updateToken(newDashboard, user);
             dashboardDao.addDashboard(sanitizeWidgets(newDashboard));
+            updateDevicesAndGroups(newDashboard);
             return newDashboard;
         } catch (IotDatabaseException e) {
             logger.error(e.getMessage());
@@ -311,5 +330,82 @@ public class DashboardLogic {
             widgets.set(i, map);
         }
         return dashboard;
+    }
+
+    private Dashboard updateToken(Dashboard dashboard, User user) throws IotDatabaseException {
+        Token token;
+
+        if (dashboard.isShared()) {
+            long lifetime = 20 * 365 * 24 * 60; // 20 years in minutes
+            if (dashboard.getSharedToken() == null) {
+                // TODO: create shared token
+                token = new Token("public", lifetime, true);
+                token.setIssuer(user.uid);
+                token.setType(TokenType.DASHBOARD);
+                token.setPayload(dashboard.getId());
+                authLogic.modifyToken(token);
+                dashboard.setSharedToken(token.getToken());
+            } else {
+                // TODO: verify or recreate shared token
+                token = authLogic.getToken(dashboard.getSharedToken());
+                if (token == null) {
+                    token = new Token("public", lifetime, true);
+                    token.setIssuer(user.uid);
+                    token.setType(TokenType.DASHBOARD);
+                    token.setPayload(dashboard.getId());
+                    authLogic.saveToken(token);
+                    dashboard.setSharedToken(token.getToken());
+                }
+            }
+        } else {
+            if (dashboard.getSharedToken() != null) {
+                authLogic.removeToken(dashboard.getSharedToken());
+                dashboard.setSharedToken(null);
+            }
+        }
+        return dashboard;
+    }
+
+    private void updateDevicesAndGroups(Dashboard dashboard) throws IotDatabaseException {
+        HashSet<String> deviceIds = dashboard.getDeviceEuis();
+        HashSet<String> groupIds = dashboard.getGroupEuis();
+
+        deviceIds.forEach((deviceId) -> {
+            try {
+                String team;
+                Device device = deviceLogic.getDevice(null, deviceId, false);
+                if (device != null) {
+                    team = device.getTeam();
+                    if (team == null || team.isEmpty()) {
+                        device.setTeam(",public,");
+                    } else {
+                        if (!team.contains(",public,")) {
+                            device.setTeam(team + "public,");
+                        }
+                    }
+                    deviceLogic.updateDevice(null, deviceId, device);
+                }
+            } catch (ServiceException e) {
+                logger.error(e.getMessage());
+            }
+        });
+        groupIds.forEach((groupId) -> {
+            try {
+                DeviceGroup group = groupLogic.getGroup(null, groupId);
+                if (group != null) {
+                    String team = group.getTeam();
+                    if (team == null || team.isEmpty()) {
+                        group.setTeam(",public,");
+                    } else {
+                        if (!team.contains(",public,")) {
+                            group.setTeam(team + "public,");
+                        }
+                    }
+                    groupLogic.updateGroup(null, group);
+                }
+            } catch (ServiceException e) {
+                logger.error(e.getMessage());
+            }
+        });
     }
 }

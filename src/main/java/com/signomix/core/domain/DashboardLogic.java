@@ -220,7 +220,7 @@ public class DashboardLogic {
             }
             updatedDashboard = updateToken(updatedDashboard, user);
             dashboardDao.updateDashboard(sanitizeWidgets(updatedDashboard));
-            updateDevicesAndGroups(updatedDashboard);
+            updateDevicesAndGroups(updatedDashboard, user);
             return updatedDashboard;
         } catch (IotDatabaseException e) {
             logger.error(e.getMessage());
@@ -239,7 +239,7 @@ public class DashboardLogic {
             newDashboard.setOrganizationId(user.organization);
             newDashboard = updateToken(newDashboard, user);
             dashboardDao.addDashboard(sanitizeWidgets(newDashboard));
-            updateDevicesAndGroups(newDashboard);
+            updateDevicesAndGroups(newDashboard, user);
             return newDashboard;
         } catch (IotDatabaseException e) {
             logger.error(e.getMessage());
@@ -334,7 +334,8 @@ public class DashboardLogic {
 
     private Dashboard updateToken(Dashboard dashboard, User user) throws IotDatabaseException {
         Token token;
-
+        logger.info(
+                "updateToken: " + dashboard.getId() + " " + dashboard.isShared() + " " + dashboard.getSharedToken());
         if (dashboard.isShared()) {
             long lifetime = 20 * 365 * 24 * 60; // 20 years in minutes
             if (dashboard.getSharedToken() == null) {
@@ -343,8 +344,7 @@ public class DashboardLogic {
                 token.setIssuer(user.uid);
                 token.setType(TokenType.DASHBOARD);
                 token.setPayload(dashboard.getId());
-                authLogic.modifyToken(token);
-                dashboard.setSharedToken(token.getToken());
+                authLogic.saveToken(token);
             } else {
                 // TODO: verify or recreate shared token
                 token = authLogic.getToken(dashboard.getSharedToken());
@@ -354,9 +354,17 @@ public class DashboardLogic {
                     token.setType(TokenType.DASHBOARD);
                     token.setPayload(dashboard.getId());
                     authLogic.saveToken(token);
-                    dashboard.setSharedToken(token.getToken());
+                } else {
+                    token.setUid("public");
+                    token.setIssuer(user.uid);
+                    token.setType(TokenType.DASHBOARD);
+                    token.setPayload(dashboard.getId());
+                    token.setPermanent(true);
+                    token.setLifetime(lifetime);
+                    authLogic.modifyToken(token);
                 }
             }
+            dashboard.setSharedToken(token.getToken());
         } else {
             if (dashboard.getSharedToken() != null) {
                 authLogic.removeToken(dashboard.getSharedToken());
@@ -366,24 +374,28 @@ public class DashboardLogic {
         return dashboard;
     }
 
-    private void updateDevicesAndGroups(Dashboard dashboard) throws IotDatabaseException {
+    private void updateDevicesAndGroups(Dashboard dashboard, User user) throws IotDatabaseException {
         HashSet<String> deviceIds = dashboard.getDeviceEuis();
         HashSet<String> groupIds = dashboard.getGroupEuis();
-
+        dashboard.isShared();
         deviceIds.forEach((deviceId) -> {
             try {
                 String team;
-                Device device = deviceLogic.getDevice(null, deviceId, false);
+                Device device = deviceLogic.getDevice(user, deviceId, false);
                 if (device != null) {
                     team = device.getTeam();
-                    if (team == null || team.isEmpty()) {
-                        device.setTeam(",public,");
-                    } else {
-                        if (!team.contains(",public,")) {
-                            device.setTeam(team + "public,");
+                    if (dashboard.isShared()) {
+                        if (team == null || team.isEmpty()) {
+                            device.setTeam(",public,");
+                        } else {
+                            if (!team.contains(",public,")) {
+                                device.setTeam(team + "public,");
+                            }
                         }
+                    } else {
+                        device.setTeam(team.replace(",public,", ","));
                     }
-                    deviceLogic.updateDevice(null, deviceId, device);
+                    deviceLogic.updateDevice(user, deviceId, device);
                 }
             } catch (ServiceException e) {
                 logger.error(e.getMessage());
@@ -394,12 +406,16 @@ public class DashboardLogic {
                 DeviceGroup group = groupLogic.getGroup(null, groupId);
                 if (group != null) {
                     String team = group.getTeam();
-                    if (team == null || team.isEmpty()) {
-                        group.setTeam(",public,");
-                    } else {
-                        if (!team.contains(",public,")) {
-                            group.setTeam(team + "public,");
+                    if (dashboard.isShared()) {
+                        if (team == null || team.isEmpty()) {
+                            group.setTeam(",public,");
+                        } else {
+                            if (!team.contains(",public,")) {
+                                group.setTeam(team + "public,");
+                            }
                         }
+                    } else {
+                        group.setTeam(team.replace(",public,", ","));
                     }
                     groupLogic.updateGroup(null, group);
                 }

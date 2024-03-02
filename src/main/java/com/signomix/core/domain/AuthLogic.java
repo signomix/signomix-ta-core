@@ -150,7 +150,8 @@ public class AuthLogic {
                 LOG.error("User not found: "+token.getIssuer());
                 return;
             }
-            authDao.createTokenForUser(issUser, token.getUid(), token.getLifetime(), token.isPermanent(), token.getType(), token.getPayload());
+            //authDao.createTokenForUser(issUser, token.getUid(), token.getLifetime(), token.isPermanent(), token.getType(), token.getPayload());
+            authDao.saveToken(token);
         }catch(Exception e){
             LOG.error(e.getMessage());
         }
@@ -159,6 +160,14 @@ public class AuthLogic {
     public void removeToken(String token){
         try{
             authDao.removeToken(token);
+        }catch(Exception e){
+            LOG.error(e.getMessage());
+        }
+    }
+
+    public void removeDashboardToken(String dashboardId){
+        try{
+            authDao.removeDashboardToken(dashboardId);
         }catch(Exception e){
             LOG.error(e.getMessage());
         }

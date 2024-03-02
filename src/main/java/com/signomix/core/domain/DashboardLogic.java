@@ -167,12 +167,14 @@ public class DashboardLogic {
         int limitInt = limit != null ? limit : 100;
         int offsetInt = offset != null ? offset : 0;
         try {
-            if (user.organization != defaultOrganizationId) {
-                return dashboardDao.getOrganizationDashboards(user.organization, limitInt, offsetInt);
-            } else {
-                logger.info("geUserDashboards searchString=" + searchString);
+            if (user.uid.equalsIgnoreCase("public")) {
+                return dashboardDao.getUserDashboards(user.uid, true, false, limit, offset, searchString);
+            }
+            if (user.organization == defaultOrganizationId) {
                 return dashboardDao.getUserDashboards(user.uid, withShared != null ? withShared : true, isAdmin,
                         limitInt, offsetInt, searchString);
+            } else {
+                return dashboardDao.getOrganizationDashboards(user.organization, limitInt, offsetInt);
             }
         } catch (IotDatabaseException e) {
             logger.error(e.getMessage());
@@ -185,9 +187,11 @@ public class DashboardLogic {
             Dashboard dashboard = dashboardDao.getDashboard(dashboardId);
             if (null != dashboard) {
                 if (!userLogic.hasObjectAccess(user, false, defaultOrganizationId, dashboard)) {
+                    logger.warn("Dashboard found but no access: " + dashboardId);
                     throw new ServiceException(exceptionApiUnauthorized);
                 }
             } else {
+                logger.warn("Dashboard not found: " + dashboardId);
                 throw new ServiceException(exceptionApiUnauthorized);
             }
             if (null == dashboard.getItems() || dashboard.getItems().isEmpty()) {
@@ -338,7 +342,7 @@ public class DashboardLogic {
                 "updateToken: " + dashboard.getId() + " " + dashboard.isShared() + " " + dashboard.getSharedToken());
         if (dashboard.isShared()) {
             long lifetime = 20 * 365 * 24 * 60; // 20 years in minutes
-            if (dashboard.getSharedToken() == null) {
+            if (dashboard.getSharedToken() == null || dashboard.getSharedToken().isEmpty()) {
                 // TODO: create shared token
                 token = new Token("public", lifetime, true);
                 token.setIssuer(user.uid);
@@ -366,10 +370,8 @@ public class DashboardLogic {
             }
             dashboard.setSharedToken(token.getToken());
         } else {
-            if (dashboard.getSharedToken() != null) {
-                authLogic.removeToken(dashboard.getSharedToken());
-                dashboard.setSharedToken(null);
-            }
+            authLogic.removeDashboardToken(dashboard.getId());
+            dashboard.setSharedToken(null);
         }
         return dashboard;
     }

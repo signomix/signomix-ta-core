@@ -15,6 +15,7 @@ import com.signomix.common.db.UserDaoIface;
 import com.signomix.common.gui.Dashboard;
 import com.signomix.common.iot.Device;
 import com.signomix.common.iot.DeviceGroup;
+import com.signomix.common.iot.sentinel.SentinelConfig;
 import com.signomix.core.application.exception.ServiceException;
 
 import io.agroal.api.AgroalDataSource;
@@ -242,6 +243,10 @@ public class UserLogic {
             long defaultOrganizationId,
             Object accessedObject) {
         // Platfor administrator has access to all objects
+        if(accessedObject == null) {
+            logger.error("Accessed object is null");
+            return false;
+        }
         if (user.type == User.OWNER) {
             return true;
         }
@@ -267,14 +272,24 @@ public class UserLogic {
             admins = group.getAdministrators();
             owner = group.getUserID();
             organizationId = group.getOrganization();
+        } else if(accessedObject instanceof SentinelConfig){
+            SentinelConfig sentinelConfig = (SentinelConfig)accessedObject;
+            team = sentinelConfig.team;
+            admins = sentinelConfig.administrators;
+            owner = sentinelConfig.userId;
+            organizationId = sentinelConfig.organizationId;
         } else {
             logger.error("Unknown object type: " + accessedObject.getClass().getName());
             return false;
         }
 
         // object owner has read/write access
-        if (owner.equals(user.uid))
+        if (owner.equals(user.uid)){
             return true;
+        }
+        if(user.uid.equalsIgnoreCase("public")){
+            return team.contains(",public,");
+        }
         // access depands on organization
         if (user.organization == defaultOrganizationId) {
             if (admins.contains("," + user.uid + ","))

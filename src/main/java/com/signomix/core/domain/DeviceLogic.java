@@ -150,7 +150,7 @@ public class DeviceLogic {
             } else {
                 searchParams = new String[0];
             }
-            if (user.organization == defaultOrganizationId) {
+            if (user.organization == defaultOrganizationId || user.uid.equalsIgnoreCase("public")) {
                 //if (searchParams.length == 3) {
                 //    return iotDao.getUserDevicesByTag(user,searchParams[1], searchParams[2], searchLimit, searchOffset);
                 //} else {

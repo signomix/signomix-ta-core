@@ -15,28 +15,39 @@ public class DevicePort {
     @Inject
     DeviceLogic deviceLogic;
 
-
-    public Device getDevice(User user, String eui, Boolean withStatus) throws ServiceException{
-        return deviceLogic.getDevice(user, eui, (null!=withStatus?withStatus:false));
+    public Device getDevice(User user, String eui, Boolean withStatus) throws ServiceException {
+        return deviceLogic.getDevice(user, eui, (null != withStatus ? withStatus : false));
     }
 
-    public List<Device> getUserDevices(User user, Boolean withStatus, Integer limit, Integer offset, String searchString)throws ServiceException{
-        return deviceLogic.getUserDevices(user, (null!=withStatus?withStatus:false), limit, offset, searchString);
+/*     public List<Device> getUserDevices(User user, Boolean withStatus, Integer limit, Integer offset,
+            String searchString) throws ServiceException {
+        return deviceLogic.getUserDevices(user, (null != withStatus ? withStatus : false), limit, offset, searchString);
     }
 
-    public void deleteDevice(User user, String eui) throws ServiceException{
+    public List<Device> getDevicesByPath(User user, Long organizationId, Boolean withStatus, Integer limit,
+            Integer offset, String path) throws ServiceException {
+        return deviceLogic.getDevicesByPath(user, organizationId, (null != withStatus ? withStatus : false), limit,
+                offset, path);
+    } */
+
+    public List<Device> getDevices(User user, Boolean withStatus, Long organizationId, Integer context, String path,
+            String search, Integer limit, Integer offset) {
+        return deviceLogic.getDevices(user, withStatus, organizationId, context, path, search, limit, offset);
+    }
+
+    public void deleteDevice(User user, String eui) throws ServiceException {
         deviceLogic.deleteDevice(user, eui);
     }
 
-    public void updateDevice(User user, String eui, Device device) throws ServiceException{
+    public void updateDevice(User user, String eui, Device device) throws ServiceException {
         deviceLogic.updateDevice(user, eui, device);
     }
 
-    public void createDevice(User user, Device device) throws ServiceException{
+    public void createDevice(User user, Device device) throws ServiceException {
         deviceLogic.createDevice(user, device);
     }
 
-    public void checkDevices() throws ServiceException{
+    public void checkDevices() throws ServiceException {
         deviceLogic.checkDevices();
     }
 }

@@ -136,14 +136,41 @@ public class DeviceLogic {
         }
     }
 
-    public List<Device> getUserDevices(User user, boolean withStatus, Integer limit, Integer offset,
+    public List<Device> getDevices(User user, Boolean withStatus, Long organizationId, Integer context, String path,
+            String search, Integer limit, Integer offset) {
+        try {
+            Integer searchOffset = null;
+            Integer searchLimit = null;
+            searchLimit = limit == null ? 10000 : limit;
+            searchOffset = offset == null ? 0 : offset;
+            String searchPath = path;
+            if(searchPath != null){
+                searchPath = searchPath.replace(".ALL", ".*");
+            }
+            if (organizationId==null || organizationId == defaultOrganizationId) {
+                return iotDao.getUserDevices(user, withStatus, searchLimit, searchOffset, search);
+            } else {
+                if(user.type == User.SUPERUSER && context != null && context > 0){
+                    return iotDao.getDevicesByPath(user.uid, user.organization, context, searchPath, searchLimit, searchOffset);
+                } else if(user.tenant > 0){
+                    return iotDao.getDevicesByPath(user.uid, user.organization, user.tenant, user.path, searchLimit, searchOffset);
+                } else {
+                    return iotDao.getOrganizationDevices(organizationId, withStatus, searchLimit, searchOffset, path);
+                }
+            }
+        } catch (IotDatabaseException e) {
+            throw new ServiceException(e.getMessage());
+        }
+    }
+
+    /* public List<Device> getUserDevices(User user, boolean withStatus, Integer limit, Integer offset,
             String searchString)
             throws ServiceException {
         try {
             Integer searchOffset = null;
             Integer searchLimit = null;
-            searchLimit=limit==null?10000:limit;
-            searchOffset=offset==null?0:offset;
+            searchLimit = limit == null ? 10000 : limit;
+            searchOffset = offset == null ? 0 : offset;
             String[] searchParams;
             if (searchString != null) {
                 searchParams = searchString.split(":");
@@ -151,18 +178,45 @@ public class DeviceLogic {
                 searchParams = new String[0];
             }
             if (user.organization == defaultOrganizationId || user.uid.equalsIgnoreCase("public")) {
-                //if (searchParams.length == 3) {
-                //    return iotDao.getUserDevicesByTag(user,searchParams[1], searchParams[2], searchLimit, searchOffset);
-                //} else {
-                    return iotDao.getUserDevices(user, withStatus, searchLimit, searchOffset, searchString);
-                //}
+                // if (searchParams.length == 3) {
+                // return iotDao.getUserDevicesByTag(user,searchParams[1], searchParams[2],
+                // searchLimit, searchOffset);
+                // } else {
+                return iotDao.getUserDevices(user, withStatus, searchLimit, searchOffset, searchString);
+                // }
             } else {
-                return iotDao.getOrganizationDevices(user.organization, withStatus, searchLimit, searchOffset, searchString);
+                return iotDao.getOrganizationDevices(user.organization, withStatus, searchLimit, searchOffset,
+                        searchString);
             }
         } catch (IotDatabaseException e) {
             throw new ServiceException(e.getMessage(), e);
         }
     }
+
+    public List<Device> getDevicesByPath(User user, Long organizationId, boolean withStatus, Integer limit,
+            Integer offset,
+            String path) throws ServiceException {
+        try {
+            Integer searchOffset = null;
+            Integer searchLimit = null;
+            String searchPath = path;
+            searchLimit = limit == null ? 10000 : limit;
+            searchOffset = offset == null ? 0 : offset;
+            if (path == null) {
+                searchPath = user.path;
+            }
+            if (searchPath != null) {
+                searchPath = searchPath.replace("ALL", "*");
+            }
+            if (user.tenant > 0) {
+                return iotDao.getDevicesByPath(user.uid, user.tenant, searchPath, searchLimit, searchOffset);
+            } else {
+                return iotDao.getOrganizationDevices(organizationId, withStatus, searchLimit, searchOffset, path);
+            }
+        } catch (IotDatabaseException e) {
+            throw new ServiceException(e.getMessage(), e);
+        }
+    } */
 
     public void deleteDevice(User user, String eui) throws ServiceException {
         Device device = getDevice(user, eui, false);
@@ -199,8 +253,8 @@ public class DeviceLogic {
                 if (eui != null && !eui.toUpperCase().equals(device.getEUI().toUpperCase())) {
                     iotDao.changeDeviceEui(eui, device.getEUI());
                 }
-                if(device.getOrganizationId()==defaultOrganizationId){
-                    device.setOrganzationPath("");
+                if (device.getOrganizationId() == defaultOrganizationId) {
+                    device.setPath("");
                 }
                 iotDao.updateDevice(user, device);
                 if (!updated.getChannelsAsString().equals(device.getChannelsAsString())) {
@@ -255,8 +309,8 @@ public class DeviceLogic {
             }
             logger.info("Creating device: " + device.getEUI());
             device.setOrganizationId(user.organization);
-            if(device.getOrganizationId()==defaultOrganizationId){
-                device.setOrganzationPath("");
+            if (device.getOrganizationId() == defaultOrganizationId) {
+                device.setPath("");
             }
             iotDao.createDevice(user, device);
             iotDao.updateDeviceChannels(device.getEUI(), device.getChannelsAsString());

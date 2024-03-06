@@ -50,7 +50,10 @@ public class DeviceRestAdapter {
             @QueryParam("full") Boolean full,
             @QueryParam("limit") Integer limit,
             @QueryParam("offset") Integer offset,
-            @QueryParam("search") String search) {
+            @QueryParam("search") String search,
+            @QueryParam("organization") Long organizationId,
+            @QueryParam("path") String path,
+            @QueryParam("context") Integer context){
         try {
             User user;
             try {
@@ -62,7 +65,13 @@ public class DeviceRestAdapter {
                 throw new ServiceException(unauthorizedException);
             }
             logger.info("getDevices limit:" + limit + " offset:" + offset + " full:" + full);
-            List<Device> devices = devicePort.getUserDevices(user, full, limit, offset, search);
+            List<Device> devices;
+            /* if(null==organizationId){
+                devices = devicePort.getUserDevices(user, full, limit, offset, search);
+            }else{
+                devices = devicePort.getDevicesByPath(user, organizationId, full, limit, offset, path);
+            } */
+            devices = devicePort.getDevices(user, full, organizationId, context, path, search, limit, offset);
             return Response.ok().entity(devices).build();
         } catch (Exception e) {
             logger.error("getDevices error:" + e.getMessage());

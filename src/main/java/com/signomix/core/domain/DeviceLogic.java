@@ -147,15 +147,16 @@ public class DeviceLogic {
             if(searchPath != null){
                 searchPath = searchPath.replace(".ALL", ".*");
             }
+            boolean searchStatus=withStatus==null?false:withStatus;
             if (organizationId==null || organizationId == defaultOrganizationId) {
-                return iotDao.getUserDevices(user, withStatus, searchLimit, searchOffset, search);
+                return iotDao.getUserDevices(user, searchStatus, searchLimit, searchOffset, search);
             } else {
                 if(user.type == User.SUPERUSER && context != null && context > 0){
                     return iotDao.getDevicesByPath(user.uid, user.organization, context, searchPath, searchLimit, searchOffset);
                 } else if(user.tenant > 0){
                     return iotDao.getDevicesByPath(user.uid, user.organization, user.tenant, user.path, searchLimit, searchOffset);
                 } else {
-                    return iotDao.getOrganizationDevices(organizationId, withStatus, searchLimit, searchOffset, path);
+                    return iotDao.getOrganizationDevices(organizationId, searchStatus, searchLimit, searchOffset, path);
                 }
             }
         } catch (IotDatabaseException e) {

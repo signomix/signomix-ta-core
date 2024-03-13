@@ -11,8 +11,6 @@ import com.signomix.common.db.ApplicationDao;
 import com.signomix.common.db.ApplicationDaoIface;
 import com.signomix.common.db.AuthDao;
 import com.signomix.common.db.AuthDaoIface;
-import com.signomix.common.db.CmsDao;
-import com.signomix.common.db.CmsDaoIface;
 import com.signomix.common.db.DashboardDao;
 import com.signomix.common.db.DashboardIface;
 import com.signomix.common.db.IotDatabaseException;
@@ -64,9 +62,9 @@ public class DatabaseUC {
     @DataSource("shortener")
     AgroalDataSource shortenerDataSource;
 
-    //@Inject
-    //@DataSource("cms")
-    //AgroalDataSource cmsDataSource;
+    // @Inject
+    // @DataSource("cms")
+    // AgroalDataSource cmsDataSource;
 
     // IotDatabaseIface dataDao;
     AuthDaoIface authDao;
@@ -74,7 +72,7 @@ public class DatabaseUC {
     UserDaoIface userDao;
     IotDatabaseIface iotDao;
     IotDatabaseIface tsDao;
-    //CmsDaoIface cmsDao;
+    // CmsDaoIface cmsDao;
     ShortenerDaoIface shortenerDao;
     DashboardIface dashboardDao;
     DashboardIface tsDashboardDao;
@@ -119,8 +117,8 @@ public class DatabaseUC {
             dashboardDao.setDatasource(iotDataSource);
             shortenerDao = new ShortenerDao();
             shortenerDao.setDatasource(shortenerDataSource);
-            //cmsDao = new CmsDao();
-            //cmsDao.setDatasource(cmsDataSource);
+            // cmsDao = new CmsDao();
+            // cmsDao.setDatasource(cmsDataSource);
         } else if ("both".equalsIgnoreCase(databaseType)) {
             tsDao = new com.signomix.common.tsdb.IotDatabaseDao();
             tsDao.setDatasource(tsDs);
@@ -139,24 +137,24 @@ public class DatabaseUC {
             dashboardDao.setDatasource(iotDataSource);
             shortenerDao = new ShortenerDao();
             shortenerDao.setDatasource(shortenerDataSource);
-            //cmsDao = new CmsDao();
-            //cmsDao.setDatasource(cmsDataSource);
-        } else if ("postgresql".equalsIgnoreCase(databaseType)){
+            // cmsDao = new CmsDao();
+            // cmsDao.setDatasource(cmsDataSource);
+        } else if ("postgresql".equalsIgnoreCase(databaseType)) {
             iotDao = new com.signomix.common.tsdb.IotDatabaseDao();
             iotDao.setDatasource(tsDs);
             iotDao.setAnalyticDatasource(olapDs);
             dashboardDao = new com.signomix.common.tsdb.DashboardDao();
             dashboardDao.setDatasource(tsDs);
-            userDao= new com.signomix.common.tsdb.UserDao();
+            userDao = new com.signomix.common.tsdb.UserDao();
             userDao.setDatasource(tsDs);
-            authDao=new com.signomix.common.tsdb.AuthDao();
+            authDao = new com.signomix.common.tsdb.AuthDao();
             authDao.setDatasource(tsDs);
             applicationDao = new com.signomix.common.tsdb.ApplicationDao();
             applicationDao.setDatasource(tsDs);
             shortenerDao = new com.signomix.common.tsdb.ShortenerDao();
             shortenerDao.setDatasource(tsDs);
-            //cmsDao = new CmsDao();
-            //cmsDao.setDatasource(cmsDataSource);
+            // cmsDao = new CmsDao();
+            // cmsDao.setDatasource(cmsDataSource);
             sentinelDao = new com.signomix.common.tsdb.SentinelDao();
             sentinelDao.setDatasource(tsDs);
             signalDao = new com.signomix.common.tsdb.SignalDao();
@@ -180,9 +178,9 @@ public class DatabaseUC {
             LOG.error(e.getMessage());
             e.printStackTrace();
         }
-        try{
+        try {
             organizationDao.createStructure();
-        }catch(IotDatabaseException e){
+        } catch (IotDatabaseException e) {
             LOG.error(e.getMessage());
             e.printStackTrace();
         }
@@ -218,15 +216,15 @@ public class DatabaseUC {
                 e.printStackTrace();
             }
         }
-        try{
+        try {
             sentinelDao.createStructure();
-        }catch(IotDatabaseException e){
+        } catch (IotDatabaseException e) {
             LOG.error(e.getMessage());
             e.printStackTrace();
         }
-        try{
+        try {
             signalDao.createStructure();
-        }catch(IotDatabaseException e){
+        } catch (IotDatabaseException e) {
             LOG.error(e.getMessage());
             e.printStackTrace();
         }
@@ -319,23 +317,25 @@ public class DatabaseUC {
         dashboardTemplates = null;
         LOG.info("data migration finished");
 
-        //TODO: migrate cms data
-        /* ArrayList<Document> documents = new ArrayList<>();
-        try {
-            documents = (ArrayList) cmsDao.getAllDocuments();
-        } catch (IotDatabaseException e) {
-            LOG.error(e.getMessage());
-            e.printStackTrace();
-        }
-        documents.forEach(document -> {
-            try {
-                tsDao.addDocument(document);
-            } catch (IotDatabaseException e) {
-                LOG.error(e.getMessage());
-                e.printStackTrace();
-            }
-        });
-        documents = null; */
+        // TODO: migrate cms data
+        /*
+         * ArrayList<Document> documents = new ArrayList<>();
+         * try {
+         * documents = (ArrayList) cmsDao.getAllDocuments();
+         * } catch (IotDatabaseException e) {
+         * LOG.error(e.getMessage());
+         * e.printStackTrace();
+         * }
+         * documents.forEach(document -> {
+         * try {
+         * tsDao.addDocument(document);
+         * } catch (IotDatabaseException e) {
+         * LOG.error(e.getMessage());
+         * e.printStackTrace();
+         * }
+         * });
+         * documents = null;
+         */
     }
 
     public void doBackup() {
@@ -348,7 +348,7 @@ public class DatabaseUC {
             sentinelDao.backupDb();
             shortenerDao.backupDb();
             signalDao.backupDb();
-            //cmsDao.backupDb();
+            // cmsDao.backupDb();
             userDao.backupDb();
         } catch (IotDatabaseException e) {
             LOG.error(e.getMessage());
@@ -460,17 +460,18 @@ public class DatabaseUC {
             iotDao.setParameter("devicesLimit", User.PRIMARY, 100, "");
             iotDao.setParameter("notifications", User.PRIMARY, 0, "SMTP,WEBHOOK,SMS"); // SMTP,SLACK,PUSHOVER,TELEGRAM,DISCORD,WEBHOOK
 
-            // Superuser account: high limit - for specific contracts - should be managed manually
+            // Superuser account: high limit - for specific contracts - should be managed
+            // manually
             iotDao.setParameter("collectionLimit", User.SUPERUSER, 720000, ""); // TODO: 24h X 6 transmission/hour
             iotDao.setParameter("collectionLimitMonthly", User.SUPERUSER, 21600000, "");
             iotDao.setParameter("dataRetention", User.SUPERUSER, 365, "");
             iotDao.setParameter("devicesLimit", User.SUPERUSER, 10000, "");
             iotDao.setParameter("notifications", User.SUPERUSER, 0, "SMTP,WEBHOOK,SMS"); // SMTP,SLACK,PUSHOVER,TELEGRAM,DISCORD,WEBHOOK
 
-            iotDao.setParameter("collectionLimit", User.ADMIN, 7200, ""); // 24h X 6 transmission/hour
-            iotDao.setParameter("collectionLimitMonthly", User.ADMIN, 216000, "");
+            iotDao.setParameter("collectionLimit", User.ADMIN, 720000, ""); // 24h X 6 transmission/hour
+            iotDao.setParameter("collectionLimitMonthly", User.ADMIN, 21600000, "");
             iotDao.setParameter("dataRetention", User.ADMIN, 365, "");
-            iotDao.setParameter("devicesLimit", User.ADMIN, 50, "");
+            iotDao.setParameter("devicesLimit", User.ADMIN, 10000, "");
             iotDao.setParameter("notifications", User.ADMIN, 0, "SMTP,WEBHOOK,SMS"); // SMTP,SLACK,PUSHOVER,TELEGRAM,DISCORD,WEBHOOK
 
             iotDao.setParameter("system.default.organization", User.ANY, 0, "");

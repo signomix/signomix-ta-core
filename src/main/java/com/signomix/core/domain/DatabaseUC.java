@@ -16,6 +16,7 @@ import com.signomix.common.db.DashboardIface;
 import com.signomix.common.db.IotDatabaseException;
 import com.signomix.common.db.IotDatabaseIface;
 import com.signomix.common.db.OrganizationDaoIface;
+import com.signomix.common.db.ReportDaoIface;
 import com.signomix.common.db.SentinelDaoIface;
 import com.signomix.common.db.ShortenerDao;
 import com.signomix.common.db.ShortenerDaoIface;
@@ -79,6 +80,7 @@ public class DatabaseUC {
     SentinelDaoIface sentinelDao;
     SignalDaoIface signalDao;
     OrganizationDaoIface organizationDao;
+    ReportDaoIface reportDao;
 
     @ConfigProperty(name = "signomix.data.retention.demo", defaultValue = "1")
     int demoDataRetention;
@@ -161,6 +163,8 @@ public class DatabaseUC {
             signalDao.setDatasource(tsDs);
             organizationDao = new com.signomix.common.tsdb.OrganizationDao();
             organizationDao.setDatasource(tsDs);
+            reportDao = new com.signomix.common.tsdb.ReportDao();
+            reportDao.setDatasource(tsDs);
         } else {
             LOG.error("Database type not configured or not supported: " + databaseType);
         }
@@ -224,6 +228,13 @@ public class DatabaseUC {
         }
         try {
             signalDao.createStructure();
+        } catch (IotDatabaseException e) {
+            LOG.error(e.getMessage());
+            e.printStackTrace();
+        }
+
+        try{
+            reportDao.createStructure();
         } catch (IotDatabaseException e) {
             LOG.error(e.getMessage());
             e.printStackTrace();
@@ -350,6 +361,8 @@ public class DatabaseUC {
             signalDao.backupDb();
             // cmsDao.backupDb();
             userDao.backupDb();
+            organizationDao.backupDb();
+            reportDao.backupDb();
         } catch (IotDatabaseException e) {
             LOG.error(e.getMessage());
         }

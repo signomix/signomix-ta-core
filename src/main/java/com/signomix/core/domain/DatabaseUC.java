@@ -6,6 +6,8 @@ import java.util.List;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.jboss.logging.Logger;
 
+import com.signomix.common.HashMaker;
+import com.signomix.common.Organization;
 import com.signomix.common.User;
 import com.signomix.common.db.ApplicationDao;
 import com.signomix.common.db.ApplicationDaoIface;
@@ -183,13 +185,13 @@ public class DatabaseUC {
             e.printStackTrace();
         }
         try {
-            organizationDao.createStructure();
+            userDao.createStructure();
         } catch (IotDatabaseException e) {
             LOG.error(e.getMessage());
             e.printStackTrace();
         }
         try {
-            userDao.createStructure();
+            organizationDao.createStructure();
         } catch (IotDatabaseException e) {
             LOG.error(e.getMessage());
             e.printStackTrace();
@@ -233,29 +235,16 @@ public class DatabaseUC {
             e.printStackTrace();
         }
 
-        try{
+        try {
             reportDao.createStructure();
         } catch (IotDatabaseException e) {
             LOG.error(e.getMessage());
             e.printStackTrace();
         }
-
-        /*
-         * try {
-         * LOG.info("test backup");
-         * //shortenerDao.createStructure();
-         * iotDao.backupDb();
-         * authDao.backupDb();
-         * cmsDao.backupDb();
-         * userDao.backupDb();
-         * shortenerDao.backupDb();
-         * } catch (IotDatabaseException e) {
-         * LOG.error(e.getMessage());
-         * e.printStackTrace();
-         * }
-         */
         setSignomixParameters();
         setSignomixFeatures();
+
+        createUsers();
 
         // TODO: create predefined users
         // TODO
@@ -509,6 +498,56 @@ public class DatabaseUC {
             LOG.error(e.getMessage());
         }
 
+    }
+
+    private void createUsers() {
+        Organization organization = new Organization(null, "0123456789", "Demo Organization",
+                "Organization for demonstration purposes", 0);
+        try {
+            organizationDao.addOrganization(organization);
+        } catch (IotDatabaseException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+        Organization demOrganization = null;
+        try {
+            demOrganization = organizationDao.getOrganization("0123456789");
+        } catch (IotDatabaseException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+        User organizationAdmin = new User();
+        organizationAdmin.uid = "admin_demo";
+        organizationAdmin.email = "";
+        organizationAdmin.organization = demOrganization.id;
+        organizationAdmin.password = HashMaker.md5Java("test123");
+        organizationAdmin.type = User.MANAGING_ADMIN;
+        organizationAdmin.confirmed = true;
+        organizationAdmin.name = "Admin";
+        organizationAdmin.surname = "Demo";
+        organizationAdmin.phone = 0;
+        organizationAdmin.preferredLanguage = "en";
+        organizationAdmin.role = "";
+        organizationAdmin.alertNotificationChannel = "";
+        organizationAdmin.infoNotificationChannel = "";
+        organizationAdmin.warningNotificationChannel = "";
+        organizationAdmin.generalNotificationChannel = "";
+        organizationAdmin.authStatus = User.IS_ACTIVE;
+        organizationAdmin.confirmed = true;
+        organizationAdmin.credits = 0L;
+        organizationAdmin.phonePrefix = "";
+        organizationAdmin.unregisterRequested = false;
+        organizationAdmin.path = "";
+        organizationAdmin.tenant = 0;
+        organizationAdmin.autologin = false;
+        organizationAdmin.services = 0;
+        organizationAdmin.organizationCode = "0123456789";
+        try {
+            userDao.addUser(organizationAdmin);
+        } catch (IotDatabaseException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
     }
 
 }

@@ -74,11 +74,14 @@ public class UserLogic {
             logger.error("Unknown database type: " + databaseType);
         }
 
-/*         try {
-            defaultOrganizationId = iotDao.getParameterValue("system.default.organization", User.ANY);
-        } catch (IotDatabaseException e) {
-            logger.error("Unable to get default organization id: " + e.getMessage());
-        } */
+        /*
+         * try {
+         * defaultOrganizationId =
+         * iotDao.getParameterValue("system.default.organization", User.ANY);
+         * } catch (IotDatabaseException e) {
+         * logger.error("Unable to get default organization id: " + e.getMessage());
+         * }
+         */
     }
 
     /**
@@ -93,7 +96,7 @@ public class UserLogic {
             throw new ServiceException(userNotAuthorizedException);
         }
         User user = userDao.getUser(uid);
-        //user.password = "***";
+        // user.password = "***";
         if (isSystemAdmin(authorizingUser)
                 || isOrganizationAdmin(authorizingUser, user.organization)
                 || authorizingUser.uid.equals(uid)) {
@@ -152,45 +155,55 @@ public class UserLogic {
 
     public List<Organization> getOrganizations(Integer limit, Integer offset) throws ServiceException {
         return null;
-/*         try {
-            return userDao.getOrganizations(limit, offset);
-        } catch (IotDatabaseException e) {
-            throw new ServiceException(e.getMessage());
-        } */
+        /*
+         * try {
+         * return userDao.getOrganizations(limit, offset);
+         * } catch (IotDatabaseException e) {
+         * throw new ServiceException(e.getMessage());
+         * }
+         */
     }
 
     public Organization getOrganization(long organizationId) throws ServiceException {
         return null;
-/*         try {
-            return userDao.getOrganization(organizationId);
-        } catch (IotDatabaseException e) {
-            e.printStackTrace();
-            throw new ServiceException(e.getMessage());
-        } */
+        /*
+         * try {
+         * return userDao.getOrganization(organizationId);
+         * } catch (IotDatabaseException e) {
+         * e.printStackTrace();
+         * throw new ServiceException(e.getMessage());
+         * }
+         */
     }
 
     public void addOrganization(Organization organization) throws ServiceException {
-/*         try {
-            userDao.addOrganization(organization);
-        } catch (IotDatabaseException e) {
-            throw new ServiceException(e.getMessage());
-        } */
+        /*
+         * try {
+         * userDao.addOrganization(organization);
+         * } catch (IotDatabaseException e) {
+         * throw new ServiceException(e.getMessage());
+         * }
+         */
     }
 
     public void updateOrganization(Organization organization) throws ServiceException {
-/*         try {
-            userDao.updateOrganization(organization);
-        } catch (IotDatabaseException e) {
-            throw new ServiceException(e.getMessage());
-        } */
+        /*
+         * try {
+         * userDao.updateOrganization(organization);
+         * } catch (IotDatabaseException e) {
+         * throw new ServiceException(e.getMessage());
+         * }
+         */
     }
 
     public void deleteOrganization(long organizationId) throws ServiceException {
-/*         try {
-            userDao.deleteOrganization(organizationId);
-        } catch (IotDatabaseException e) {
-            throw new ServiceException(e.getMessage());
-        } */
+        /*
+         * try {
+         * userDao.deleteOrganization(organizationId);
+         * } catch (IotDatabaseException e) {
+         * throw new ServiceException(e.getMessage());
+         * }
+         */
     }
 
     /**
@@ -243,10 +256,11 @@ public class UserLogic {
             long defaultOrganizationId,
             Object accessedObject) {
         // Platfor administrator has access to all objects
-        if(accessedObject == null) {
+        if (accessedObject == null) {
             logger.error("Accessed object is null");
             return false;
         }
+        // System admin has access to all objects
         if (user.type == User.OWNER) {
             return true;
         }
@@ -254,41 +268,56 @@ public class UserLogic {
         String team = null;
         String admins = null;
         long organizationId = 0;
+        int tenantId = 0;
+        boolean isPublic = false;
+        String path = "";
         if (accessedObject instanceof Dashboard) {
             Dashboard dashboard = (Dashboard) accessedObject;
             team = dashboard.getTeam();
             admins = dashboard.getAdministrators();
             owner = dashboard.getUserID();
             organizationId = dashboard.getOrganizationId();
+            // tenantId = dashboard.getTenantId();
+            isPublic = dashboard.isShared();
+            // path = dashboard.getPath();
         } else if (accessedObject instanceof Device) {
             Device device = (Device) accessedObject;
             team = device.getTeam();
             admins = device.getAdministrators();
             owner = device.getUserID();
             organizationId = device.getOrganizationId();
+            // tenantId = device.getTenantId();
+            isPublic = device.getTeam().contains(",public,");
+            path = device.getPath();
         } else if (accessedObject instanceof DeviceGroup) {
-            DeviceGroup group = (DeviceGroup)accessedObject;
+            DeviceGroup group = (DeviceGroup) accessedObject;
             team = group.getTeam();
             admins = group.getAdministrators();
             owner = group.getUserID();
             organizationId = group.getOrganization();
-        } else if(accessedObject instanceof SentinelConfig){
-            SentinelConfig sentinelConfig = (SentinelConfig)accessedObject;
+            // tenantId = group.getTenantId();
+            isPublic = group.getTeam().contains(",public,");
+            // path = group.getPath();
+        } else if (accessedObject instanceof SentinelConfig) {
+            SentinelConfig sentinelConfig = (SentinelConfig) accessedObject;
             team = sentinelConfig.team;
             admins = sentinelConfig.administrators;
             owner = sentinelConfig.userId;
             organizationId = sentinelConfig.organizationId;
+            // tenantId = sentinelConfig.tenantId;
+            isPublic = sentinelConfig.team.contains(",public,");
+            // path = sentinelConfig.path;
         } else {
             logger.error("Unknown object type: " + accessedObject.getClass().getName());
             return false;
         }
 
         // object owner has read/write access
-        if (owner.equals(user.uid)){
+        if (owner.equals(user.uid)) {
             return true;
         }
-        if(user.uid.equalsIgnoreCase("public")){
-            return team.contains(",public,");
+        if (user.uid.equalsIgnoreCase("public")) {
+            return isPublic;
         }
         // access depands on organization
         if (user.organization == defaultOrganizationId) {
@@ -299,15 +328,42 @@ public class UserLogic {
                     return true;
             }
         } else {
-            if (!writeAccess) {
-                if (user.organization == organizationId)
-                    return true;
-            } else {
-                if (user.organization == organizationId && user.type == User.ADMIN) {
-                    return true;
+            if (user.tenant < 1) {
+                if (!writeAccess) {
+                    // user has read access to all objects in organization
+                    if (user.organization == organizationId)
+                        return true;
                 } else {
+                    // organization admin has write access to all objects in organization
+                    if (user.organization == organizationId && user.type == User.MANAGING_ADMIN) {
+                        return true;
+                    }
+                }
+            } else {
+                if (user.organization != organizationId || user.tenant != tenantId) {
                     return false;
                 }
+                boolean readAccess = false;
+                String parentPath;
+                boolean withChildren = false;
+                if (user.path.endsWith(".ALL") || user.path.endsWith(".*")) {
+                    parentPath = user.path.substring(0, user.path.lastIndexOf("."));
+                    withChildren = true;
+                } else {
+                    parentPath = user.path;
+                }
+                // tenant users have read access to objects depending on path
+                if (path.equalsIgnoreCase(parentPath)) {
+                    readAccess = true;
+                } else if (withChildren) {
+                    readAccess = path.startsWith(parentPath + ".");
+                }
+                if (writeAccess) {
+                    return readAccess && user.type == User.ADMIN;
+                } else {
+                    return readAccess;
+                }
+
             }
         }
         return false;

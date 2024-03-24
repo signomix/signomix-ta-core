@@ -98,10 +98,33 @@ public class DashboardLogic {
          */
     }
 
+    private DashboardIface getDashboardDao() {
+        if(null!=dashboardDao){
+            return dashboardDao;
+        }else{
+            if ("h2".equalsIgnoreCase(databaseType)) {
+                dashboardDao = new DashboardDao();
+                dashboardDao.setDatasource(dataSource);
+                // iotDao = new IotDatabaseDao();
+                // iotDao.setDatasource(dataSource);
+                defaultOrganizationId = 0;
+            } else if ("postgresql".equalsIgnoreCase(databaseType)) {
+                dashboardDao = new com.signomix.common.tsdb.DashboardDao();
+                dashboardDao.setDatasource(tsDs);
+                // iotDao = new com.signomix.common.tsdb.IotDatabaseDao();
+                // iotDao.setDatasource(tsDs);
+                defaultOrganizationId = 1;
+            } else {
+                logger.error("Unknown database type: " + databaseType);
+            }
+            return dashboardDao;
+        }
+    }
+
     public void addDefaultDashboard(Device device) throws ServiceException {
         Dashboard dashboard = null;
         try {
-            dashboard = dashboardDao.getDashboard(device.getEUI());
+            dashboard = getDashboardDao().getDashboard(device.getEUI());
             if (null != dashboard) {
                 dashboard.setUserID(device.getUserID());
                 dashboardDao.updateDashboard(dashboard);
@@ -184,7 +207,7 @@ public class DashboardLogic {
 
     public Dashboard getDashboard(User user, String dashboardId) throws ServiceException {
         try {
-            Dashboard dashboard = dashboardDao.getDashboard(dashboardId);
+            Dashboard dashboard = getDashboardDao().getDashboard(dashboardId);
             if (null != dashboard) {
                 if (!userLogic.hasObjectAccess(user, false, defaultOrganizationId, dashboard)) {
                     logger.warn("Dashboard found but no access: " + dashboardId);

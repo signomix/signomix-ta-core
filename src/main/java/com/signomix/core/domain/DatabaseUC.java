@@ -1,6 +1,7 @@
 package com.signomix.core.domain;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 
 import org.eclipse.microprofile.config.inject.ConfigProperty;
@@ -27,8 +28,11 @@ import com.signomix.common.db.UserDao;
 import com.signomix.common.db.UserDaoIface;
 import com.signomix.common.gui.Dashboard;
 import com.signomix.common.gui.DashboardTemplate;
+import com.signomix.common.iot.Channel;
 import com.signomix.common.iot.Device;
 import com.signomix.common.iot.DeviceTemplate;
+import com.signomix.core.application.port.in.DevicePort;
+import com.signomix.core.application.port.in.UserPort;
 
 import io.agroal.api.AgroalDataSource;
 import io.quarkus.agroal.DataSource;
@@ -40,6 +44,8 @@ import jakarta.inject.Inject;
 @ApplicationScoped
 public class DatabaseUC {
     private static final Logger LOG = Logger.getLogger(DatabaseUC.class);
+
+    private static Long DEFAULT_ORGANIZATION_ID=1L;
 
     @Inject
     @DataSource("auth")
@@ -64,6 +70,11 @@ public class DatabaseUC {
     @Inject
     @DataSource("shortener")
     AgroalDataSource shortenerDataSource;
+
+    @Inject
+    DevicePort devicePort;
+    @Inject
+    UserPort userPort;
 
     // @Inject
     // @DataSource("cms")
@@ -244,7 +255,7 @@ public class DatabaseUC {
         setSignomixParameters();
         setSignomixFeatures();
 
-        createUsers();
+        createObjects();
 
         // TODO: create predefined users
         // TODO
@@ -500,7 +511,7 @@ public class DatabaseUC {
 
     }
 
-    private void createUsers() {
+    private void createObjects() {
         Organization organization = new Organization(null, "0123456789", "Demo Organization",
                 "Organization for demonstration purposes", 0);
         try {
@@ -515,6 +526,95 @@ public class DatabaseUC {
         } catch (IotDatabaseException e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
+        }
+        User user = new User();
+        user.uid = "admin";
+        user.type = User.OWNER;
+        user.email = "";
+        user.name = "admin";
+        user.surname = "admin";
+        user.role = "";
+        user.confirmString = "";
+        user.password = HashMaker.md5Java("test123");
+        user.generalNotificationChannel = "";
+        user.infoNotificationChannel = "";
+        user.warningNotificationChannel = "";
+        user.alertNotificationChannel = "";
+        user.confirmed = true;
+        user.unregisterRequested = false;
+        user.authStatus = 1;
+        user.createdAt = System.currentTimeMillis();
+        user.number = 0L;
+        user.services = 0;
+        user.phonePrefix = "";
+        user.credits = 0L;
+        user.autologin = false;
+        user.preferredLanguage = "en";
+        user.organization = DEFAULT_ORGANIZATION_ID;
+        user.path = "";
+        try {
+            userDao.addUser(user);
+        } catch (IotDatabaseException e) {
+            LOG.warn("Error inserting default admin user", e);
+        }
+        User tester1 = new User();
+        tester1.uid = "tester1";
+        tester1.email = "";
+        tester1.organization = DEFAULT_ORGANIZATION_ID;
+        tester1.password = HashMaker.md5Java("test123");
+        tester1.type = User.USER;
+        tester1.confirmed = true;
+        tester1.name = "Tester";
+        tester1.surname = "One";    
+        tester1.phone = 0;
+        tester1.preferredLanguage = "en";
+        tester1.role = "";
+        tester1.alertNotificationChannel = "";
+        tester1.infoNotificationChannel = "";
+        tester1.warningNotificationChannel = "";
+        tester1.generalNotificationChannel = "";
+        tester1.authStatus = User.IS_ACTIVE;
+        tester1.credits = 0L;
+        tester1.phonePrefix = "";
+        tester1.unregisterRequested = false;
+        tester1.path = "";
+        tester1.tenant = 0;
+        tester1.autologin = false;
+        tester1.services = 0;
+        try {
+            userDao.addUser(user);
+        } catch (IotDatabaseException e) {
+            LOG.warn("Error inserting tester1 user", e);
+        }
+        user = new User();
+        user.uid = "public";
+        user.type = User.READONLY;
+        user.email = "";
+        user.name = "Public";
+        user.surname = "User";
+        user.role = "";
+        user.confirmString = "";
+        user.password = HashMaker.md5Java("public");
+        user.generalNotificationChannel = "";
+        user.infoNotificationChannel = "";
+        user.warningNotificationChannel = "";
+        user.alertNotificationChannel = "";
+        user.confirmed = true;
+        user.unregisterRequested = false;
+        user.authStatus = 1;
+        user.createdAt = System.currentTimeMillis();
+        user.number = null;
+        user.services = 0;
+        user.phonePrefix = "";
+        user.credits = 0L;
+        user.autologin = false;
+        user.preferredLanguage = "en";
+        user.organization = DEFAULT_ORGANIZATION_ID;
+        user.path = "";
+        try {
+            userDao.addUser(user);
+        } catch (IotDatabaseException e) {
+            LOG.warn("Error inserting public user", e);
         }
         User organizationAdmin = new User();
         organizationAdmin.uid = "admin_demo";
@@ -545,8 +645,39 @@ public class DatabaseUC {
         try {
             userDao.addUser(organizationAdmin);
         } catch (IotDatabaseException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
+            LOG.warn("Error inserting admin_demo user", e);
+        }
+
+        Device device = new Device();
+        device.setType(Device.GENERIC);
+        device.setName("IoT emulator");
+        device.setEUI("IOT-EMULATOR");
+        device.setTeam("admin");
+        device.setUserID("tester1");
+        device.setKey("6022140857");
+        device.setOrganizationId(1L);
+        device.setOrgApplicationId(1L);
+        device.setPath("");
+        device.setActive(true);
+        device.setAltitude(null);
+        device.setLatitude(null);
+        device.setLongitude(null);
+        device.setCheckFrames(false);
+        device.setDashboard(true);
+        device.setType(Device.GENERIC);
+
+        LinkedHashMap<String, Channel> channels;
+        channels = new LinkedHashMap<>();
+        channels.put("temperature", new Channel("temperature"));
+        channels.put("humidity", new Channel("humidity"));
+        channels.put("latitude", new Channel("latitude"));
+        channels.put("longitude", new Channel("longitude"));
+        device.setChannels(channels);
+
+        try{
+        devicePort.createDevice(tester1, device);
+        }catch(Exception e){
+            LOG.warn("Error creating device", e);
         }
     }
 

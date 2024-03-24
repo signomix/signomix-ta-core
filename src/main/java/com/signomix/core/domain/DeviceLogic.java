@@ -113,6 +113,16 @@ public class DeviceLogic {
          */
     }
 
+    private IotDatabaseIface getIotDao() {
+        if(iotDao!=null){
+            return iotDao;
+        }else{
+            iotDao = new IotDatabaseDao();
+            iotDao.setDatasource(deviceDataSource);
+            return iotDao;
+        }
+    }
+
     // TODO: add organizationId to all methods
     public Device getDevice(User user, String eui, boolean withStatus) throws ServiceException {
         try {
@@ -295,7 +305,7 @@ public class DeviceLogic {
 
     public void createDevice(User user, Device device) throws ServiceException {
         try {
-            List<Device> userDevices = iotDao.getUserDevices(user, false, null, null, null);
+            List<Device> userDevices = getIotDao().getUserDevices(user, false, null, null, null);
             int deviceCount = userDevices.size();
             long maxDevices = iotDao.getParameterValue("devicesLimit", user.type);
             if (deviceCount >= maxDevices && user.type != User.SUPERUSER) {

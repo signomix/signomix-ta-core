@@ -53,7 +53,7 @@ public class DeviceRestAdapter {
             @QueryParam("search") String search,
             @QueryParam("organization") Long organizationId,
             @QueryParam("path") String path,
-            @QueryParam("context") Integer context){
+            @QueryParam("context") Integer context) {
         try {
             User user;
             try {
@@ -66,11 +66,14 @@ public class DeviceRestAdapter {
             }
             logger.info("getDevices limit:" + limit + " offset:" + offset + " full:" + full);
             List<Device> devices;
-            /* if(null==organizationId){
-                devices = devicePort.getUserDevices(user, full, limit, offset, search);
-            }else{
-                devices = devicePort.getDevicesByPath(user, organizationId, full, limit, offset, path);
-            } */
+            /*
+             * if(null==organizationId){
+             * devices = devicePort.getUserDevices(user, full, limit, offset, search);
+             * }else{
+             * devices = devicePort.getDevicesByPath(user, organizationId, full, limit,
+             * offset, path);
+             * }
+             */
             devices = devicePort.getDevices(user, full, organizationId, context, path, search, limit, offset);
             return Response.ok().entity(devices).build();
         } catch (Exception e) {
@@ -84,17 +87,24 @@ public class DeviceRestAdapter {
     @Path("/device/{eui}")
     public Response getDevice(@HeaderParam("Authentication") String token, @PathParam("eui") String eui,
             @QueryParam("full") Boolean full) {
-        User user;
         try {
-            user = userPort.getAuthorizing(authPort.getUserId(token));
-        } catch (IotDatabaseException e) {
-            throw new ServiceException(unauthorizedException);
+            User user;
+            try {
+                user = userPort.getAuthorizing(authPort.getUserId(token));
+            } catch (IotDatabaseException e) {
+                e.printStackTrace();
+                throw new ServiceException(unauthorizedException);
+            }
+            if (null == user) {
+                throw new ServiceException(unauthorizedException);
+            }
+            Device device = devicePort.getDevice(user, eui, full);
+            return Response.ok().entity(device).build();
+        } catch (Exception e) {
+            e.printStackTrace();
+            LOG.warn(e.getMessage());
+            throw new ServiceException(e.getMessage());
         }
-        if (null == user) {
-            throw new ServiceException(unauthorizedException);
-        }
-        Device device = devicePort.getDevice(user, eui, full);
-        return Response.ok().entity(device).build();
     }
 
     @DELETE

@@ -224,6 +224,10 @@ public class UserLogic {
      * @return
      */
     public boolean isOrganizationAdmin(User user, long organizationId) {
+        return user != null && user.organization == organizationId && user.type == User.ORGANIZATION_ADMIN;
+    }
+
+    public boolean isTenantAdmin(User user, long organizationId){
         return user != null && user.organization == organizationId && user.type == User.ADMIN;
     }
 
@@ -311,7 +315,8 @@ public class UserLogic {
             logger.error("Unknown object type: " + accessedObject.getClass().getName());
             return false;
         }
-
+        logger.info("hasObjectAccess: " + user.uid + " " + owner + " " + team + " " + admins + " " + organizationId + " "
+                + tenantId + " " + isPublic + " " + path + " " + writeAccess + " " + user.path);
         // object owner has read/write access
         if (owner.equals(user.uid)) {
             return true;
@@ -340,7 +345,7 @@ public class UserLogic {
                     }
                 }
             } else {
-                if (user.organization != organizationId || user.tenant != tenantId) {
+                if (user.organization != organizationId /* || user.tenant != tenantId */) {
                     return false;
                 }
                 boolean readAccess = false;

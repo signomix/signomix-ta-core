@@ -1,14 +1,18 @@
 package com.signomix.core.domain;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.jboss.logging.Logger;
 
 import com.signomix.common.Organization;
+import com.signomix.common.Tenant;
 import com.signomix.common.User;
 import com.signomix.common.db.IotDatabaseDao;
+import com.signomix.common.db.IotDatabaseException;
 import com.signomix.common.db.IotDatabaseIface;
+import com.signomix.common.db.OrganizationDaoIface;
 import com.signomix.core.application.exception.ServiceException;
 import com.signomix.core.application.port.in.UserPort;
 
@@ -34,6 +38,7 @@ public class OrganizationLogic {
     AgroalDataSource tsDs;
 
     IotDatabaseIface iotDao;
+    OrganizationDaoIface organizationDao;
 
     @Inject
     UserLogic userLogic;
@@ -47,25 +52,32 @@ public class OrganizationLogic {
     @ConfigProperty(name = "signomix.database.type")
     String databaseType;
 
-    private long defaultOrganizationId=0;
+    private long defaultOrganizationId = 0;
 
     void onStart(@Observes StartupEvent ev) {
         if ("h2".equalsIgnoreCase(databaseType)) {
             iotDao = new IotDatabaseDao();
             iotDao.setDatasource(deviceDataSource);
-            defaultOrganizationId=0;
+            defaultOrganizationId = 0;
+            organizationDao = new com.signomix.common.db.OrganizationDao();
+            organizationDao.setDatasource(deviceDataSource);
         } else if ("postgresql".equalsIgnoreCase(databaseType)) {
             iotDao = new com.signomix.common.tsdb.IotDatabaseDao();
             iotDao.setDatasource(tsDs);
             defaultOrganizationId = 1;
-        }else {
+            organizationDao = new com.signomix.common.tsdb.OrganizationDao();
+            organizationDao.setDatasource(tsDs);
+        } else {
             logger.error("Unknown database type: " + databaseType);
         }
-/*         try {
-            defaultOrganizationId = iotDao.getParameterValue("system.default.organization", User.ANY);
-        } catch (IotDatabaseException e) {
-            logger.error("Unable to get default organization id: " + e.getMessage());
-        } */
+        /*
+         * try {
+         * defaultOrganizationId =
+         * iotDao.getParameterValue("system.default.organization", User.ANY);
+         * } catch (IotDatabaseException e) {
+         * logger.error("Unable to get default organization id: " + e.getMessage());
+         * }
+         */
     }
 
     /**
@@ -142,9 +154,33 @@ public class OrganizationLogic {
         if (!userLogic.isSystemAdmin(user)) {
             throw new ServiceException(userNotAuthorizedException);
         }
-        if(organizationId==defaultOrganizationId){
+        if (organizationId == defaultOrganizationId) {
             throw new ServiceException("Unable to delete default organization");
         }
         userLogic.deleteOrganization(organizationId);
+    }
+
+    public Tenant getTenant(User user, Integer tenantId) throws ServiceException {
+        if (!(userLogic.isSystemAdmin(user) || userLogic.isOrganizationAdmin(user, user.organization)
+                || user.tenant == tenantId)) {
+            return null;
+        }
+        return getTenant(user, user.tenant);
+    }
+
+    public List<Tenant> getTenants(User user, Long organizationId, Integer limit, Integer offset)
+            throws ServiceException {
+        if (!(userLogic.isSystemAdmin(user) || userLogic.isOrganizationAdmin(user, organizationId))) {
+            return null;
+        }
+        List<Tenant> tenants;
+        try {
+            return organizationDao.getTenants(organizationId, limit, offset);
+        } catch (IotDatabaseException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+            return new ArrayList<Tenant>();
+        }
+        
     }
 }

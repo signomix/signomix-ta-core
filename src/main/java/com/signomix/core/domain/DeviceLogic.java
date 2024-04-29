@@ -121,8 +121,10 @@ public class DeviceLogic {
         if (iotDao != null) {
             return iotDao;
         } else {
-            iotDao = new IotDatabaseDao();
-            iotDao.setDatasource(deviceDataSource);
+            iotDao = new com.signomix.common.tsdb.IotDatabaseDao();
+            iotDao.setDatasource(tsDs);
+            //iotDao = new IotDatabaseDao();
+            //iotDao.setDatasource(deviceDataSource);
             return iotDao;
         }
     }
@@ -326,7 +328,10 @@ public class DeviceLogic {
             if (deviceCount >= maxDevices && user.type != User.SUPERUSER) {
                 throw new ServiceException("User has reached maximum number of devices: " + maxDevices);
             }
+            
+            // remove all non-alphanumeric characters from EUI
             device.setEUI(removeNonAlphanumeric(device.getEUI()));
+
             if (device.getEUI() == null || device.getEUI().isEmpty() || device.getEUI().toLowerCase().equals("new")) {
                 device.setEUI(euiGenerator.createEui(deviceEuiPrefix));
             }

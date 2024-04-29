@@ -81,7 +81,7 @@ public class GroupLogic {
         try {
             DeviceGroup group = iotDao.getGroup(groupEui);
             if (null != group) {
-                if (!userLogic.hasObjectAccess(user, false, defaultOrganizationId, group)) {
+                if (user!=null && !userLogic.hasObjectAccess(user, false, defaultOrganizationId, group)) {
                     throw new ServiceException(exceptionApiUnauthorized);
                 }
             } else {
@@ -98,12 +98,13 @@ public class GroupLogic {
         try {
             DeviceGroup group = iotDao.getGroup(updatedGroup.getEUI());
             if (null != group) {
-                if (!userLogic.hasObjectAccess(user, true, defaultOrganizationId, group)) {
+                if (user!=null && !userLogic.hasObjectAccess(user, true, defaultOrganizationId, group)) {
                     throw new ServiceException(exceptionApiUnauthorized);
                 }
             } else {
                 throw new ServiceException(exceptionApiUnauthorized);
             }
+            logger.info("update group: " + updatedGroup.getEUI() + " " + updatedGroup.getChannelsAsString());
             iotDao.updateGroup(updatedGroup);
             return updatedGroup;
         } catch (IotDatabaseException e) {

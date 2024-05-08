@@ -341,16 +341,19 @@ public class DashboardLogic {
     private Dashboard sanitizeWidgets(Dashboard dashboard) {
         // return dashboard;
         ArrayList widgets = dashboard.getWidgets();
-        System.out.println("widgets " + widgets.getClass().getName());
-        System.out.println("widgets.size() = " + widgets.size());
+/*         System.out.println("widgets " + widgets.getClass().getName());
+        System.out.println("widgets.size() = " + widgets.size()); */
         // Widget widget;
         LinkedHashMap map;
         String description;
+        String type;
         for (int i = 0; i < widgets.size(); i++) {
-            System.out.println("widgets.get(i) = " + widgets.get(i).getClass().getName());
+            //System.out.println("widgets.get(i) = " + widgets.get(i).getClass().getName());
             map = (LinkedHashMap) widgets.get(i);
             description = (String) map.get("description");
-            if (null != description && !description.isEmpty()) {
+            type = (String) map.get("type");
+            System.out.println("widget type = " + type);
+            if (null != description && !description.isEmpty() && !"plan".equalsIgnoreCase(type)) {
                 String safe = Jsoup.clean(description, Safelist.basic());
                 map.put("description", safe);
             }

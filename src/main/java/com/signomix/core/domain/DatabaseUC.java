@@ -14,6 +14,7 @@ import com.signomix.common.db.ApplicationDao;
 import com.signomix.common.db.ApplicationDaoIface;
 import com.signomix.common.db.AuthDao;
 import com.signomix.common.db.AuthDaoIface;
+import com.signomix.common.db.BillingDaoIface;
 import com.signomix.common.db.DashboardDao;
 import com.signomix.common.db.DashboardIface;
 import com.signomix.common.db.IotDatabaseException;
@@ -94,6 +95,7 @@ public class DatabaseUC {
     SignalDaoIface signalDao;
     OrganizationDaoIface organizationDao;
     ReportDaoIface reportDao;
+    BillingDaoIface billingDao;
 
     @ConfigProperty(name = "signomix.data.retention.demo", defaultValue = "1")
     int demoDataRetention;
@@ -178,6 +180,8 @@ public class DatabaseUC {
             organizationDao.setDatasource(tsDs);
             reportDao = new com.signomix.common.tsdb.ReportDao();
             reportDao.setDatasource(tsDs);
+            billingDao = new com.signomix.common.tsdb.BillingDao();
+            billingDao.setDatasource(tsDs);
         } else {
             LOG.error("Database type not configured or not supported: " + databaseType);
         }
@@ -252,6 +256,13 @@ public class DatabaseUC {
             LOG.error(e.getMessage());
             e.printStackTrace();
         }
+        try{
+            billingDao.createStructure();
+        }catch(IotDatabaseException e){
+            LOG.error(e.getMessage());
+            e.printStackTrace();
+        }
+        
         setSignomixParameters();
         setSignomixFeatures();
 

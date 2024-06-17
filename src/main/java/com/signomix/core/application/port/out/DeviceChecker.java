@@ -1,5 +1,6 @@
 package com.signomix.core.application.port.out;
 
+import java.util.HashSet;
 import java.util.List;
 
 import org.jboss.logging.Logger;
@@ -33,6 +34,9 @@ public class DeviceChecker implements Runnable {
         } catch (IotDatabaseException e) {
             throw new ServiceException(e.getMessage(), e);
         }
+        //TODO: optimize this
+        // divide devices into groups then udpate all in one query for each group
+        // and send notifications to each group
         for (Device device : devices) {
             try {
                 if (device.getTransmissionInterval() > 0 && (System.currentTimeMillis()
@@ -75,8 +79,10 @@ public class DeviceChecker implements Runnable {
                 logger.error("Unknown notification type: " + type);
                 return;
         }
+        HashSet<String> users = new HashSet<>();
         // device owner
-        IotEvent event = new IotEvent();
+        users.add(device.getUserID());
+        /* IotEvent event = new IotEvent();
         event.setGeneralMessage(messageText);
         event.setOrigin(device.getUserID() + "\t" + device.getEUI());
         try {
@@ -84,29 +90,32 @@ public class DeviceChecker implements Runnable {
         } catch (IotDatabaseException e) {
             logger.error(e.getMessage());
         }
-        messageService.sendNotification(event);
+        messageService.sendNotification(event); */
 
         String[] deviceUsers;
         // device team
         deviceUsers = device.getTeam().split(",");
         for (String deviceUser : deviceUsers) {
             if (deviceUser.length() > 0) {
-                event = new IotEvent();
+                users.add(deviceUser);
+                /* event = new IotEvent();
                 event.setGeneralMessage(messageText);
                 event.setOrigin(deviceUser + "\t" + device.getEUI());
+                
                 try {
                     iotDao.addAlert(event);
                 } catch (IotDatabaseException e) {
                     logger.error(e.getMessage());
                 }
-                messageService.sendNotification(event);
+                messageService.sendNotification(event); */
             }
         }
         // device administrators
         deviceUsers = device.getAdministrators().split(",");
         for (String deviceUser : deviceUsers) {
             if (deviceUser.length() > 0) {
-                event = new IotEvent();
+                users.add(deviceUser);
+                /* event = new IotEvent();
                 event.setGeneralMessage(messageText);
                 event.setOrigin(deviceUser + "\t" + device.getEUI());
                 try {
@@ -114,9 +123,25 @@ public class DeviceChecker implements Runnable {
                 } catch (IotDatabaseException e) {
                     logger.error(e.getMessage());
                 }
-                messageService.sendNotification(event);
+                messageService.sendNotification(event); */
             }
         }
+
+        // send notifications
+        IotEvent event = new IotEvent();
+        event.setGeneralMessage(messageText);
+        String origin="";
+        for (String user : users) {
+            origin+=user+";";
+        }
+        origin+="\t" + device.getEUI();
+        event.setOrigin(origin);
+        try {
+            iotDao.addAlert(event);
+        } catch (IotDatabaseException e) {
+            logger.error(e.getMessage());
+        }
+        messageService.sendNotification(event);
     }
 
 }

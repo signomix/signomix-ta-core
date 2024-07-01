@@ -46,7 +46,7 @@ import jakarta.inject.Inject;
 public class DatabaseUC {
     private static final Logger LOG = Logger.getLogger(DatabaseUC.class);
 
-    private static Long DEFAULT_ORGANIZATION_ID=1L;
+    private static Long DEFAULT_ORGANIZATION_ID = 1L;
 
     @Inject
     @DataSource("auth")
@@ -256,13 +256,19 @@ public class DatabaseUC {
             LOG.error(e.getMessage());
             e.printStackTrace();
         }
-        try{
-            billingDao.createStructure();
-        }catch(IotDatabaseException e){
+        try {
+            savePredefinedReports();
+        } catch (Exception e) {
             LOG.error(e.getMessage());
             e.printStackTrace();
         }
-        
+        try {
+            billingDao.createStructure();
+        } catch (IotDatabaseException e) {
+            LOG.error(e.getMessage());
+            e.printStackTrace();
+        }
+
         setSignomixParameters();
         setSignomixFeatures();
 
@@ -576,7 +582,7 @@ public class DatabaseUC {
         tester1.type = User.USER;
         tester1.confirmed = true;
         tester1.name = "Tester";
-        tester1.surname = "One";    
+        tester1.surname = "One";
         tester1.phone = 0;
         tester1.preferredLanguage = "en";
         tester1.role = "";
@@ -685,10 +691,27 @@ public class DatabaseUC {
         channels.put("longitude", new Channel("longitude"));
         device.setChannels(channels);
 
-        try{
-        devicePort.createDevice(tester1, device);
-        }catch(Exception e){
+        try {
+            devicePort.createDevice(tester1, device);
+        } catch (Exception e) {
             LOG.warn("Error creating device", e);
+        }
+    }
+
+    private void savePredefinedReports() {
+        String className = "com.sigmomix.reports.pre.Html";
+        try {
+            reportDao.saveReport(className, 0L, null, null, null);
+        } catch (IotDatabaseException e) {
+            e.printStackTrace();
+            LOG.warn("Error saving report " + className + ": " + e.getMessage());
+        }
+        className = "com.sigmomix.reports.pre.DummyReport";
+        try {
+            reportDao.saveReport(className, 0L, null, null, null);
+        } catch (IotDatabaseException e) {
+            e.printStackTrace();
+            LOG.warn("Error saving report " + className + ": " + e.getMessage());
         }
     }
 

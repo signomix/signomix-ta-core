@@ -6,9 +6,9 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>com.signomix</groupId>
   <artifactId>signomix-core</artifactId>
-  <version>2.6.0</version>
+  <version>1.0.0</version>
   <properties>
-    <compiler-plugin.version>3.8.1</compiler-plugin.version>
+    <compiler-plugin.version>3.10.1</compiler-plugin.version>
     <maven.compiler.release>17</maven.compiler.release>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
@@ -32,6 +32,10 @@
     <dependency>
       <groupId>io.quarkus</groupId>
       <artifactId>quarkus-arc</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>io.quarkus</groupId>
+      <artifactId>quarkus-container-image-jib</artifactId>
     </dependency>
     <dependency>
       <groupId>io.quarkus</groupId>
@@ -78,10 +82,6 @@
     </dependency>
     <dependency>
       <groupId>io.quarkus</groupId>
-      <artifactId>quarkus-container-image-jib</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>io.quarkus</groupId>
       <artifactId>quarkus-logging-gelf</artifactId>
     </dependency>
     <dependency>
@@ -98,14 +98,14 @@
       <artifactId>jsoup</artifactId>
       <version>1.16.1</version>
     </dependency>
-    <dependency>
+<!--     <dependency>
       <groupId>io.quarkus</groupId>
       <artifactId>quarkus-opentelemetry</artifactId>
     </dependency>
     <dependency>
       <groupId>io.opentelemetry.instrumentation</groupId>
       <artifactId>opentelemetry-jdbc</artifactId>
-    </dependency>
+    </dependency> -->
   </dependencies>
   <build>
     <plugins>

@@ -20,6 +20,7 @@ import com.signomix.common.db.DashboardIface;
 import com.signomix.common.db.IotDatabaseException;
 import com.signomix.common.db.IotDatabaseIface;
 import com.signomix.common.db.OrganizationDaoIface;
+import com.signomix.common.db.QdbDaoIface;
 import com.signomix.common.db.ReportDaoIface;
 import com.signomix.common.db.SentinelDaoIface;
 import com.signomix.common.db.ShortenerDao;
@@ -73,6 +74,10 @@ public class DatabaseUC {
     AgroalDataSource shortenerDataSource;
 
     @Inject
+    @DataSource("qdb")
+    AgroalDataSource qdbDataSource;
+
+    @Inject
     DevicePort devicePort;
     @Inject
     UserPort userPort;
@@ -96,6 +101,7 @@ public class DatabaseUC {
     OrganizationDaoIface organizationDao;
     ReportDaoIface reportDao;
     BillingDaoIface billingDao;
+    QdbDaoIface qdbDao;
 
     @ConfigProperty(name = "signomix.data.retention.demo", defaultValue = "1")
     int demoDataRetention;
@@ -116,6 +122,9 @@ public class DatabaseUC {
     @ConfigProperty(name = "signomix.database.migration")
     boolean migration;
 
+    @ConfigProperty(name = "questdb.client.config")
+    String questDbConfig;
+
     void onStart(@Observes StartupEvent ev) {
         LOG.info("Starting ...");
         LOG.info("AUTH DB URL: " + authDbUrl);
@@ -123,7 +132,7 @@ public class DatabaseUC {
         if ("h2".equalsIgnoreCase(databaseType)) {
             tsDao = null;
             authDao = new AuthDao();
-            authDao.setDatasource(authDataSource);
+            authDao.setDatasource(authDataSource, questDbConfig);
             applicationDao = new ApplicationDao();
             applicationDao.setDatasource(iotDataSource);
             userDao = new UserDao();
@@ -143,7 +152,7 @@ public class DatabaseUC {
             tsDashboardDao = new com.signomix.common.tsdb.DashboardDao();
             tsDashboardDao.setDatasource(tsDs);
             authDao = new AuthDao();
-            authDao.setDatasource(authDataSource);
+            authDao.setDatasource(authDataSource, questDbConfig);
             applicationDao = new ApplicationDao();
             applicationDao.setDatasource(iotDataSource);
             userDao = new UserDao();
@@ -165,7 +174,7 @@ public class DatabaseUC {
             userDao = new com.signomix.common.tsdb.UserDao();
             userDao.setDatasource(tsDs);
             authDao = new com.signomix.common.tsdb.AuthDao();
-            authDao.setDatasource(tsDs);
+            authDao.setDatasource(tsDs, questDbConfig);
             applicationDao = new com.signomix.common.tsdb.ApplicationDao();
             applicationDao.setDatasource(tsDs);
             shortenerDao = new com.signomix.common.tsdb.ShortenerDao();
@@ -182,6 +191,7 @@ public class DatabaseUC {
             reportDao.setDatasource(tsDs);
             billingDao = new com.signomix.common.tsdb.BillingDao();
             billingDao.setDatasource(tsDs);
+            qdbDao = new com.signomix.common.tsdb.QuestDbDao();
         } else {
             LOG.error("Database type not configured or not supported: " + databaseType);
         }
@@ -264,6 +274,14 @@ public class DatabaseUC {
         }
         try {
             billingDao.createStructure();
+        } catch (IotDatabaseException e) {
+            LOG.error(e.getMessage());
+            e.printStackTrace();
+        }
+
+        try {
+            qdbDao.setDatasource(qdbDataSource);
+            qdbDao.createStructure();
         } catch (IotDatabaseException e) {
             LOG.error(e.getMessage());
             e.printStackTrace();

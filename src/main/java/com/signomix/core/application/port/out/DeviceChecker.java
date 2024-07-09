@@ -30,11 +30,52 @@ public class DeviceChecker implements Runnable {
         logger.info("DeviceChecker started");
         List<Device> devices;
         try {
+            devices = iotDao.getDevicesRequiringAlert();
+        } catch (IotDatabaseException e) {
+            throw new ServiceException(e.getMessage(), e);
+        }
+        // TODO: optimize this
+        // divide devices into groups then udpate all in one query for each group
+        // and send notifications to each group
+        long counter = 0;
+        long delta;
+        for (Device device : devices) {
+            try {
+                if (device.getAlertStatus() >= Device.ALERT_FAILURE) {
+                    continue;
+                }
+                delta = System.currentTimeMillis() - device.getLastSeen();
+                // if (System.currentTimeMillis() - device.getLastSeen() < device.getTransmissionInterval() * 2) {
+                //     logger.info("DeviceOK: " + device.getEUI() + " " + device.getAlertStatus());
+                //     continue;
+                // }
+                logger.debug("DeviceFailure: " + device.getEUI() + " " + device.getAlertStatus() + " " + delta + ">"
+                        + device.getTransmissionInterval());
+                iotDao.updateDeviceStatus(device.getEUI(), device.getTransmissionInterval(), device.getState(),
+                        Device.ALERT_FAILURE);
+                counter++;
+                sendNotification(device, "ALERT_FAILURE");
+            } catch (IotDatabaseException e) {
+                logger.error(e.getMessage());
+                e.printStackTrace();
+            }
+        }
+        //iotDao.commit();
+        long end = System.currentTimeMillis();
+        logger.info("DeviceChecker finished: " + counter + "/" + devices.size() + " devices, " + (end - start) + " ms");
+    }
+
+    @Deprecated
+    private void runPrevVersion() {
+        long start = System.currentTimeMillis();
+        logger.info("DeviceChecker started");
+        List<Device> devices;
+        try {
             devices = iotDao.getInactiveDevices();
         } catch (IotDatabaseException e) {
             throw new ServiceException(e.getMessage(), e);
         }
-        //TODO: optimize this
+        // TODO: optimize this
         // divide devices into groups then udpate all in one query for each group
         // and send notifications to each group
         for (Device device : devices) {
@@ -82,15 +123,17 @@ public class DeviceChecker implements Runnable {
         HashSet<String> users = new HashSet<>();
         // device owner
         users.add(device.getUserID());
-        /* IotEvent event = new IotEvent();
-        event.setGeneralMessage(messageText);
-        event.setOrigin(device.getUserID() + "\t" + device.getEUI());
-        try {
-            iotDao.addAlert(event);
-        } catch (IotDatabaseException e) {
-            logger.error(e.getMessage());
-        }
-        messageService.sendNotification(event); */
+        /*
+         * IotEvent event = new IotEvent();
+         * event.setGeneralMessage(messageText);
+         * event.setOrigin(device.getUserID() + "\t" + device.getEUI());
+         * try {
+         * iotDao.addAlert(event);
+         * } catch (IotDatabaseException e) {
+         * logger.error(e.getMessage());
+         * }
+         * messageService.sendNotification(event);
+         */
 
         String[] deviceUsers;
         // device team
@@ -98,16 +141,18 @@ public class DeviceChecker implements Runnable {
         for (String deviceUser : deviceUsers) {
             if (deviceUser.length() > 0) {
                 users.add(deviceUser);
-                /* event = new IotEvent();
-                event.setGeneralMessage(messageText);
-                event.setOrigin(deviceUser + "\t" + device.getEUI());
-                
-                try {
-                    iotDao.addAlert(event);
-                } catch (IotDatabaseException e) {
-                    logger.error(e.getMessage());
-                }
-                messageService.sendNotification(event); */
+                /*
+                 * event = new IotEvent();
+                 * event.setGeneralMessage(messageText);
+                 * event.setOrigin(deviceUser + "\t" + device.getEUI());
+                 * 
+                 * try {
+                 * iotDao.addAlert(event);
+                 * } catch (IotDatabaseException e) {
+                 * logger.error(e.getMessage());
+                 * }
+                 * messageService.sendNotification(event);
+                 */
             }
         }
         // device administrators
@@ -115,26 +160,28 @@ public class DeviceChecker implements Runnable {
         for (String deviceUser : deviceUsers) {
             if (deviceUser.length() > 0) {
                 users.add(deviceUser);
-                /* event = new IotEvent();
-                event.setGeneralMessage(messageText);
-                event.setOrigin(deviceUser + "\t" + device.getEUI());
-                try {
-                    iotDao.addAlert(event);
-                } catch (IotDatabaseException e) {
-                    logger.error(e.getMessage());
-                }
-                messageService.sendNotification(event); */
+                /*
+                 * event = new IotEvent();
+                 * event.setGeneralMessage(messageText);
+                 * event.setOrigin(deviceUser + "\t" + device.getEUI());
+                 * try {
+                 * iotDao.addAlert(event);
+                 * } catch (IotDatabaseException e) {
+                 * logger.error(e.getMessage());
+                 * }
+                 * messageService.sendNotification(event);
+                 */
             }
         }
 
         // send notifications
         IotEvent event = new IotEvent();
         event.setGeneralMessage(messageText);
-        String origin="";
+        String origin = "";
         for (String user : users) {
-            origin+=user+";";
+            origin += user + ";";
         }
-        origin+="\t" + device.getEUI();
+        origin += "\t" + device.getEUI();
         event.setOrigin(origin);
         try {
             iotDao.addAlert(event);

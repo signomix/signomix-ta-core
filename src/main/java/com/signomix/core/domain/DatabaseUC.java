@@ -33,6 +33,7 @@ import com.signomix.common.gui.DashboardTemplate;
 import com.signomix.common.iot.Channel;
 import com.signomix.common.iot.Device;
 import com.signomix.common.iot.DeviceTemplate;
+import com.signomix.common.tsdb.NewsDao;
 import com.signomix.core.application.port.in.DevicePort;
 import com.signomix.core.application.port.in.UserPort;
 
@@ -102,6 +103,7 @@ public class DatabaseUC {
     ReportDaoIface reportDao;
     BillingDaoIface billingDao;
     QdbDaoIface qdbDao;
+    NewsDao newsDao;
 
     @ConfigProperty(name = "signomix.data.retention.demo", defaultValue = "1")
     int demoDataRetention;
@@ -192,6 +194,9 @@ public class DatabaseUC {
             billingDao = new com.signomix.common.tsdb.BillingDao();
             billingDao.setDatasource(tsDs);
             qdbDao = new com.signomix.common.tsdb.QuestDbDao();
+            qdbDao.setDatasource(qdbDataSource);
+            newsDao = new NewsDao();
+            newsDao.setDatasource(tsDs);
         } else {
             LOG.error("Database type not configured or not supported: " + databaseType);
         }
@@ -280,8 +285,14 @@ public class DatabaseUC {
         }
 
         try {
-            qdbDao.setDatasource(qdbDataSource);
             qdbDao.createStructure();
+        } catch (IotDatabaseException e) {
+            LOG.error(e.getMessage());
+            e.printStackTrace();
+        }
+
+        try{
+            newsDao.createStructure();
         } catch (IotDatabaseException e) {
             LOG.error(e.getMessage());
             e.printStackTrace();
@@ -398,6 +409,9 @@ public class DatabaseUC {
             userDao.backupDb();
             organizationDao.backupDb();
             reportDao.backupDb();
+            billingDao.backupDb();
+            qdbDao.backupDb();
+            newsDao.backupDb();
         } catch (IotDatabaseException e) {
             LOG.error(e.getMessage());
         }
@@ -472,6 +486,10 @@ public class DatabaseUC {
         } catch (IotDatabaseException ex) {
         }
 
+    }
+
+    public void doArchive() {
+        LOG.warn("doArchive not implemented");
     }
 
     private void setSignomixParameters() {

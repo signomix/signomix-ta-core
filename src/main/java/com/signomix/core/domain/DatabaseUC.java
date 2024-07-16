@@ -19,6 +19,7 @@ import com.signomix.common.db.DashboardDao;
 import com.signomix.common.db.DashboardIface;
 import com.signomix.common.db.IotDatabaseException;
 import com.signomix.common.db.IotDatabaseIface;
+import com.signomix.common.db.NewsDaoIface;
 import com.signomix.common.db.OrganizationDaoIface;
 import com.signomix.common.db.QdbDaoIface;
 import com.signomix.common.db.ReportDaoIface;
@@ -103,7 +104,7 @@ public class DatabaseUC {
     ReportDaoIface reportDao;
     BillingDaoIface billingDao;
     QdbDaoIface qdbDao;
-    NewsDao newsDao;
+    NewsDaoIface newsDao;
 
     @ConfigProperty(name = "signomix.data.retention.demo", defaultValue = "1")
     int demoDataRetention;
@@ -279,21 +280,21 @@ public class DatabaseUC {
         }
         try {
             billingDao.createStructure();
-        } catch (IotDatabaseException e) {
+        } catch (Exception e) {
             LOG.error(e.getMessage());
             e.printStackTrace();
         }
 
         try {
             qdbDao.createStructure();
-        } catch (IotDatabaseException e) {
+        } catch (Exception e) {
             LOG.error(e.getMessage());
             e.printStackTrace();
         }
 
         try{
             newsDao.createStructure();
-        } catch (IotDatabaseException e) {
+        } catch (Exception e) {
             LOG.error(e.getMessage());
             e.printStackTrace();
         }

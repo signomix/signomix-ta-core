@@ -750,6 +750,13 @@ public class DatabaseUC {
             e.printStackTrace();
             LOG.warn("Error saving report " + className + ": " + e.getMessage());
         }
+        className = "com.sigmomix.reports.pre.LoginReportExample";
+        try {
+            reportDao.saveReport(className, 0L, null, null, null);
+        } catch (IotDatabaseException e) {
+            e.printStackTrace();
+            LOG.warn("Error saving report " + className + ": " + e.getMessage());
+        }
     }
 
 }

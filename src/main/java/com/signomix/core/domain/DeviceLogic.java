@@ -123,26 +123,32 @@ public class DeviceLogic {
         } else {
             iotDao = new com.signomix.common.tsdb.IotDatabaseDao();
             iotDao.setDatasource(tsDs);
-            //iotDao = new IotDatabaseDao();
-            //iotDao.setDatasource(deviceDataSource);
+            // iotDao = new IotDatabaseDao();
+            // iotDao.setDatasource(deviceDataSource);
             return iotDao;
         }
     }
 
     // TODO: add organizationId to all methods
     public Device getDevice(User user, String eui, boolean withStatus) throws ServiceException {
+        return getDevice(user, eui, withStatus, true);
+    }
+
+    public Device getDevice(User user, String eui, boolean withStatus, boolean withTags) throws ServiceException {
         try {
             Device device = iotDao.getDevice(eui, withStatus);
             if (userLogic.hasObjectAccess(user, false, defaultOrganizationId, device)) {
-                List<Tag> tags = iotDao.getDeviceTags(device.getEUI());
-                String tagString = "";
-                for (Tag tag : tags) {
-                    tagString += tag.name + ":" + tag.value + ";";
+                if (withTags) {
+                    List<Tag> tags = iotDao.getDeviceTags(device.getEUI());
+                    String tagString = "";
+                    for (Tag tag : tags) {
+                        tagString += tag.name + ":" + tag.value + ";";
+                    }
+                    if (tagString.length() > 0 && tagString.charAt(tagString.length() - 1) == ';') {
+                        tagString = tagString.substring(0, tagString.length() - 1);
+                    }
+                    device.setTags(tagString);
                 }
-                if (tagString.length() > 0 && tagString.charAt(tagString.length() - 1) == ';') {
-                    tagString = tagString.substring(0, tagString.length() - 1);
-                }
-                device.setTags(tagString);
                 return device;
             } else {
                 throw new ServiceException(exceptionApiUnauthorized);
@@ -168,10 +174,12 @@ public class DeviceLogic {
                 return iotDao.getUserDevices(user, searchStatus, searchLimit, searchOffset, search);
             } else {
                 if (user.type == User.MANAGING_ADMIN && context != null && context > 0) {
-                    return iotDao.getDevicesByPath(user.uid, user.organization, context, searchPath, search, searchLimit,
+                    return iotDao.getDevicesByPath(user.uid, user.organization, context, searchPath, search,
+                            searchLimit,
                             searchOffset);
                 } else if (user.tenant > 0) {
-                    return iotDao.getDevicesByPath(user.uid, user.organization, user.tenant, user.path, search, searchLimit,
+                    return iotDao.getDevicesByPath(user.uid, user.organization, user.tenant, user.path, search,
+                            searchLimit,
                             searchOffset);
                 } else {
                     return iotDao.getOrganizationDevices(organizationId, searchStatus, searchLimit, searchOffset, path);
@@ -328,7 +336,7 @@ public class DeviceLogic {
             if (deviceCount >= maxDevices && user.type != User.SUPERUSER) {
                 throw new ServiceException("User has reached maximum number of devices: " + maxDevices);
             }
-            
+
             // remove all non-alphanumeric characters from EUI
             device.setEUI(removeNonAlphanumeric(device.getEUI()));
 
@@ -383,7 +391,7 @@ public class DeviceLogic {
                             return device.getPath();
                         }
                     }
-                }else{
+                } else {
                     // no tenants, set path to organization root
                 }
                 // if path is not related to any tenant, set path to organization root

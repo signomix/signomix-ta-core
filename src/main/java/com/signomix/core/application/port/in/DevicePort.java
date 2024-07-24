@@ -18,6 +18,13 @@ public class DevicePort {
     public Device getDevice(User user, String eui, Boolean withStatus) throws ServiceException {
         return deviceLogic.getDevice(user, eui, (null != withStatus ? withStatus : false));
     }
+    public Device getDevice(User user, String eui, Boolean withStatus, Boolean withTags) throws ServiceException {
+        return deviceLogic.getDevice(
+            user, 
+            eui, 
+            (null != withStatus ? withStatus : false),
+            (null != withTags ? withTags : false));
+    }
 
 /*     public List<Device> getUserDevices(User user, Boolean withStatus, Integer limit, Integer offset,
             String searchString) throws ServiceException {

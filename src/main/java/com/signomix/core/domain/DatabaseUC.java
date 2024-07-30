@@ -17,11 +17,11 @@ import com.signomix.common.db.AuthDaoIface;
 import com.signomix.common.db.BillingDaoIface;
 import com.signomix.common.db.DashboardDao;
 import com.signomix.common.db.DashboardIface;
+import com.signomix.common.db.EventLogDaoIface;
 import com.signomix.common.db.IotDatabaseException;
 import com.signomix.common.db.IotDatabaseIface;
 import com.signomix.common.db.NewsDaoIface;
 import com.signomix.common.db.OrganizationDaoIface;
-import com.signomix.common.db.QdbDaoIface;
 import com.signomix.common.db.ReportDaoIface;
 import com.signomix.common.db.SentinelDaoIface;
 import com.signomix.common.db.ShortenerDao;
@@ -103,7 +103,8 @@ public class DatabaseUC {
     OrganizationDaoIface organizationDao;
     ReportDaoIface reportDao;
     BillingDaoIface billingDao;
-    QdbDaoIface qdbDao;
+    EventLogDaoIface qdbDao;
+    EventLogDaoIface eventLogDao;
     NewsDaoIface newsDao;
 
     @ConfigProperty(name = "signomix.data.retention.demo", defaultValue = "1")
@@ -198,6 +199,8 @@ public class DatabaseUC {
             qdbDao.setDatasource(qdbDataSource);
             newsDao = new NewsDao();
             newsDao.setDatasource(tsDs);
+            eventLogDao = new com.signomix.common.tsdb.EventLogDao();
+            eventLogDao.setDatasource(tsDs);
         } else {
             LOG.error("Database type not configured or not supported: " + databaseType);
         }
@@ -287,6 +290,13 @@ public class DatabaseUC {
 
         try {
             qdbDao.createStructure();
+        } catch (Exception e) {
+            LOG.error(e.getMessage());
+            e.printStackTrace();
+        }
+
+        try{
+            eventLogDao.createStructure();
         } catch (Exception e) {
             LOG.error(e.getMessage());
             e.printStackTrace();
@@ -412,6 +422,7 @@ public class DatabaseUC {
             reportDao.backupDb();
             billingDao.backupDb();
             qdbDao.backupDb();
+            eventLogDao.backupDb();
             newsDao.backupDb();
         } catch (IotDatabaseException e) {
             LOG.error(e.getMessage());
@@ -736,28 +747,35 @@ public class DatabaseUC {
     }
 
     private void savePredefinedReports() {
-        String className = "com.sigmomix.reports.pre.Html";
+        String className = "com.signomix.reports.pre.Html";
         try {
             reportDao.saveReport(className, 0L, null, null, null);
         } catch (IotDatabaseException e) {
             e.printStackTrace();
             LOG.warn("Error saving report " + className + ": " + e.getMessage());
         }
-        className = "com.sigmomix.reports.pre.DummyReport";
+        className = "com.signomix.reports.pre.DummyReport";
         try {
             reportDao.saveReport(className, 0L, null, null, null);
         } catch (IotDatabaseException e) {
             e.printStackTrace();
             LOG.warn("Error saving report " + className + ": " + e.getMessage());
         }
-        className = "com.sigmomix.reports.pre.LoginReportExample";
+        className = "com.signomix.reports.pre.LoginReportExample";
         try {
             reportDao.saveReport(className, 0L, null, null, null);
         } catch (IotDatabaseException e) {
             e.printStackTrace();
             LOG.warn("Error saving report " + className + ": " + e.getMessage());
         }
-        className = "com.sigmomix.reports.pre.DeviceInfo";
+        className = "com.signomix.reports.pre.DeviceInfo";
+        try {
+            reportDao.saveReport(className, 0L, null, null, null);
+        } catch (IotDatabaseException e) {
+            e.printStackTrace();
+            LOG.warn("Error saving report " + className + ": " + e.getMessage());
+        }
+        className = "com.signomix.reports.pre.UserLoginReport";
         try {
             reportDao.saveReport(className, 0L, null, null, null);
         } catch (IotDatabaseException e) {

@@ -60,7 +60,7 @@ public class NotificationRestAdapter {
             if (null == user) {
                 throw new ServiceException(unauthorizedException);
             }
-            logger.info("getNotifications: " + user.uid + " " + nLimit + " " + nOffset);
+            logger.debug("getNotifications: " + user.uid + " " + nLimit + " " + nOffset);
             List<Alert> notifications = new ArrayList<>();
             notifications = notificationsPort.getNotifications(user, nLimit, nOffset);
             return Response.ok().entity(notifications).build();
@@ -84,7 +84,7 @@ public class NotificationRestAdapter {
             if (null == user) {
                 throw new ServiceException(unauthorizedException);
             }
-            logger.info("getNotificationStatus: " + user.uid);
+            logger.debug("getNotificationStatus: " + user.uid);
             Long count = notificationsPort.getNotificationsStatus(user);
             return Response.ok().entity(count).build();
         } catch (Exception e) {

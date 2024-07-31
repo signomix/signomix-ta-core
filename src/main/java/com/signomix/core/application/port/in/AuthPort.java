@@ -44,7 +44,7 @@ public class AuthPort {
         if(token!=null && token.endsWith("/")){
             token=token.substring(0,token.length()-1);
         }
-        logger.info("getUserId: "+token);
+        logger.debug("getUserId: "+token);
         Token t=authLogic.updateToken(token);
         if(t!=null){
             if(t.getIssuer()!=null && !t.getIssuer().isEmpty()){

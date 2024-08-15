@@ -347,15 +347,32 @@ public class DashboardLogic {
         LinkedHashMap map;
         String description;
         String type;
+        Boolean axisOptions;
+        Boolean yAxisAutoScale;
         for (int i = 0; i < widgets.size(); i++) {
             //System.out.println("widgets.get(i) = " + widgets.get(i).getClass().getName());
             map = (LinkedHashMap) widgets.get(i);
             description = (String) map.get("description");
             type = (String) map.get("type");
-            System.out.println("widget type = " + type);
+            //System.out.println("widget type = " + type);
             if (null != description && !description.isEmpty() && !"plan".equalsIgnoreCase(type)) {
                 String safe = Jsoup.clean(description, Safelist.basic());
                 map.put("description", safe);
+            }
+            axisOptions = (Boolean) map.get("axisOptions");
+            if (null == axisOptions) {
+                map.put("axisOptions", false);
+                axisOptions = false;
+            }
+            yAxisAutoScale = (Boolean) map.get("yAxisAutoScale");
+            if (null == yAxisAutoScale || !axisOptions) {
+                map.put("yAxisAutoScale", false);
+            }
+            if(null == map.get("chartArea")){
+                map.put("chartArea", false);
+            }
+            if(null == map.get("chartMarkers")){
+                map.put("chartMarkers", false);
             }
             widgets.set(i, map);
         }

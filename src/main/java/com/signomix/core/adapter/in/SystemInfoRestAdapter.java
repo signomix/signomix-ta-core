@@ -17,8 +17,14 @@ import jakarta.ws.rs.core.Response;
 public class SystemInfoRestAdapter {
     private static final Logger LOG = Logger.getLogger(DeviceRestAdapter.class);
 
-    @ConfigProperty(name = "signomix.release")
-    String webappReleaseNumber;
+    /* @ConfigProperty(name = "signomix.release")
+    String webappReleaseNumber; */
+
+    @ConfigProperty(name = "signomix.release.version")
+    String releaseNumber;
+    
+    @ConfigProperty(name = "signomix.webapp.version")
+    String webappVersion;
 
     Long defaultOrganizationId=null;
 
@@ -43,7 +49,8 @@ public class SystemInfoRestAdapter {
         HashMap<String,Object> info=new HashMap<>();
         //info.put("release", releaseNumber);
         info.put("defaultOrganizationId", getDefaultOrganizationId());
-        info.put("webappRelease", getWebappReleaseNumber());
+        info.put("webappRelease", getWebappVersion());
+        info.put("platformRelease", getPlatformVersion());
         //info.put("platformRelease", getPlatformReleaseNumber());
         return Response.ok().entity(info).build();
     }
@@ -52,8 +59,12 @@ public class SystemInfoRestAdapter {
      * Get release number of webapp
      * @return
      */
-    private String getWebappReleaseNumber(){
-        return "";
+    private String getWebappVersion(){
+        return webappVersion;
+    }
+
+    private String getPlatformVersion(){
+        return releaseNumber;
     }
 
     /**

@@ -145,9 +145,9 @@ public class UserLogic {
             throw new ServiceException(userNotAuthorizedException);
         }
         if (isSystemAdmin(authorizingUser)) {
-            return userDao.getUsers(limit, offset);
+            return userDao.getUsers(limit, offset, null, null);
         } else if (isOrganizationAdmin(authorizingUser, authorizingUser.organization)) {
-            return userDao.getOrganizationUsers(authorizingUser.organization, limit, offset);
+            return userDao.getOrganizationUsers(authorizingUser.organization, limit, offset, null, null);
         } else {
             throw new ServiceException(userNotAuthorizedException);
         }

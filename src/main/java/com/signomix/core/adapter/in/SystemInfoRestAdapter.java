@@ -1,16 +1,15 @@
 package com.signomix.core.adapter.in;
 
-import java.util.Base64;
-import java.util.HashMap;
-
-import org.eclipse.microprofile.config.inject.ConfigProperty;
-import org.jboss.logging.Logger;
-
 import com.signomix.common.annotation.InboundAdapter;
-
+import com.signomix.common.proprietary.AccountTypesIface;
+import com.signomix.common.proprietary.ExtensionConfig;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.core.Response;
+import java.util.Base64;
+import java.util.HashMap;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
+import org.jboss.logging.Logger;
 
 @InboundAdapter
 @Path("/api/core/info")
@@ -51,6 +50,7 @@ public class SystemInfoRestAdapter {
         info.put("defaultOrganizationId", getDefaultOrganizationId());
         info.put("webappRelease", getWebappVersion());
         info.put("platformRelease", getPlatformVersion());
+        info.put("paidVersionAvailable", getPaidVersionAvailable());
         //info.put("platformRelease", getPlatformReleaseNumber());
         return Response.ok().entity(info).build();
     }
@@ -67,6 +67,16 @@ public class SystemInfoRestAdapter {
         return releaseNumber;
     }
 
+    private boolean getPaidVersionAvailable(){
+        try {
+            AccountTypesIface at = (AccountTypesIface)ExtensionConfig.getExtension("com.signomix.proprietary.AccountTypes");
+            return at.paidVersionAvailable();
+        } catch (Exception e) {
+            e.printStackTrace();
+            LOG.error("Error getting paid version availability", e);
+            return false;
+        }
+    }
     /**
      * Bulid hash number composed of release numbers of all platform services.
      * @return compressed release number

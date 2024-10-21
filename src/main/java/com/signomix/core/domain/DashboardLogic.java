@@ -1,17 +1,5 @@
 package com.signomix.core.domain;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.List;
-
-import org.eclipse.microprofile.config.inject.ConfigProperty;
-import org.jboss.logging.Logger;
-import org.jsoup.Jsoup;
-import org.jsoup.safety.Safelist;
-
 import com.signomix.common.Token;
 import com.signomix.common.TokenType;
 import com.signomix.common.User;
@@ -26,13 +14,22 @@ import com.signomix.common.iot.Channel;
 import com.signomix.common.iot.Device;
 import com.signomix.common.iot.DeviceGroup;
 import com.signomix.core.application.exception.ServiceException;
-
 import io.agroal.api.AgroalDataSource;
 import io.quarkus.agroal.DataSource;
 import io.quarkus.runtime.StartupEvent;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.Observes;
 import jakarta.inject.Inject;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.List;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
+import org.jboss.logging.Logger;
+import org.jsoup.Jsoup;
+import org.jsoup.safety.Safelist;
 
 @ApplicationScoped
 public class DashboardLogic {
@@ -99,9 +96,9 @@ public class DashboardLogic {
     }
 
     private DashboardIface getDashboardDao() {
-        if(null!=dashboardDao){
+        if (null != dashboardDao) {
             return dashboardDao;
-        }else{
+        } else {
             if ("h2".equalsIgnoreCase(databaseType)) {
                 dashboardDao = new DashboardDao();
                 dashboardDao.setDatasource(dataSource);
@@ -247,7 +244,8 @@ public class DashboardLogic {
             }
             updatedDashboard = updateToken(updatedDashboard, user);
             dashboardDao.updateDashboard(sanitizeWidgets(updatedDashboard));
-            updateDevicesAndGroups(updatedDashboard, user);
+            boolean sharedAttributeChanged = dashboard.isShared() != updatedDashboard.isShared();
+            updateDevicesAndGroups(updatedDashboard, user, sharedAttributeChanged);
             return updatedDashboard;
         } catch (IotDatabaseException e) {
             logger.error(e.getMessage());
@@ -266,7 +264,7 @@ public class DashboardLogic {
             newDashboard.setOrganizationId(user.organization);
             newDashboard = updateToken(newDashboard, user);
             dashboardDao.addDashboard(sanitizeWidgets(newDashboard));
-            updateDevicesAndGroups(newDashboard, user);
+            updateDevicesAndGroups(newDashboard, user, newDashboard.isShared());
             return newDashboard;
         } catch (IotDatabaseException e) {
             logger.error(e.getMessage());
@@ -341,8 +339,10 @@ public class DashboardLogic {
     private Dashboard sanitizeWidgets(Dashboard dashboard) {
         // return dashboard;
         ArrayList widgets = dashboard.getWidgets();
-/*         System.out.println("widgets " + widgets.getClass().getName());
-        System.out.println("widgets.size() = " + widgets.size()); */
+        /*
+         * System.out.println("widgets " + widgets.getClass().getName());
+         * System.out.println("widgets.size() = " + widgets.size());
+         */
         // Widget widget;
         LinkedHashMap map;
         String description;
@@ -350,11 +350,12 @@ public class DashboardLogic {
         Boolean axisOptions;
         Boolean yAxisAutoScale;
         for (int i = 0; i < widgets.size(); i++) {
-            //System.out.println("widgets.get(i) = " + widgets.get(i).getClass().getName());
+            // System.out.println("widgets.get(i) = " +
+            // widgets.get(i).getClass().getName());
             map = (LinkedHashMap) widgets.get(i);
             description = (String) map.get("description");
             type = (String) map.get("type");
-            //System.out.println("widget type = " + type);
+            // System.out.println("widget type = " + type);
             if (null != description && !description.isEmpty() && !"plan".equalsIgnoreCase(type)) {
                 String safe = Jsoup.clean(description, Safelist.basic());
                 map.put("description", safe);
@@ -368,10 +369,10 @@ public class DashboardLogic {
             if (null == yAxisAutoScale || !axisOptions) {
                 map.put("yAxisAutoScale", false);
             }
-            if(null == map.get("chartArea")){
+            if (null == map.get("chartArea")) {
                 map.put("chartArea", false);
             }
-            if(null == map.get("chartMarkers")){
+            if (null == map.get("chartMarkers")) {
                 map.put("chartMarkers", false);
             }
             widgets.set(i, map);
@@ -419,7 +420,8 @@ public class DashboardLogic {
         return dashboard;
     }
 
-    private void updateDevicesAndGroups(Dashboard dashboard, User user) throws IotDatabaseException {
+    private void updateDevicesAndGroups(Dashboard dashboard, User user, boolean sharedAttributeChanged)
+            throws IotDatabaseException {
         HashSet<String> deviceIds = dashboard.getDeviceEuis();
         HashSet<String> groupIds = dashboard.getGroupEuis();
         dashboard.isShared();
@@ -440,7 +442,9 @@ public class DashboardLogic {
                     } else {
                         device.setTeam(team.replace(",public,", ","));
                     }
-                    deviceLogic.updateDevice(user, deviceId, device);
+                    if (sharedAttributeChanged) {
+                        deviceLogic.updateDevice(user, deviceId, device);
+                    }
                 }
             } catch (ServiceException e) {
                 logger.error(e.getMessage());

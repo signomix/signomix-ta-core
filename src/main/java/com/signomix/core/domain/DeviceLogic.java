@@ -1,13 +1,5 @@
 package com.signomix.core.domain;
 
-import java.util.List;
-import java.util.concurrent.Executors;
-
-import org.eclipse.microprofile.config.inject.ConfigProperty;
-import org.eclipse.microprofile.reactive.messaging.Channel;
-import org.eclipse.microprofile.reactive.messaging.Emitter;
-import org.jboss.logging.Logger;
-
 import com.signomix.common.Tag;
 import com.signomix.common.Tenant;
 import com.signomix.common.User;
@@ -21,13 +13,18 @@ import com.signomix.core.application.exception.ServiceException;
 import com.signomix.core.application.port.in.DashboardPort;
 import com.signomix.core.application.port.in.UserPort;
 import com.signomix.core.application.port.out.DeviceChecker;
-
 import io.agroal.api.AgroalDataSource;
 import io.quarkus.agroal.DataSource;
 import io.quarkus.runtime.StartupEvent;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.Observes;
 import jakarta.inject.Inject;
+import java.util.List;
+import java.util.concurrent.Executors;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
+import org.eclipse.microprofile.reactive.messaging.Channel;
+import org.eclipse.microprofile.reactive.messaging.Emitter;
+import org.jboss.logging.Logger;
 
 /**
  * 
@@ -333,7 +330,7 @@ public class DeviceLogic {
             List<Device> userDevices = getIotDao().getUserDevices(user, false, null, null, null);
             int deviceCount = userDevices.size();
             long maxDevices = iotDao.getParameterValue("devicesLimit", user.type);
-            if (deviceCount >= maxDevices && user.type != User.SUPERUSER) {
+            if (deviceCount!=-1 && deviceCount >= maxDevices && user.type != User.SUPERUSER) {
                 throw new ServiceException("User has reached maximum number of devices: " + maxDevices);
             }
 

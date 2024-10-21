@@ -1,23 +1,20 @@
 package com.signomix.core.domain;
 
-import java.util.List;
-
-import org.eclipse.microprofile.config.inject.ConfigProperty;
-import org.jboss.logging.Logger;
-
 import com.signomix.common.User;
 import com.signomix.common.db.IotDatabaseDao;
 import com.signomix.common.db.IotDatabaseException;
 import com.signomix.common.db.IotDatabaseIface;
 import com.signomix.common.iot.DeviceGroup;
 import com.signomix.core.application.exception.ServiceException;
-
 import io.agroal.api.AgroalDataSource;
 import io.quarkus.agroal.DataSource;
 import io.quarkus.runtime.StartupEvent;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.Observes;
 import jakarta.inject.Inject;
+import java.util.List;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
+import org.jboss.logging.Logger;
 
 @ApplicationScoped
 public class GroupLogic {
@@ -106,6 +103,7 @@ public class GroupLogic {
             }
             logger.info("update group: " + updatedGroup.getEUI() + " " + updatedGroup.getChannelsAsString());
             iotDao.updateGroup(updatedGroup);
+            //TODO: send notification to dashboard owner
             return updatedGroup;
         } catch (IotDatabaseException e) {
             logger.error(e.getMessage());

@@ -1,12 +1,5 @@
 package com.signomix.core.domain;
 
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-
-import org.eclipse.microprofile.config.inject.ConfigProperty;
-import org.jboss.logging.Logger;
-
 import com.signomix.common.HashMaker;
 import com.signomix.common.Organization;
 import com.signomix.common.User;
@@ -31,19 +24,25 @@ import com.signomix.common.db.UserDao;
 import com.signomix.common.db.UserDaoIface;
 import com.signomix.common.gui.Dashboard;
 import com.signomix.common.gui.DashboardTemplate;
+import com.signomix.common.iot.Application;
+import com.signomix.common.iot.ApplicationConfig;
 import com.signomix.common.iot.Channel;
 import com.signomix.common.iot.Device;
 import com.signomix.common.iot.DeviceTemplate;
 import com.signomix.common.tsdb.NewsDao;
 import com.signomix.core.application.port.in.DevicePort;
 import com.signomix.core.application.port.in.UserPort;
-
 import io.agroal.api.AgroalDataSource;
 import io.quarkus.agroal.DataSource;
 import io.quarkus.runtime.StartupEvent;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.Observes;
 import jakarta.inject.Inject;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
+import org.jboss.logging.Logger;
 
 @ApplicationScoped
 public class DatabaseUC {
@@ -582,16 +581,48 @@ public class DatabaseUC {
         try {
             organizationDao.addOrganization(organization);
         } catch (IotDatabaseException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
+            LOG.warn("Error inserting demo organization: "+e.getMessage());
         }
-        Organization demOrganization = null;
+        Organization demoOrganization = null;
         try {
-            demOrganization = organizationDao.getOrganization("0123456789");
+            demoOrganization = organizationDao.getOrganization("0123456789");
         } catch (IotDatabaseException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
+            LOG.error("Unable to read demo organization: "+e.getMessage());
         }
+
+        // Application
+        // System application
+        ApplicationConfig config = new ApplicationConfig();
+        config.put("refreshInterval", "60");
+        Application application = new Application(null, 1L, 1L, "system", "");
+        application.setConfig(config);
+        try {
+            applicationDao.addApplication(application);
+        } catch (IotDatabaseException e) {
+            LOG.warn("Error inserting system application: "+e.getMessage());
+            try {
+                application.id=1l;
+                applicationDao.updateApplication(application);
+            } catch (IotDatabaseException e2) {
+                // TODO Auto-generated catch block
+                e2.printStackTrace();
+            } catch (Exception e2) {
+                // TODO Auto-generated catch block
+                e2.printStackTrace();
+            }
+        }
+        // Demo application
+        config = new ApplicationConfig();
+        config.put("refreshInterval", "60");
+        application = new Application(null, demoOrganization.id, 1L, "demo", "");
+        application.setConfig(config);
+        try {
+            applicationDao.addApplication(application);
+        } catch (IotDatabaseException e) {
+            LOG.warn("Error inserting demo application: "+e.getMessage());
+        }
+        
+        // Users
         User user = new User();
         user.uid = "admin";
         user.type = User.OWNER;
@@ -620,7 +651,7 @@ public class DatabaseUC {
         try {
             userDao.addUser(user);
         } catch (IotDatabaseException e) {
-            LOG.warn("Error inserting default admin user", e);
+            LOG.warn("Error inserting default admin user: "+e.getMessage());
         }
         User tester1 = new User();
         tester1.uid = "tester1";
@@ -649,7 +680,7 @@ public class DatabaseUC {
         try {
             userDao.addUser(user);
         } catch (IotDatabaseException e) {
-            LOG.warn("Error inserting tester1 user", e);
+            LOG.warn("Error inserting tester1 user: "+e.getMessage());
         }
         user = new User();
         user.uid = "public";
@@ -679,12 +710,12 @@ public class DatabaseUC {
         try {
             userDao.addUser(user);
         } catch (IotDatabaseException e) {
-            LOG.warn("Error inserting public user", e);
+            LOG.warn("Error inserting public user: "+e.getMessage());
         }
         User organizationAdmin = new User();
         organizationAdmin.uid = "admin_demo";
         organizationAdmin.email = "";
-        organizationAdmin.organization = demOrganization.id;
+        organizationAdmin.organization = demoOrganization.id;
         organizationAdmin.password = HashMaker.md5Java("test123");
         organizationAdmin.type = User.MANAGING_ADMIN;
         organizationAdmin.confirmed = true;
@@ -710,7 +741,7 @@ public class DatabaseUC {
         try {
             userDao.addUser(organizationAdmin);
         } catch (IotDatabaseException e) {
-            LOG.warn("Error inserting admin_demo user", e);
+            LOG.warn("Error inserting admin_demo user: "+e.getMessage());
         }
 
         Device device = new Device();
@@ -742,7 +773,7 @@ public class DatabaseUC {
         try {
             devicePort.createDevice(tester1, device);
         } catch (Exception e) {
-            LOG.warn("Error creating device", e);
+            LOG.warn("Error creating device: "+e.getMessage());
         }
     }
 

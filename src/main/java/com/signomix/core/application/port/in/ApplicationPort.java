@@ -24,8 +24,8 @@ public class ApplicationPort {
         return applicationLogic.getApplication(user, applicationId);
     }
 
-    public Application getApplicationByName(User user, String name) throws ServiceException {
-        return applicationLogic.getApplicationByName(user, name);
+    public Application getApplicationByName(User user, long organizationId, String name) throws ServiceException {
+        return applicationLogic.getApplicationByName(user, organizationId, name);
     }
 
     public void addApplication(User user, Application application) throws ServiceException {

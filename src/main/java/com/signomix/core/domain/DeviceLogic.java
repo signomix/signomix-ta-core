@@ -330,7 +330,7 @@ public class DeviceLogic {
             List<Device> userDevices = getIotDao().getUserDevices(user, false, null, null, null);
             int deviceCount = userDevices.size();
             long maxDevices = iotDao.getParameterValue("devicesLimit", user.type);
-            if (deviceCount!=-1 && deviceCount >= maxDevices && user.type != User.SUPERUSER) {
+            if (maxDevices!=-1 && deviceCount >= maxDevices && user.type != User.SUPERUSER) {
                 throw new ServiceException("User has reached maximum number of devices: " + maxDevices);
             }
 

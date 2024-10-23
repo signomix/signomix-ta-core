@@ -1,10 +1,5 @@
 package com.signomix.core.domain;
 
-import java.util.List;
-
-import org.eclipse.microprofile.config.inject.ConfigProperty;
-import org.jboss.logging.Logger;
-
 import com.signomix.common.User;
 import com.signomix.common.db.ApplicationDao;
 import com.signomix.common.db.ApplicationDaoIface;
@@ -12,13 +7,15 @@ import com.signomix.common.db.IotDatabaseException;
 import com.signomix.common.iot.Application;
 import com.signomix.core.application.exception.ServiceException;
 import com.signomix.core.application.port.in.UserPort;
-
 import io.agroal.api.AgroalDataSource;
 import io.quarkus.agroal.DataSource;
 import io.quarkus.runtime.StartupEvent;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.Observes;
 import jakarta.inject.Inject;
+import java.util.List;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
+import org.jboss.logging.Logger;
 
 @ApplicationScoped
 public class ApplicationLogic {
@@ -101,10 +98,10 @@ public class ApplicationLogic {
         }
     }
 
-    public Application getApplicationByName(User user, String name) throws ServiceException {
+    public Application getApplicationByName(User user, long organizationId, String name) throws ServiceException {
         Application application;
         try {
-            application = applicationDao.getApplication(name);
+            application = applicationDao.getApplication(organizationId, name);
         } catch (IotDatabaseException e) {
             e.printStackTrace();
             throw new ServiceException(e.getMessage());

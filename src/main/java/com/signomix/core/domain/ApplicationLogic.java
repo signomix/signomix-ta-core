@@ -88,10 +88,9 @@ public class ApplicationLogic {
         try {
             application = applicationDao.getApplication(applicationId);
         } catch (IotDatabaseException e) {
-            e.printStackTrace();
             throw new ServiceException(e.getMessage());
         }
-        if (userLogic.isOrganizationMember(user, application.organization) || userLogic.isSystemAdmin(user)) {
+        if (application==null || userLogic.isOrganizationMember(user, application.organization) || userLogic.isSystemAdmin(user)) {
             return application;
         } else {
             throw new ServiceException(userNotAuthorizedException);

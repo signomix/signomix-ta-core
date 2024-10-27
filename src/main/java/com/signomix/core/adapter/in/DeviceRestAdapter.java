@@ -1,10 +1,5 @@
 package com.signomix.core.adapter.in;
 
-import java.util.List;
-
-import org.eclipse.microprofile.config.inject.ConfigProperty;
-import org.jboss.logging.Logger;
-
 import com.signomix.common.User;
 import com.signomix.common.annotation.InboundAdapter;
 import com.signomix.common.db.IotDatabaseException;
@@ -13,7 +8,6 @@ import com.signomix.core.application.exception.ServiceException;
 import com.signomix.core.application.port.in.AuthPort;
 import com.signomix.core.application.port.in.DevicePort;
 import com.signomix.core.application.port.in.UserPort;
-
 import jakarta.inject.Inject;
 import jakarta.ws.rs.DELETE;
 import jakarta.ws.rs.GET;
@@ -24,6 +18,9 @@ import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.Response;
+import java.util.List;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
+import org.jboss.logging.Logger;
 
 @InboundAdapter
 @Path("/api/core")
@@ -167,8 +164,9 @@ public class DeviceRestAdapter {
     }
 
     @POST
-    @Path("/device")
-    public Response addDevice(@HeaderParam("Authentication") String token, Device device) {
+    @Path("/device/copy")
+    public Response copyDevice(@HeaderParam("Authentication") String token, 
+    DeviceCopyDefinition definition) {
         try {
             User user;
             try {
@@ -179,13 +177,37 @@ public class DeviceRestAdapter {
             if (null == user) {
                 throw new ServiceException(unauthorizedException);
             }
+            String eui = definition.eui;
+            Device device = devicePort.getDevice(user, eui, false);
+            if (null == device) {
+                throw new ServiceException("Device not found");
+            }
+
+            device.setEUI(definition.newEui);
+            device.setName(definition.name);
+            device.setDashboard(definition.dashboard==null?false:definition.dashboard);
+            device.setDeviceID(definition.deviceID);
+            device.setApplicationID(definition.applicationID);
+            //device.setDownlink(definition.downlink);
+            device.setLatitude(definition.latitude);
+            device.setLongitude(definition.longitude);
+            device.setAltitude(definition.altitude);
+            
+            device.setState(0d);
+            device.setLastSeen(0L);
+            device.setLastFrame(0L);
+            device.setAlertStatus(0);
+
             device.setUserID(user.uid);
             devicePort.createDevice(user, device);
+            LOG.info("Device copied: " + device.getEUI());
             return Response.ok().entity("OK").build();
         } catch (Exception e) {
             LOG.warn(e.getMessage());
             throw new ServiceException(e.getMessage());
         }
     }
+
+    
 
 }

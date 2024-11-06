@@ -1,19 +1,16 @@
 package com.signomix.core.adapter.out;
 
-import org.eclipse.microprofile.reactive.messaging.Channel;
-import org.eclipse.microprofile.reactive.messaging.Emitter;
-import org.jboss.logging.Logger;
-
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.signomix.common.EventEnvelope;
 import com.signomix.common.MessageEnvelope;
-//import com.signomix.common.event.IotEvent;
 import com.signomix.common.User;
 import com.signomix.common.event.IotEvent;
 import com.signomix.common.event.MessageServiceIface;
-
 import jakarta.enterprise.context.ApplicationScoped;
+import org.eclipse.microprofile.reactive.messaging.Channel;
+import org.eclipse.microprofile.reactive.messaging.Emitter;
+import org.jboss.logging.Logger;
 
 @ApplicationScoped
 public class MessageService implements MessageServiceIface {
@@ -74,12 +71,12 @@ public class MessageService implements MessageServiceIface {
 
     @Override
     public void sendData(IotEvent event) {
-        LOG.info("sending data to MQ");
+        //LOG.info("sending data to MQ");
     }
 
     @Override
     public void sendCommand(IotEvent event) {
-        LOG.info("sending command to MQ");
+/*         LOG.info("sending command to MQ");
         String[] origin = event.getOrigin().split("\t");
         User user = new User();
         user.uid = origin[0];
@@ -95,12 +92,12 @@ public class MessageService implements MessageServiceIface {
             //eventEmitter.send(encodedMessage.getBytes());
         } catch (JsonProcessingException ex) {
             LOG.error(ex.getMessage());
-        }
+        } */
     }
 
     @Override
     public void sendDeviceEvent(EventEnvelope wrapper) {
-        LOG.info("sending device event to MQ");
+/*         LOG.info("sending device event to MQ");
         String encodedMessage;
         ObjectMapper objectMapper = new ObjectMapper();
         try {
@@ -109,12 +106,12 @@ public class MessageService implements MessageServiceIface {
             //eventDeviceEmitter.send(encodedMessage.getBytes());
         } catch (JsonProcessingException ex) {
             LOG.error(ex.getMessage());
-        }
+        } */
     }
 
     @Override
     public void sendDbEvent(EventEnvelope wrapper) {
-        String encodedMessage;
+/*         String encodedMessage;
         ObjectMapper objectMapper = new ObjectMapper();
         try {
             LOG.info("eventDbEmitter with payload " + wrapper.payload);
@@ -122,12 +119,12 @@ public class MessageService implements MessageServiceIface {
             //eventDbEmitter.send(encodedMessage.getBytes());
         } catch (JsonProcessingException ex) {
             LOG.error(ex.getMessage());
-        }
+        } */
     }
 
     @Override
     public void sendAdminEmail(MessageEnvelope wrapper) {
-        LOG.info("sending admin e-mail to MQ");
+/*         LOG.info("sending admin e-mail to MQ");
         String encodedMessage;
         ObjectMapper objectMapper = new ObjectMapper();
         try {
@@ -135,12 +132,12 @@ public class MessageService implements MessageServiceIface {
             //adminEmailEmitter.send(encodedMessage.getBytes());
         } catch (JsonProcessingException ex) {
             LOG.error(ex.getMessage());
-        }
+        } */
     }
 
     @Override
     public void sendErrorInfo(EventEnvelope wrapper) {
-        String encodedMessage;
+/*         String encodedMessage;
         ObjectMapper objectMapper = new ObjectMapper();
         try {
             LOG.info("eventEmitter with payload " + wrapper.payload);
@@ -148,7 +145,7 @@ public class MessageService implements MessageServiceIface {
             //eventEmitter.send(encodedMessage.getBytes());
         } catch (JsonProcessingException ex) {
             LOG.error(ex.getMessage());
-        }
+        } */
     }
 
 }

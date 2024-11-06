@@ -1,18 +1,10 @@
 package com.signomix.core.adapter.in;
 
-import java.nio.charset.StandardCharsets;
-
-import org.eclipse.microprofile.reactive.messaging.Incoming;
-import org.jboss.logging.Logger;
-
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.signomix.common.EventEnvelope;
 import com.signomix.core.application.port.in.CommandPort;
 import com.signomix.core.application.port.in.DevicePort;
-
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import org.jboss.logging.Logger;
 
 @ApplicationScoped
 public class MqClient {
@@ -24,7 +16,7 @@ public class MqClient {
     @Inject
     DevicePort devicePort;
 
-    @Incoming("events_db")
+/*     @Incoming("events_db")
     public void processDbEvent(byte[] bytes) {
         // processMessageUseCase.processEvent(bytes);
         String message = new String(bytes, StandardCharsets.UTF_8);
@@ -36,22 +28,11 @@ public class MqClient {
             LOG.error(ex.getMessage());
             return;
         }
-        switch (wrapper.payload.toLowerCase()) {
-            case "backup":
-                commandPort.runBackup();
-                break;
-            case "clean":
-                // TODO: clean command
-                LOG.warn("Clean command is not implemented yet");
-                break;
-            default:
-                LOG.warn("Unknown command " + wrapper.payload);
-
-        }
+        LOG.info("Skipping message "+wrapper.type + " " + wrapper.uuid + " " + wrapper.payload);
         LOG.debug(wrapper.type + " " + wrapper.uuid + " " + wrapper.payload);
-    }
+    } */
 
-    @Incoming("events_device")
+/*     @Incoming("events_device")
     public void processDeviceEvent(byte[] bytes) {
         // processMessageUseCase.processEvent(bytes);
         String message = new String(bytes, StandardCharsets.UTF_8);
@@ -72,6 +53,6 @@ public class MqClient {
                 LOG.warn("Unknown command " + wrapper.payload);
 
         }
-    }
+    } */
 
 }

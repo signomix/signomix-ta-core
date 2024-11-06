@@ -1,11 +1,9 @@
 package com.signomix.core.application.port.in;
 
-import org.jboss.logging.Logger;
-
 import com.signomix.core.domain.DatabaseUC;
-
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import org.jboss.logging.Logger;
 
 @ApplicationScoped
 public class CommandPort {
@@ -21,6 +19,11 @@ public class CommandPort {
     public void runArchive(){
         LOG.info("Archiving data...");
         databaseLogic.doArchive();
+    }
+
+    public void runClean(){
+        LOG.info("Cleaning data...");
+        databaseLogic.clearData();
     }
     
 

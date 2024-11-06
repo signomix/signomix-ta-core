@@ -482,12 +482,16 @@ public class DatabaseUC {
                     }
                 }
                 iotDao.removeAlerts(user.uid, tooOldPoint);
+                List<Device> protectedDevices=iotDao.getDevicesByTag(user.uid, DEFAULT_ORGANIZATION_ID, "protected", "true");
                 /*
-                 * devices = dataDao.getUserDevices(user.uid, -1, false);
+                 * devices = iotDao.getUserDevices(user.uid, -1, false);
                  * for (int j = 0; j < devices.size(); j++) {
-                 * dataDao.clearAllChannels(devices.get(j).getEUI(), tooOldPoint);
+                 * if (protectedDevices.contains(devices.get(j))) {
+                 * continue;
+                 * }
+                 * iotDao.clearAllChannels(devices.get(j).getEUI(), tooOldPoint);
                  * try {
-                 * dataDao.removeCommands(devices.get(j).getEUI(), tooOldPoint);
+                 * iotDao.removeCommands(devices.get(j).getEUI(), tooOldPoint);
                  * } catch (Exception e) {
                  * e.printStackTrace();
                  * }

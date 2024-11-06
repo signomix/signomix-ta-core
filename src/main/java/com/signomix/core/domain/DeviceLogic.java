@@ -259,13 +259,14 @@ public class DeviceLogic {
         try {
             if (userLogic.hasObjectAccess(user, true, defaultOrganizationId, device)) {
                 iotDao.deleteDevice(user, eui);
-                String[] tags = device.getTags().split(",");
+                iotDao.removeAllDeviceTags(user, eui);
+/*                 String[] tags = device.getTags().split(",");
                 for (String tag : tags) {
                     String[] tagParts = tag.split(":");
                     if (tagParts.length > 0) {
                         iotDao.removeDeviceTag(user, device.getEUI(), tagParts[0]);
                     }
-                }
+                } */
                 deviceRemovalEmitter.send(eui);
                 sendNotification(device, "DELETED");
             } else {
@@ -294,13 +295,15 @@ public class DeviceLogic {
                     iotDao.clearDeviceData(device.getEUI());
                     iotDao.updateDeviceChannels(device.getEUI(), device.getChannelsAsString());
                 }
-                String[] tags = updated.getTags().split(";");
+                String[] tags;
+/*                 tags = updated.getTags().split(";");
                 for (String tag : tags) {
                     String[] tagParts = tag.split(":");
                     if (tagParts.length > 0) {
                         iotDao.removeDeviceTag(user, device.getEUI(), tagParts[0]);
                     }
-                }
+                } */
+                iotDao.removeAllDeviceTags(user, device.getEUI());
                 tags = device.getTags().split(";");
                 for (String tag : tags) {
                     if (tag.length() > 0) {

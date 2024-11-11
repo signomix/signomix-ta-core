@@ -258,15 +258,31 @@ public class DeviceLogic {
         }
         try {
             if (userLogic.hasObjectAccess(user, true, defaultOrganizationId, device)) {
-                iotDao.deleteDevice(user, eui);
-                iotDao.removeAllDeviceTags(user, eui);
-/*                 String[] tags = device.getTags().split(",");
-                for (String tag : tags) {
-                    String[] tagParts = tag.split(":");
-                    if (tagParts.length > 0) {
-                        iotDao.removeDeviceTag(user, device.getEUI(), tagParts[0]);
+                List<Tag> tags = iotDao.getDeviceTags(eui);
+                boolean isProtected = false;
+                for (Tag tag : tags) {
+                    if (tag.name.equals("protected") && tag.value.equalsIgnoreCase("true")) {
+                        isProtected = true;
+                        break;
                     }
-                } */
+                }
+                if (!isProtected) {
+                    iotDao.deleteDevice(user, eui);
+                    iotDao.removeAllDeviceTags(user, eui);
+                    iotDao.clearDeviceData(eui);
+                } else {
+                    device.setActive(false);
+                    iotDao.updateDevice(user, device);
+                }
+                /*
+                 * String[] tags = device.getTags().split(",");
+                 * for (String tag : tags) {
+                 * String[] tagParts = tag.split(":");
+                 * if (tagParts.length > 0) {
+                 * iotDao.removeDeviceTag(user, device.getEUI(), tagParts[0]);
+                 * }
+                 * }
+                 */
                 deviceRemovalEmitter.send(eui);
                 sendNotification(device, "DELETED");
             } else {
@@ -296,13 +312,15 @@ public class DeviceLogic {
                     iotDao.updateDeviceChannels(device.getEUI(), device.getChannelsAsString());
                 }
                 String[] tags;
-/*                 tags = updated.getTags().split(";");
-                for (String tag : tags) {
-                    String[] tagParts = tag.split(":");
-                    if (tagParts.length > 0) {
-                        iotDao.removeDeviceTag(user, device.getEUI(), tagParts[0]);
-                    }
-                } */
+                /*
+                 * tags = updated.getTags().split(";");
+                 * for (String tag : tags) {
+                 * String[] tagParts = tag.split(":");
+                 * if (tagParts.length > 0) {
+                 * iotDao.removeDeviceTag(user, device.getEUI(), tagParts[0]);
+                 * }
+                 * }
+                 */
                 iotDao.removeAllDeviceTags(user, device.getEUI());
                 tags = device.getTags().split(";");
                 for (String tag : tags) {
@@ -333,7 +351,7 @@ public class DeviceLogic {
             List<Device> userDevices = getIotDao().getUserDevices(user, false, null, null, null);
             int deviceCount = userDevices.size();
             long maxDevices = iotDao.getParameterValue("devicesLimit", user.type);
-            if (maxDevices!=-1 && deviceCount >= maxDevices && user.type != User.SUPERUSER) {
+            if (maxDevices != -1 && deviceCount >= maxDevices && user.type != User.SUPERUSER) {
                 throw new ServiceException("User has reached maximum number of devices: " + maxDevices);
             }
 

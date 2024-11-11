@@ -34,7 +34,7 @@ public class MessageService implements MessageServiceIface {
 
     @Override
     public void sendEvent(EventEnvelope wrapper) {
-        LOG.info("sending event to MQ");
+/*         LOG.info("sending event to MQ");
         String encodedMessage;
         ObjectMapper objectMapper = new ObjectMapper();
         try {
@@ -42,12 +42,12 @@ public class MessageService implements MessageServiceIface {
             //eventEmitter.send(encodedMessage.getBytes());
         } catch (JsonProcessingException ex) {
             LOG.error(ex.getMessage());
-        }
+        } */
     }
 
     @Override
     public void sendNotification(IotEvent event) {
-        LOG.info("sending notification to MQ, origin:" + event.getOrigin());
+        LOG.info("sending notification to MQTT, origin:" + event.getOrigin());
 
         String[] origin = event.getOrigin().split("\t");
         User user = new User();

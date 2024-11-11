@@ -481,7 +481,8 @@ public class DatabaseUC {
                             tooOldPoint = tooOldPointFree;
                     }
                 }
-                iotDao.removeAlerts(user.uid, tooOldPoint);
+                // Alerst are archived and removed by the system process initiated by signomix-ta-jobs
+                //iotDao.removeAlerts(user.uid, tooOldPoint);
                 List<Device> protectedDevices=iotDao.getDevicesByTag(user.uid, DEFAULT_ORGANIZATION_ID, "protected", "true");
                 /*
                  * devices = iotDao.getUserDevices(user.uid, -1, false);

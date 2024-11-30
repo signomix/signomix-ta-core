@@ -2,7 +2,6 @@ package com.signomix.core.adapter.in;
 
 import com.signomix.core.application.port.in.CommandPort;
 import com.signomix.core.application.port.in.DevicePort;
-
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import org.eclipse.microprofile.reactive.messaging.Incoming;
@@ -39,6 +38,13 @@ public class MqttClient {
             default:
                 logger.warn("Unknown command: " + msg);
         }
+    }
+
+    @Incoming("sms-sent")
+    public void processSmsSent(byte[] bytes) {
+        logger.info("SMS sent: " + new String(bytes));
+        String msg = new String(bytes);
+        String[] parts = msg.split(";");
     }
 
 }

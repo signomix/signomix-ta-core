@@ -29,9 +29,9 @@ public class OrganizationLogic {
     @Inject
     Logger logger;
 
-    @Inject
+/*     @Inject
     @DataSource("iot")
-    AgroalDataSource deviceDataSource;
+    AgroalDataSource deviceDataSource; */
 
     @Inject
     @DataSource("oltp")
@@ -55,13 +55,14 @@ public class OrganizationLogic {
     private long defaultOrganizationId = 0;
 
     void onStart(@Observes StartupEvent ev) {
-        if ("h2".equalsIgnoreCase(databaseType)) {
+        /* if ("h2".equalsIgnoreCase(databaseType)) {
             iotDao = new IotDatabaseDao();
             iotDao.setDatasource(deviceDataSource);
             defaultOrganizationId = 0;
             organizationDao = new com.signomix.common.db.OrganizationDao();
             organizationDao.setDatasource(deviceDataSource);
-        } else if ("postgresql".equalsIgnoreCase(databaseType)) {
+        } else */ 
+         if ("postgresql".equalsIgnoreCase(databaseType)) {
             iotDao = new com.signomix.common.tsdb.IotDatabaseDao();
             iotDao.setDatasource(tsDs);
             defaultOrganizationId = 1;

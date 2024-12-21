@@ -1,14 +1,18 @@
 package com.signomix.core.domain;
 
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+
+import org.eclipse.microprofile.config.inject.ConfigProperty;
+import org.jboss.logging.Logger;
+
 import com.signomix.common.HashMaker;
 import com.signomix.common.Organization;
 import com.signomix.common.User;
-import com.signomix.common.db.ApplicationDao;
 import com.signomix.common.db.ApplicationDaoIface;
-import com.signomix.common.db.AuthDao;
 import com.signomix.common.db.AuthDaoIface;
 import com.signomix.common.db.BillingDaoIface;
-import com.signomix.common.db.DashboardDao;
 import com.signomix.common.db.DashboardIface;
 import com.signomix.common.db.EventLogDaoIface;
 import com.signomix.common.db.IotDatabaseException;
@@ -17,10 +21,8 @@ import com.signomix.common.db.NewsDaoIface;
 import com.signomix.common.db.OrganizationDaoIface;
 import com.signomix.common.db.ReportDaoIface;
 import com.signomix.common.db.SentinelDaoIface;
-import com.signomix.common.db.ShortenerDao;
 import com.signomix.common.db.ShortenerDaoIface;
 import com.signomix.common.db.SignalDaoIface;
-import com.signomix.common.db.UserDao;
 import com.signomix.common.db.UserDaoIface;
 import com.signomix.common.gui.Dashboard;
 import com.signomix.common.gui.DashboardTemplate;
@@ -32,17 +34,13 @@ import com.signomix.common.iot.DeviceTemplate;
 import com.signomix.common.tsdb.NewsDao;
 import com.signomix.core.application.port.in.DevicePort;
 import com.signomix.core.application.port.in.UserPort;
+
 import io.agroal.api.AgroalDataSource;
 import io.quarkus.agroal.DataSource;
 import io.quarkus.runtime.StartupEvent;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.Observes;
 import jakarta.inject.Inject;
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import org.eclipse.microprofile.config.inject.ConfigProperty;
-import org.jboss.logging.Logger;
 
 @ApplicationScoped
 public class DatabaseUC {
@@ -54,9 +52,9 @@ public class DatabaseUC {
     @DataSource("auth")
     AgroalDataSource authDataSource;
 
-    @Inject
+/*     @Inject
     @DataSource("iot")
-    AgroalDataSource iotDataSource;
+    AgroalDataSource iotDataSource; */
 
     @Inject
     @DataSource("oltp")
@@ -132,7 +130,7 @@ public class DatabaseUC {
         LOG.info("Starting ...");
         LOG.info("AUTH DB URL: " + authDbUrl);
 
-        if ("h2".equalsIgnoreCase(databaseType)) {
+        /* if ("h2".equalsIgnoreCase(databaseType)) {
             tsDao = null;
             authDao = new AuthDao();
             authDao.setDatasource(authDataSource, questDbConfig);
@@ -146,8 +144,6 @@ public class DatabaseUC {
             dashboardDao.setDatasource(iotDataSource);
             shortenerDao = new ShortenerDao();
             shortenerDao.setDatasource(shortenerDataSource);
-            // cmsDao = new CmsDao();
-            // cmsDao.setDatasource(cmsDataSource);
         } else if ("both".equalsIgnoreCase(databaseType)) {
             tsDao = new com.signomix.common.tsdb.IotDatabaseDao();
             tsDao.setDatasource(tsDs);
@@ -166,9 +162,8 @@ public class DatabaseUC {
             dashboardDao.setDatasource(iotDataSource);
             shortenerDao = new ShortenerDao();
             shortenerDao.setDatasource(shortenerDataSource);
-            // cmsDao = new CmsDao();
-            // cmsDao.setDatasource(cmsDataSource);
-        } else if ("postgresql".equalsIgnoreCase(databaseType)) {
+        } else  */
+         if ("postgresql".equalsIgnoreCase(databaseType)) {
             iotDao = new com.signomix.common.tsdb.IotDatabaseDao();
             iotDao.setDatasource(tsDs);
             iotDao.setAnalyticDatasource(olapDs);
@@ -294,14 +289,14 @@ public class DatabaseUC {
             e.printStackTrace();
         }
 
-        try{
+        try {
             eventLogDao.createStructure();
         } catch (Exception e) {
             LOG.error(e.getMessage());
             e.printStackTrace();
         }
 
-        try{
+        try {
             newsDao.createStructure();
         } catch (Exception e) {
             LOG.error(e.getMessage());
@@ -455,7 +450,9 @@ public class DatabaseUC {
             long tooOldPointStandard = now - standardRetention;
             long tooOldPointPrimary = now - primaryRetention;
             long tooOldPointSuperuser = now - superuserRetention;
+            long tooOldPoint30 = now - 30 * ONE_DAY;
             boolean demoMode = false;
+
             User user;
             for (int i = 0; i < users.size(); i++) {
                 user = users.get(i);
@@ -481,9 +478,9 @@ public class DatabaseUC {
                             tooOldPoint = tooOldPointFree;
                     }
                 }
-                // Alerst are archived and removed by the system process initiated by signomix-ta-jobs
-                //iotDao.removeAlerts(user.uid, tooOldPoint);
-                List<Device> protectedDevices=iotDao.getDevicesByTag(user.uid, DEFAULT_ORGANIZATION_ID, "protected", "true");
+
+                List<Device> protectedDevices = iotDao.getDevicesByTag(user.uid, DEFAULT_ORGANIZATION_ID, "protected",
+                        "true");
                 /*
                  * devices = iotDao.getUserDevices(user.uid, -1, false);
                  * for (int j = 0; j < devices.size(); j++) {
@@ -505,7 +502,24 @@ public class DatabaseUC {
     }
 
     public void doArchive() {
-        LOG.warn("doArchive not implemented");
+        long ONE_DAY = 24 * 3600 * 1000;
+        long tooOldPoint30 = System.currentTimeMillis() - 30 * ONE_DAY;
+        // alerts
+        try{
+        iotDao.archiveAlerts(tooOldPoint30);
+        iotDao.removeAlerts(tooOldPoint30);
+        }catch(IotDatabaseException e){
+            LOG.error(e.getMessage());
+        }
+        // signals
+        try{
+        signalDao.archiveSignals(tooOldPoint30);
+        signalDao.clearOldSignals(tooOldPoint30);
+        signalDao.archiveUserSignals(tooOldPoint30);
+        signalDao.clearOldUserSignals(tooOldPoint30);
+        }catch(IotDatabaseException e){
+            LOG.error(e.getMessage());
+        }
     }
 
     private void setSignomixParameters() {
@@ -586,13 +600,13 @@ public class DatabaseUC {
         try {
             organizationDao.addOrganization(organization);
         } catch (IotDatabaseException e) {
-            LOG.warn("Error inserting demo organization: "+e.getMessage());
+            LOG.warn("Error inserting demo organization: " + e.getMessage());
         }
         Organization demoOrganization = null;
         try {
             demoOrganization = organizationDao.getOrganization("0123456789");
         } catch (IotDatabaseException e) {
-            LOG.error("Unable to read demo organization: "+e.getMessage());
+            LOG.error("Unable to read demo organization: " + e.getMessage());
         }
 
         // Application
@@ -604,9 +618,9 @@ public class DatabaseUC {
         try {
             applicationDao.addApplication(application);
         } catch (IotDatabaseException e) {
-            LOG.warn("Error inserting system application: "+e.getMessage());
+            LOG.warn("Error inserting system application: " + e.getMessage());
             try {
-                application.id=1l;
+                application.id = 1l;
                 applicationDao.updateApplication(application);
             } catch (IotDatabaseException e2) {
                 // TODO Auto-generated catch block
@@ -624,9 +638,9 @@ public class DatabaseUC {
         try {
             applicationDao.addApplication(application);
         } catch (IotDatabaseException e) {
-            LOG.warn("Error inserting demo application: "+e.getMessage());
+            LOG.warn("Error inserting demo application: " + e.getMessage());
         }
-        
+
         // Users
         User user = new User();
         user.uid = "admin";
@@ -656,7 +670,7 @@ public class DatabaseUC {
         try {
             userDao.addUser(user);
         } catch (IotDatabaseException e) {
-            LOG.warn("Error inserting default admin user: "+e.getMessage());
+            LOG.warn("Error inserting default admin user: " + e.getMessage());
         }
         User tester1 = new User();
         tester1.uid = "tester1";
@@ -685,7 +699,7 @@ public class DatabaseUC {
         try {
             userDao.addUser(user);
         } catch (IotDatabaseException e) {
-            LOG.warn("Error inserting tester1 user: "+e.getMessage());
+            LOG.warn("Error inserting tester1 user: " + e.getMessage());
         }
         user = new User();
         user.uid = "public";
@@ -715,7 +729,7 @@ public class DatabaseUC {
         try {
             userDao.addUser(user);
         } catch (IotDatabaseException e) {
-            LOG.warn("Error inserting public user: "+e.getMessage());
+            LOG.warn("Error inserting public user: " + e.getMessage());
         }
         User organizationAdmin = new User();
         organizationAdmin.uid = "admin_demo";
@@ -746,7 +760,7 @@ public class DatabaseUC {
         try {
             userDao.addUser(organizationAdmin);
         } catch (IotDatabaseException e) {
-            LOG.warn("Error inserting admin_demo user: "+e.getMessage());
+            LOG.warn("Error inserting admin_demo user: " + e.getMessage());
         }
 
         Device device = new Device();
@@ -778,7 +792,7 @@ public class DatabaseUC {
         try {
             devicePort.createDevice(tester1, device);
         } catch (Exception e) {
-            LOG.warn("Error creating device: "+e.getMessage());
+            LOG.warn("Error creating device: " + e.getMessage());
         }
     }
 

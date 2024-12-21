@@ -6,10 +6,8 @@ import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.jboss.logging.Logger;
 
 import com.signomix.common.User;
-import com.signomix.common.db.DashboardDao;
 import com.signomix.common.db.DashboardIface;
 import com.signomix.common.db.IotDatabaseException;
-import com.signomix.common.db.UserDao;
 import com.signomix.common.db.UserDaoIface;
 import com.signomix.common.gui.Dashboard;
 import com.signomix.core.application.exception.ServiceException;
@@ -35,9 +33,9 @@ public class FavouritesLogic {
     @DataSource("user")
     AgroalDataSource userDataSource;
 
-    @Inject
+/*     @Inject
     @DataSource("iot")
-    AgroalDataSource dataSource;
+    AgroalDataSource dataSource; */
 
     @Inject
     @DataSource("oltp")
@@ -53,12 +51,12 @@ public class FavouritesLogic {
     String databaseType;
 
     void onStart(@Observes StartupEvent ev) {
-        if ("h2".equalsIgnoreCase(databaseType)) {
+        /* if ("h2".equalsIgnoreCase(databaseType)) {
             dashboardDao = new DashboardDao();
             dashboardDao.setDatasource(dataSource);
             userDao = new UserDao();
             userDao.setDatasource(userDataSource);
-        } else if ("postgresql".equalsIgnoreCase(databaseType)) {
+        } else  */if ("postgresql".equalsIgnoreCase(databaseType)) {
             dashboardDao = new com.signomix.common.tsdb.DashboardDao();
             dashboardDao.setDatasource(tsDs);
             userDao = new com.signomix.common.tsdb.UserDao();

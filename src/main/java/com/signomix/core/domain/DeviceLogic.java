@@ -1,9 +1,16 @@
 package com.signomix.core.domain;
 
+import java.util.List;
+import java.util.concurrent.Executors;
+
+import org.eclipse.microprofile.config.inject.ConfigProperty;
+import org.eclipse.microprofile.reactive.messaging.Channel;
+import org.eclipse.microprofile.reactive.messaging.Emitter;
+import org.jboss.logging.Logger;
+
 import com.signomix.common.Tag;
 import com.signomix.common.Tenant;
 import com.signomix.common.User;
-import com.signomix.common.db.IotDatabaseDao;
 import com.signomix.common.db.IotDatabaseException;
 import com.signomix.common.db.IotDatabaseIface;
 import com.signomix.common.event.IotEvent;
@@ -13,18 +20,13 @@ import com.signomix.core.application.exception.ServiceException;
 import com.signomix.core.application.port.in.DashboardPort;
 import com.signomix.core.application.port.in.UserPort;
 import com.signomix.core.application.port.out.DeviceChecker;
+
 import io.agroal.api.AgroalDataSource;
 import io.quarkus.agroal.DataSource;
 import io.quarkus.runtime.StartupEvent;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.Observes;
 import jakarta.inject.Inject;
-import java.util.List;
-import java.util.concurrent.Executors;
-import org.eclipse.microprofile.config.inject.ConfigProperty;
-import org.eclipse.microprofile.reactive.messaging.Channel;
-import org.eclipse.microprofile.reactive.messaging.Emitter;
-import org.jboss.logging.Logger;
 
 /**
  * 
@@ -45,9 +47,9 @@ public class DeviceLogic {
     @ConfigProperty(name = "signomix.exception.api.unauthorized", defaultValue = "")
     String exceptionApiUnauthorized;
 
-    @Inject
+/*     @Inject
     @DataSource("iot")
-    AgroalDataSource deviceDataSource;
+    AgroalDataSource deviceDataSource; */
 
     @Inject
     @DataSource("oltp")
@@ -92,11 +94,12 @@ public class DeviceLogic {
     String databaseType;
 
     void onStart(@Observes StartupEvent ev) {
-        if ("h2".equalsIgnoreCase(databaseType)) {
+        /* if ("h2".equalsIgnoreCase(databaseType)) {
             iotDao = new IotDatabaseDao();
             iotDao.setDatasource(deviceDataSource);
             defaultOrganizationId = 0;
-        } else if ("postgresql".equalsIgnoreCase(databaseType)) {
+        } else  */
+         if ("postgresql".equalsIgnoreCase(databaseType)) {
             iotDao = new com.signomix.common.tsdb.IotDatabaseDao();
             iotDao.setDatasource(tsDs);
             defaultOrganizationId = 1;

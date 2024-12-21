@@ -1,11 +1,13 @@
 package com.signomix.core.adapter.in;
 
-import com.signomix.core.application.port.in.CommandPort;
-import com.signomix.core.application.port.in.DevicePort;
-import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.inject.Inject;
 import org.eclipse.microprofile.reactive.messaging.Incoming;
 import org.jboss.logging.Logger;
+
+import com.signomix.core.application.port.in.CommandPort;
+import com.signomix.core.application.port.in.DevicePort;
+
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
 
 @ApplicationScoped
 public class MqttClient {
@@ -30,10 +32,18 @@ public class MqttClient {
                 commandLogic.runArchive();
                 break;
             case "clean":
+            case "datacleaner":
                 commandLogic.runClean();
                 break;
             case "check":
+            case "devicechecker":
                 devicePort.checkDevices();
+                break;
+            case "devicecommands":
+                //TODO: implement device commands
+                break;
+            case "system-monitor":
+                //TODO: implement system monitor
                 break;
             default:
                 logger.warn("Unknown command: " + msg);

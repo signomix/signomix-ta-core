@@ -7,10 +7,8 @@ import org.jboss.logging.Logger;
 
 import com.signomix.common.Organization;
 import com.signomix.common.User;
-import com.signomix.common.db.IotDatabaseDao;
 import com.signomix.common.db.IotDatabaseException;
 import com.signomix.common.db.IotDatabaseIface;
-import com.signomix.common.db.UserDao;
 import com.signomix.common.db.UserDaoIface;
 import com.signomix.common.gui.Dashboard;
 import com.signomix.common.iot.Device;
@@ -38,9 +36,9 @@ public class UserLogic {
     @Inject
     @DataSource("user")
     AgroalDataSource userDataSource;
-    @Inject
+    /* @Inject
     @DataSource("iot")
-    AgroalDataSource deviceDataSource;
+    AgroalDataSource deviceDataSource; */
 
     @Inject
     @DataSource("oltp")
@@ -58,13 +56,14 @@ public class UserLogic {
     private long defaultOrganizationId = 0;
 
     void onStart(@Observes StartupEvent ev) {
-        if ("h2".equalsIgnoreCase(databaseType)) {
+        /* if ("h2".equalsIgnoreCase(databaseType)) {
             userDao = new UserDao();
             userDao.setDatasource(userDataSource);
             iotDao = new IotDatabaseDao();
             iotDao.setDatasource(deviceDataSource);
             defaultOrganizationId = 0;
-        } else if ("postgresql".equalsIgnoreCase(databaseType)) {
+        } else */ 
+         if ("postgresql".equalsIgnoreCase(databaseType)) {
             userDao = new com.signomix.common.tsdb.UserDao();
             userDao.setDatasource(tsDs);
             iotDao = new com.signomix.common.tsdb.IotDatabaseDao();

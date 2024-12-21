@@ -6,7 +6,6 @@ import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.jboss.logging.Logger;
 
 import com.signomix.common.User;
-import com.signomix.common.db.IotDatabaseDao;
 import com.signomix.common.db.IotDatabaseException;
 import com.signomix.common.db.IotDatabaseIface;
 import com.signomix.common.iot.Alert;
@@ -26,9 +25,9 @@ public class NotificationsLogic {
     @Inject
     Logger logger;
 
-    @Inject
+/*     @Inject
     @DataSource("iot")
-    AgroalDataSource deviceDataSource;
+    AgroalDataSource deviceDataSource; */
 
     @Inject
     @DataSource("oltp")
@@ -49,10 +48,11 @@ public class NotificationsLogic {
     String databaseType;
 
     void onStart(@Observes StartupEvent ev) {
-        if ("h2".equalsIgnoreCase(databaseType)) {
+        /* if ("h2".equalsIgnoreCase(databaseType)) {
             iotDatabaseDao = new IotDatabaseDao();
             iotDatabaseDao.setDatasource(deviceDataSource);
-        } else if ("postgresql".equalsIgnoreCase(databaseType)) {
+        } else */ 
+         if ("postgresql".equalsIgnoreCase(databaseType)) {
             iotDatabaseDao = new com.signomix.common.tsdb.IotDatabaseDao();
             iotDatabaseDao.setDatasource(tsDs);
         }else {

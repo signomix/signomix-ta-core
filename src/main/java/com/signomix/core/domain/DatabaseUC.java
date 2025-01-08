@@ -657,7 +657,7 @@ public class DatabaseUC {
         user.alertNotificationChannel = "";
         user.confirmed = true;
         user.unregisterRequested = false;
-        user.authStatus = 1;
+        user.authStatus = User.IS_ACTIVE;
         user.createdAt = System.currentTimeMillis();
         user.number = 0L;
         user.services = 0;
@@ -697,7 +697,7 @@ public class DatabaseUC {
         tester1.autologin = false;
         tester1.services = 0;
         try {
-            userDao.addUser(user);
+            userDao.addUser(tester1);
         } catch (IotDatabaseException e) {
             LOG.warn("Error inserting tester1 user: " + e.getMessage());
         }
@@ -716,7 +716,7 @@ public class DatabaseUC {
         user.alertNotificationChannel = "";
         user.confirmed = true;
         user.unregisterRequested = false;
-        user.authStatus = 1;
+        user.authStatus = User.IS_ACTIVE;
         user.createdAt = System.currentTimeMillis();
         user.number = null;
         user.services = 0;

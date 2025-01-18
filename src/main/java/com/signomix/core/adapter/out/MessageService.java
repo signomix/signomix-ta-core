@@ -46,6 +46,21 @@ public class MessageService implements MessageServiceIface {
     }
 
     @Override
+    public void sendNotification(MessageEnvelope event) {
+        LOG.info("sending notification to MQTT, origin:" + event.userIds);
+        String encodedMessage;
+        ObjectMapper objectMapper = new ObjectMapper();
+        try {
+            encodedMessage = objectMapper.writeValueAsString(event);
+            iotEventEmitter.send(encodedMessage.getBytes());
+        } catch (Exception e) {
+            LOG.error(e.getMessage());
+            e.printStackTrace();
+        }
+    }
+        
+
+    @Override
     public void sendNotification(IotEvent event) {
         LOG.info("sending notification to MQTT, origin:" + event.getOrigin());
 

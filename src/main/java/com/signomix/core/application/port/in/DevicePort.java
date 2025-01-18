@@ -54,7 +54,7 @@ public class DevicePort {
         deviceLogic.createDevice(user, device);
     }
 
-    public void checkDevices() throws ServiceException {
-        deviceLogic.checkDevices();
+    public void checkDevices(boolean paid) throws ServiceException {
+        deviceLogic.checkDevices(paid);
     }
 }

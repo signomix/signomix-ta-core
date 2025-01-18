@@ -37,7 +37,10 @@ public class MqttClient {
                 break;
             case "check":
             case "devicechecker":
-                devicePort.checkDevices();
+                devicePort.checkDevices(false);
+                break;
+            case "devicechecker-paid":
+                devicePort.checkDevices(true);
                 break;
             case "devicecommands":
                 //TODO: implement device commands

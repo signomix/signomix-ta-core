@@ -452,9 +452,9 @@ public class DeviceLogic {
      * 
      * @throws ServiceException
      */
-    public void checkDevices() throws ServiceException {
+    public void checkDevices(boolean paid) throws ServiceException {
         logger.info("Checking devices...");
-        Executors.newSingleThreadExecutor().execute(new DeviceChecker(iotDao, messageService));
+        Executors.newSingleThreadExecutor().execute(new DeviceChecker(iotDao, messageService, paid));
     }
 
     private void sendNotification(Device device, String type) {

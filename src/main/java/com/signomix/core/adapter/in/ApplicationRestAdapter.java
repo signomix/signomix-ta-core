@@ -45,7 +45,7 @@ public class ApplicationRestAdapter {
             @HeaderParam("Authentication") String token,
             @QueryParam("limit") Integer limit,
             @QueryParam("offset") Integer offset,
-            @QueryParam("organization") Long organization,
+            @QueryParam("organization") Integer organization,
             @QueryParam("name") String name) {
         try {
             int appLimit = limit == null ? 1000 : limit;
@@ -75,7 +75,7 @@ public class ApplicationRestAdapter {
 
     @GET
     @Path("/application/{id}")
-    public Response getApplication(@HeaderParam("Authentication") String token, @PathParam("id") long id) {
+    public Response getApplication(@HeaderParam("Authentication") String token, @PathParam("id") int id) {
         User user;
         try {
             user = userPort.getAuthorizing(authPort.getUserId(token));
@@ -109,7 +109,7 @@ public class ApplicationRestAdapter {
 
     @DELETE
     @Path("/application/{id}")
-    public Response delete(@HeaderParam("Authentication") String token, @PathParam("id") long id) {
+    public Response delete(@HeaderParam("Authentication") String token, @PathParam("id") int id) {
         User user;
         try {
             user = userPort.getAuthorizing(authPort.getUserId(token));
@@ -125,7 +125,7 @@ public class ApplicationRestAdapter {
 
     @PUT
     @Path("/application/{id}")
-    public Response updateApplication(@HeaderParam("Authentication") String token, @PathParam("id") long id,
+    public Response updateApplication(@HeaderParam("Authentication") String token, @PathParam("id") int id,
             Application application) {
         try {
             User user;

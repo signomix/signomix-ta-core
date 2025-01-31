@@ -66,7 +66,7 @@ public class ApplicationLogic {
             if (userLogic.isSystemAdmin(user)) {
                 return applicationDao.getApplications(limit, offset);
             } else {
-                return applicationDao.getApplications(user.organization, limit, offset);
+                return applicationDao.getApplications(user.organization.intValue(), limit, offset);
             }
         } catch (IotDatabaseException e) {
             throw new ServiceException(e.getMessage());
@@ -82,7 +82,7 @@ public class ApplicationLogic {
      * @return
      * @throws ServiceException
      */
-    public Application getApplication(User user, long applicationId) throws ServiceException {
+    public Application getApplication(User user, int applicationId) throws ServiceException {
         Application application;
         try {
             application = applicationDao.getApplication(applicationId);
@@ -96,7 +96,7 @@ public class ApplicationLogic {
         }
     }
 
-    public Application getApplicationByName(User user, long organizationId, String name) throws ServiceException {
+    public Application getApplicationByName(User user, int organizationId, String name) throws ServiceException {
         Application application;
         try {
             application = applicationDao.getApplication(organizationId, name);
@@ -163,7 +163,7 @@ public class ApplicationLogic {
      * @param organizationId
      * @throws ServiceException
      */
-    public void deleteApplication(User user, long applicationId) throws ServiceException {
+    public void deleteApplication(User user, int applicationId) throws ServiceException {
         if (!userLogic.isSystemAdmin(user)) {
             throw new ServiceException(userNotAuthorizedException);
         }

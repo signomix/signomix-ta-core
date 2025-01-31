@@ -20,11 +20,11 @@ public class ApplicationPort {
         return applicationLogic.getApplications(user, limit, offset);
     }
 
-    public Application getApplication(User user, long applicationId) throws ServiceException {
+    public Application getApplication(User user, int applicationId) throws ServiceException {
         return applicationLogic.getApplication(user, applicationId);
     }
 
-    public Application getApplicationByName(User user, long organizationId, String name) throws ServiceException {
+    public Application getApplicationByName(User user, int organizationId, String name) throws ServiceException {
         return applicationLogic.getApplicationByName(user, organizationId, name);
     }
 
@@ -32,7 +32,7 @@ public class ApplicationPort {
         applicationLogic.addApplication(user, application);
     }
 
-    public void deleteApplication(User user, long applicationId) throws ServiceException {
+    public void deleteApplication(User user, int applicationId) throws ServiceException {
         applicationLogic.deleteApplication(user, applicationId);
     }
 

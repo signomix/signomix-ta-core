@@ -231,6 +231,7 @@ public class DatabaseUC {
             e.printStackTrace();
         }
         try {
+            LOG.info("Creating application structure");
             applicationDao.createStructure();
         } catch (IotDatabaseException e) {
             LOG.error(e.getMessage());
@@ -613,14 +614,14 @@ public class DatabaseUC {
         // System application
         ApplicationConfig config = new ApplicationConfig();
         config.put("refreshInterval", "60");
-        Application application = new Application(null, 1L, 1L, "system", "");
+        Application application = new Application(null, 1, 1, "system", "");
         application.setConfig(config);
         try {
             applicationDao.addApplication(application);
         } catch (IotDatabaseException e) {
             LOG.warn("Error inserting system application: " + e.getMessage());
             try {
-                application.id = 1l;
+                application.id = 1;
                 applicationDao.updateApplication(application);
             } catch (IotDatabaseException e2) {
                 // TODO Auto-generated catch block
@@ -633,7 +634,7 @@ public class DatabaseUC {
         // Demo application
         config = new ApplicationConfig();
         config.put("refreshInterval", "60");
-        application = new Application(null, demoOrganization.id, 1L, "demo", "");
+        application = new Application(null, demoOrganization.id, 1, "demo", "");
         application.setConfig(config);
         try {
             applicationDao.addApplication(application);
@@ -734,7 +735,7 @@ public class DatabaseUC {
         User organizationAdmin = new User();
         organizationAdmin.uid = "admin_demo";
         organizationAdmin.email = "";
-        organizationAdmin.organization = demoOrganization.id;
+        organizationAdmin.organization = (long)demoOrganization.id;
         organizationAdmin.password = HashMaker.md5Java("test123");
         organizationAdmin.type = User.MANAGING_ADMIN;
         organizationAdmin.confirmed = true;

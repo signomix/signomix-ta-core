@@ -353,6 +353,28 @@ public class DeviceRestAdapter {
         }
     }
 
+    @DELETE
+    @Path("/device/{eui}/data")
+    public Response deleteData(@HeaderParam("Authentication") String token, @PathParam("eui") String eui) {
+        try {
+            User user;
+            try {
+                user = userPort.getAuthorizing(authPort.getUserId(token));
+            } catch (IotDatabaseException e) {
+                throw new ServiceException(unauthorizedException);
+            }
+            if (null == user) {
+                throw new ServiceException(unauthorizedException);
+            }
+            devicePort.deleteDeviceData(user, eui);
+            return Response.ok().entity("OK").build();
+        } catch (Exception e) {
+            LOG.warn(e.getMessage());
+            throw new ServiceException(e.getMessage());
+        }
+    }
+
+
     private String getParam(String name, String[] paramNames, String[] values) {
         for (int i = 0; i < paramNames.length; i++) {
             if (paramNames[i].equals(name)) {

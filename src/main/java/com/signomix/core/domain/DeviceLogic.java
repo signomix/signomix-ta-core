@@ -560,4 +560,32 @@ public class DeviceLogic {
         }
         return false;
     }
+
+    public void deleteDeviceData(User user, String eui) throws ServiceException {
+        Device device = getDevice(user, eui, false);
+        if (null == device) {
+            throw new ServiceException("Device not found");
+        }
+        try {
+            if (userLogic.hasObjectAccess(user, true, defaultOrganizationId, device)) {
+                List<Tag> tags = iotDao.getDeviceTags(eui);
+                boolean isProtected = false;
+                for (Tag tag : tags) {
+                    if (tag.name.equals("protected") && tag.value.equalsIgnoreCase("true")) {
+                        isProtected = true;
+                        break;
+                    }
+                }
+                if (!isProtected) {
+                    iotDao.clearDeviceData(eui);
+                }
+                //deviceRemovalEmitter.send(eui);
+                //sendNotification(device, "DELETED");
+            } else {
+                throw new ServiceException(exceptionApiUnauthorized);
+            }
+        } catch (IotDatabaseException e) {
+            throw new ServiceException(e.getMessage(), e);
+        }
+    }
 }

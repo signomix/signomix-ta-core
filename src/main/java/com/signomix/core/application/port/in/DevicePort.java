@@ -57,4 +57,8 @@ public class DevicePort {
     public void checkDevices(boolean paid) throws ServiceException {
         deviceLogic.checkDevices(paid);
     }
+
+    public void deleteDeviceData(User user, String eui) throws ServiceException {
+        deviceLogic.deleteDeviceData(user, eui);
+    }
 }

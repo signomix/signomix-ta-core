@@ -118,9 +118,12 @@ public class GroupLogic {
         try {
             DeviceGroup group = iotDao.getGroup(newGroup.getEUI());
             if (null != group) {
-                throw new ServiceException("Dashboard already exists");
+                throw new ServiceException("Group already exists");
             }
-            newGroup.setEUI(euiGenerator.createEui("S-"));
+            if(newGroup.getEUI()==null || newGroup.getEUI().isEmpty()||newGroup.getEUI().equalsIgnoreCase("new")){
+                newGroup.setEUI(euiGenerator.createEui("S-"));
+            }
+            //newGroup.setEUI(euiGenerator.createEui("S-"));
             newGroup.setUserID(user.uid);
             newGroup.setOrganization(user.organization);
             iotDao.createGroup(newGroup);

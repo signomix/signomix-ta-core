@@ -3,6 +3,7 @@ package com.signomix.core.adapter.in;
 import org.eclipse.microprofile.reactive.messaging.Incoming;
 import org.jboss.logging.Logger;
 
+import com.signomix.core.application.port.in.ActuatorPort;
 import com.signomix.core.application.port.in.CommandPort;
 import com.signomix.core.application.port.in.DevicePort;
 
@@ -17,8 +18,10 @@ public class MqttClient {
 
     @Inject
     CommandPort commandLogic;
-     @Inject
+    @Inject
     DevicePort devicePort;
+    @Inject
+    ActuatorPort actuatorPort;
 
     @Incoming("commands")
     public void processCommand(byte[] bytes) {
@@ -43,10 +46,11 @@ public class MqttClient {
                 devicePort.checkDevices(true);
                 break;
             case "devicecommands":
-                //TODO: implement device commands
+                actuatorPort.sendWaitingCommands();
+                // TODO: implement device commands
                 break;
             case "system-monitor":
-                //TODO: implement system monitor
+                // TODO: implement system monitor
                 break;
             default:
                 logger.warn("Unknown command: " + msg);

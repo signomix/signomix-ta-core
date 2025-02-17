@@ -32,4 +32,9 @@ public class ActuatorPort {
         logger.debug("processJsonCommand");
         actuatorLogic.processHexCommand(user, device, command);
     }
+
+    public void sendWaitingCommands() {
+        logger.debug("sendWaitingCommands");
+        actuatorLogic.sendWaitingCommands();
+    }
 }

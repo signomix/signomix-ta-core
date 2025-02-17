@@ -1,11 +1,18 @@
 package com.signomix.core.domain;
 
+import java.util.HashMap;
+import java.util.Map;
+
+import org.eclipse.microprofile.rest.client.inject.RestClient;
 import org.jboss.logging.Logger;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.signomix.common.User;
 import com.signomix.common.db.IotDatabaseException;
 import com.signomix.common.db.IotDatabaseIface;
 import com.signomix.common.iot.Device;
+import com.signomix.core.adapter.out.ChirpStackClient;
+import com.signomix.core.adapter.out.ChirpStackResponse;
 
 import io.agroal.api.AgroalDataSource;
 import io.quarkus.agroal.DataSource;
@@ -19,6 +26,10 @@ public class ActuatorLogic {
 
     @Inject
     Logger logger = Logger.getLogger(ActuatorLogic.class);
+
+    @Inject
+    @RestClient
+    ChirpStackClient chirpStackClient;
 
     @Inject
     @DataSource("oltp")
@@ -37,7 +48,6 @@ public class ActuatorLogic {
     }
 
     public void processPlainCommand(User user, Device device, String command) throws IotDatabaseException {
-        logger.info("processPlainCommand");
         try {
             logger.info("Saving command");
             iotDao.putDeviceCommand(device.getEUI(), "ACTUATOR_PLAINCMD", command, System.currentTimeMillis());
@@ -48,9 +58,12 @@ public class ActuatorLogic {
     }
 
     public void processJsonCommand(User user, Device device, String command) throws IotDatabaseException {
-        logger.info("processJsonCommand");
         // Check if command is a valid JSON string
-        if (!command.matches("^\\{.*\\}$")) {
+        String json = command;
+        if (command.indexOf("@@@") > 0) {
+            json = command.substring(0, command.indexOf("@@@"));
+        }
+        if (!json.matches("^\\{.*\\}$")) {
             logger.debug("Invalid JSON string");
             throw new IotDatabaseException(IotDatabaseException.UNKNOWN, "Invalid JSON string");
         }
@@ -64,9 +77,12 @@ public class ActuatorLogic {
     }
 
     public void processHexCommand(User user, Device device, String command) throws IotDatabaseException {
-        logger.info("processJsonCommand");
         // Check if command is a valid hex string
-        if (!command.matches("^[0-9A-Fa-f]+$")) {
+        String hexStr = command;
+        if (command.indexOf("@@@") > 0) {
+            hexStr = command.substring(0, command.indexOf("@@@"));
+        }
+        if (!hexStr.matches("^[0-9A-Fa-f]+$")) {
             logger.debug("Invalid hex string");
             throw new IotDatabaseException(IotDatabaseException.UNKNOWN, "Invalid hex string");
         }
@@ -80,4 +96,95 @@ public class ActuatorLogic {
 
     }
 
+    public void sendWaitingCommands() {
+        try {
+            iotDao.getCommands().forEach((command) -> {
+                // Process command
+                logger.info("Processing command for device: " + command.getOrigin());
+                logger.info("Command: " + command.getPayload());
+                // TODO: Implement command processing
+                // 1. if devide is of type DIRECT (GENERIC) then skip command processing
+                // 2. for TTN devices, send command to TTN
+                // 3. for ChirpStack devices, send command to ChirpStack
+                // 4. otherwise, log operation and do nothing
+                // Remove command
+
+                try {
+                    Device device = iotDao.getDevice(command.getOrigin(), false);
+                    boolean success = false;
+                    logger.info("Device type: " + device.getType());
+                    if (device != null) {
+                        if (device.getType() == Device.TTN) {
+                            // Send command to TTN
+                            success = true;
+                        } else if (device.getType() == Device.CHIRPSTACK || device.getType().equals("LORA")) {
+                            // Send command to ChirpStack
+                            String apiKey = (String)device.getConfigurationMap().get("apiKey");
+                            success = sendToChirpstack(device.getEUI(), apiKey, command.getPayload());
+                        }
+                        if (success) {
+                            iotDao.removeCommand(command.getId());
+                            iotDao.putCommandLog(null, command);
+                        }
+                    }
+
+                } catch (Exception e) {
+                    logger.warn("Error removing command", e);
+                }
+            });
+        } catch (IotDatabaseException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private boolean sendToChirpstack(String eui, String key, Object payload) {
+        logger.info("Sending command to ChirpStack");
+        String command = payload.toString();
+        if (command.indexOf("@@@") < 0) {
+            logger.warn("Invalid command format");
+            return false;
+        }
+        String sPort = command.substring(command.indexOf("@@@") + 3);
+        Integer port;
+        try {
+            port = Integer.parseInt(sPort);
+        } catch (NumberFormatException e) {
+            logger.warn("Invalid port number: " + sPort);
+            return false;
+        }
+        try {
+            command = command.substring(0, command.indexOf("@@@"));
+            ChirpStackQueueItem item = new ChirpStackQueueItem();
+            item.fPort = port;
+            ObjectMapper mapper = new ObjectMapper();
+            mapper.setSerializationInclusion(com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL);
+            
+            // command is a JSON string, eg. {"led":1}
+            item.object = mapper.readValue(command, Map.class);
+
+            HashMap<String, Object> body = new HashMap<>();
+            body.put("queueItem", item);
+
+            // serialize item back to String
+            String json = mapper.writeValueAsString(body);
+            logger.info("Sending body: " + json);
+
+            // Send command to ChirpStack
+            logger.info("eui: "+eui);
+            logger.info("key: "+"Bearer "+key);
+            ChirpStackResponse response = chirpStackClient.sendDownlink("Bearer "+key, eui, body);
+            if(response.id==null){
+                logger.warn("Error sending command to ChirpStack. Code: "+response.code);
+                logger.warn("Response message: "+response.message);
+                //TODO: save error message to command log?
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            logger.warn("Error sending command to ChirpStack. Message"+e.getMessage());
+            return false;
+        }
+        return true;
+    }
 }

@@ -102,13 +102,6 @@ public class ActuatorLogic {
                 // Process command
                 logger.info("Processing command for device: " + command.getOrigin());
                 logger.info("Command: " + command.getPayload());
-                // TODO: Implement command processing
-                // 1. if devide is of type DIRECT (GENERIC) then skip command processing
-                // 2. for TTN devices, send command to TTN
-                // 3. for ChirpStack devices, send command to ChirpStack
-                // 4. otherwise, log operation and do nothing
-                // Remove command
-
                 try {
                     Device device = iotDao.getDevice(command.getOrigin(), false);
                     boolean success = false;

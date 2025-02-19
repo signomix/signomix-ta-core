@@ -63,6 +63,9 @@ public class ActuatorLogic {
         if (command.indexOf("@@@") > 0) {
             json = command.substring(0, command.indexOf("@@@"));
         }
+        if(json.startsWith("&") || json.startsWith("#")){
+            json = json.substring(1);
+        }
         if (!json.matches("^\\{.*\\}$")) {
             logger.debug("Invalid JSON string");
             throw new IotDatabaseException(IotDatabaseException.UNKNOWN, "Invalid JSON string");
@@ -81,6 +84,9 @@ public class ActuatorLogic {
         String hexStr = command;
         if (command.indexOf("@@@") > 0) {
             hexStr = command.substring(0, command.indexOf("@@@"));
+        }
+        if(hexStr.startsWith("&") || hexStr.startsWith("#")){
+            hexStr = hexStr.substring(1);
         }
         if (!hexStr.matches("^[0-9A-Fa-f]+$")) {
             logger.debug("Invalid hex string");

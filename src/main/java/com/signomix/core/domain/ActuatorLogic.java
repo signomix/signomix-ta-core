@@ -123,7 +123,7 @@ public class ActuatorLogic {
                         }
                         if (success) {
                             iotDao.removeCommand(command.getId());
-                            iotDao.putCommandLog(null, command);
+                            iotDao.putCommandLog(device.getEUI(), command);
                         }
                     }
 

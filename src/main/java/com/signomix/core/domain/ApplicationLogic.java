@@ -125,11 +125,13 @@ public class ApplicationLogic {
      */
     public void addApplication(User user, Application application) throws ServiceException {
         if (!userLogic.isSystemAdmin(user)) {
+            logger.warn("User not authorized to add application");
             throw new ServiceException(userNotAuthorizedException);
         }
         try {
             applicationDao.addApplication(application);
         } catch (IotDatabaseException e) {
+            logger.warn(e.getMessage());
             e.printStackTrace();
             throw new ServiceException(e.getMessage());
         }

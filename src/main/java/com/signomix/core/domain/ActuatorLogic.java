@@ -104,7 +104,8 @@ public class ActuatorLogic {
 
     public void sendWaitingCommands() {
         try {
-            iotDao.getCommands().forEach((command) -> {
+            boolean processAll = true; // Process all commands for each device, not only the first one as in the previous version
+            iotDao.getCommands(processAll).forEach((command) -> {
                 // Process command
                 logger.info("Processing command for device: " + command.getOrigin());
                 logger.info("Command: " + command.getPayload());

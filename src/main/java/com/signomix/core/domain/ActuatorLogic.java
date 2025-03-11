@@ -102,7 +102,7 @@ public class ActuatorLogic {
 
     }
 
-    public void sendWaitingCommands() {
+    public void sendWaitingCommands(String eui) {
         try {
             boolean processAll = true; // Process all commands for each device, not only the first one as in the previous version
             iotDao.getCommands(processAll).forEach((command) -> {
@@ -113,6 +113,7 @@ public class ActuatorLogic {
                     Device device = iotDao.getDevice(command.getOrigin(), false);
                     boolean success = false;
                     logger.info("Device type: " + device.getType());
+                    //logger.info(device.)
                     if (device != null) {
                         if (device.getType() == Device.TTN) {
                             // Send command to TTN

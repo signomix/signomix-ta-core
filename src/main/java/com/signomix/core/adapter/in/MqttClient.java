@@ -46,8 +46,7 @@ public class MqttClient {
                 devicePort.checkDevices(true);
                 break;
             case "devicecommands":
-                actuatorPort.sendWaitingCommands();
-                // TODO: implement device commands
+                actuatorPort.sendWaitingCommands(null);
                 break;
             case "system-monitor":
                 // TODO: implement system monitor
@@ -55,6 +54,13 @@ public class MqttClient {
             default:
                 logger.warn("Unknown command: " + msg);
         }
+    }
+
+    @Incoming("command-ready")
+    public void processCommandReady(byte[] bytes) {
+        logger.info("Command ready for: " + new String(bytes));
+        String eui = new String(bytes);
+        actuatorPort.sendWaitingCommands(eui);
     }
 
     @Incoming("sms-sent")

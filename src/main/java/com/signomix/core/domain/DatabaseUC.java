@@ -597,7 +597,7 @@ public class DatabaseUC {
 
     private void createObjects() {
         Organization organization = new Organization(null, "0123456789", "Demo Organization",
-                "Organization for demonstration purposes", 0);
+                "Organization for demonstration purposes", 0, "{}");
         try {
             organizationDao.addOrganization(organization);
         } catch (IotDatabaseException e) {

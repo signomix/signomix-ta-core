@@ -47,9 +47,12 @@ public class DeviceLogic {
     @ConfigProperty(name = "signomix.exception.api.unauthorized", defaultValue = "")
     String exceptionApiUnauthorized;
 
-/*     @Inject
-    @DataSource("iot")
-    AgroalDataSource deviceDataSource; */
+    /*
+     * @Inject
+     * 
+     * @DataSource("iot")
+     * AgroalDataSource deviceDataSource;
+     */
 
     @Inject
     @DataSource("oltp")
@@ -94,12 +97,14 @@ public class DeviceLogic {
     String databaseType;
 
     void onStart(@Observes StartupEvent ev) {
-        /* if ("h2".equalsIgnoreCase(databaseType)) {
-            iotDao = new IotDatabaseDao();
-            iotDao.setDatasource(deviceDataSource);
-            defaultOrganizationId = 0;
-        } else  */
-         if ("postgresql".equalsIgnoreCase(databaseType)) {
+        /*
+         * if ("h2".equalsIgnoreCase(databaseType)) {
+         * iotDao = new IotDatabaseDao();
+         * iotDao.setDatasource(deviceDataSource);
+         * defaultOrganizationId = 0;
+         * } else
+         */
+        if ("postgresql".equalsIgnoreCase(databaseType)) {
             iotDao = new com.signomix.common.tsdb.IotDatabaseDao();
             iotDao.setDatasource(tsDs);
             defaultOrganizationId = 1;
@@ -309,6 +314,29 @@ public class DeviceLogic {
                 if (device.getOrganizationId() == defaultOrganizationId) {
                     device.setPath("");
                 }
+
+                // cleaning
+                // if device.team is not null remove spaces from device.team
+                if (device.getTeam() != null) {
+                    device.setTeam(removeSpaces(device.getTeam()));
+                }
+                // if device.administrators is not null remove spaces from device.administrators
+                if (device.getAdministrators() != null) {
+                    device.setAdministrators(removeSpaces(device.getAdministrators()));
+                }
+                // if device.project is not null remove spaces from device.project
+                if (device.getProject() != null) {
+                    device.setProject(removeSpaces(device.getProject()));
+                }
+                // if device.groups is not null remove spaces from device.groups
+                if (device.getGroups() != null) {
+                    device.setGroups(removeSpaces(device.getGroups()));
+                }
+                // if getChannelsAsString is not null remove spaces from getChannelsAsString
+                if (device.getChannelsAsString() != null) {
+                    device.setChannelsAsString(removeSpaces(device.getChannelsAsString()));
+                }
+
                 iotDao.updateDevice(user, device);
                 if (!updated.getChannelsAsString().equals(device.getChannelsAsString())) {
                     iotDao.clearDeviceData(device.getEUI());
@@ -366,6 +394,27 @@ public class DeviceLogic {
             }
             if (device.getKey() == null || device.getKey().isEmpty()) {
                 device.setKey(euiGenerator.createEui(""));
+            }
+            // cleaning
+            // if device.team is not null remove spaces from device.team
+            if (device.getTeam() != null) {
+                device.setTeam(removeSpaces(device.getTeam()));
+            }
+            // if device.administrators is not null remove spaces from device.administrators
+            if (device.getAdministrators() != null) {
+                device.setAdministrators(removeSpaces(device.getAdministrators()));
+            }
+            // if device.project is not null remove spaces from device.project
+            if (device.getProject() != null) {
+                device.setProject(removeSpaces(device.getProject()));
+            }
+            // if device.groups is not null remove spaces from device.groups
+            if (device.getGroups() != null) {
+                device.setGroups(removeSpaces(device.getGroups()));
+            }
+            // if getChannelsAsString is not null remove spaces from getChannelsAsString
+            if (device.getChannelsAsString() != null) {
+                device.setChannelsAsString(removeSpaces(device.getChannelsAsString()));
             }
             logger.info("Creating device: " + device.getEUI());
             device.setOrganizationId(user.organization);
@@ -445,6 +494,11 @@ public class DeviceLogic {
      */
     private String removeNonAlphanumeric(String str) {
         return str.trim().replaceAll("[^a-zA-Z0-9]", "");
+    }
+
+    private String removeSpaces(String str) {
+        logger.info("Removing spaces from: " + str);
+        return str.trim().replaceAll("\\s", "");
     }
 
     /**
@@ -579,8 +633,8 @@ public class DeviceLogic {
                 if (!isProtected) {
                     iotDao.clearDeviceData(eui);
                 }
-                //deviceRemovalEmitter.send(eui);
-                //sendNotification(device, "DELETED");
+                // deviceRemovalEmitter.send(eui);
+                // sendNotification(device, "DELETED");
             } else {
                 throw new ServiceException(exceptionApiUnauthorized);
             }

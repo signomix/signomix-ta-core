@@ -262,7 +262,9 @@ public class DashboardLogic {
             if (null != dashboard) {
                 throw new ServiceException("Dashboard already exists");
             }
-            newDashboard.setId(euiGenerator.createEui("S-"));
+            if(newDashboard.getId() == null || newDashboard.getId().isEmpty() || newDashboard.getId().equalsIgnoreCase("new")){
+                newDashboard.setId(euiGenerator.createEui("S-"));
+            }
             newDashboard.setUserID(user.uid);
             newDashboard.setOrganizationId(user.organization);
             newDashboard = updateToken(newDashboard, user);

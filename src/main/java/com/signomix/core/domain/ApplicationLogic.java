@@ -53,7 +53,7 @@ public class ApplicationLogic {
     }
 
     /**
-     * Gets organizations
+     * Gets applications.
      * 
      * @param user
      * @param limit
@@ -124,7 +124,7 @@ public class ApplicationLogic {
      * @throws ServiceException
      */
     public void addApplication(User user, Application application) throws ServiceException {
-        if (!userLogic.isSystemAdmin(user)) {
+        if (!(userLogic.isSystemAdmin(user) || userLogic.isOrganizationMember(user, application.organization))) {
             logger.warn("User not authorized to add application");
             throw new ServiceException(userNotAuthorizedException);
         }
@@ -146,7 +146,7 @@ public class ApplicationLogic {
      * @throws ServiceException
      */
     public void updateApplication(User user, Application application) throws ServiceException {
-        if (!userLogic.isSystemAdmin(user)) {
+        if (!(userLogic.isSystemAdmin(user)|| userLogic.isOrganizationMember(user, application.organization))) {
             throw new ServiceException(userNotAuthorizedException);
         }
         try {
@@ -166,7 +166,13 @@ public class ApplicationLogic {
      * @throws ServiceException
      */
     public void deleteApplication(User user, int applicationId) throws ServiceException {
-        if (!userLogic.isSystemAdmin(user)) {
+        Application application;
+        try {
+            application = applicationDao.getApplication(applicationId);
+        } catch (IotDatabaseException e) {
+            throw new ServiceException(e.getMessage());
+        }
+        if (!(userLogic.isSystemAdmin(user)|| userLogic.isOrganizationMember(user, application.organization))) {
             throw new ServiceException(userNotAuthorizedException);
         }
         try {

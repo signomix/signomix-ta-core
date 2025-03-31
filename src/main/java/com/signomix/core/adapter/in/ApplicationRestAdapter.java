@@ -170,8 +170,14 @@ public class ApplicationRestAdapter {
         if (null == user) {
             throw new ServiceException(unauthorizedException);
         }
-        applicationPort.addApplication(user, application);
-        return Response.ok().entity("OK").build();
+        try{
+            applicationPort.addApplication(user, application);
+            return Response.ok().entity("OK").build();
+        } catch (Exception e) {
+            e.printStackTrace();
+            LOG.warn(e.getMessage());
+            return Response.serverError().entity(e.getMessage()).build();
+        }
     }
 
 }

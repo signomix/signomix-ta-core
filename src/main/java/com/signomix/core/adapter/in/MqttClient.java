@@ -52,7 +52,7 @@ public class MqttClient {
                 // TODO: implement system monitor
                 break;
             default:
-                logger.warn("Unknown command: " + msg);
+                logger.debug("Unknown command: " + msg);
         }
     }
 

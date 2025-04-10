@@ -8,8 +8,10 @@ import org.jboss.logging.Logger;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.signomix.common.User;
+import com.signomix.common.db.ApplicationDaoIface;
 import com.signomix.common.db.IotDatabaseException;
 import com.signomix.common.db.IotDatabaseIface;
+import com.signomix.common.iot.Application;
 import com.signomix.common.iot.Device;
 import com.signomix.core.adapter.out.ChirpStackClient;
 import com.signomix.core.adapter.out.ChirpStackResponse;
@@ -47,12 +49,17 @@ public class ActuatorLogic {
     @DataSource("olap")
     AgroalDataSource olapDs;
 
+
+
     IotDatabaseIface iotDao;
+    ApplicationDaoIface appDao;
 
     public void onStart(@Observes StartupEvent ev) {
         iotDao = new com.signomix.common.tsdb.IotDatabaseDao();
         iotDao.setDatasource(oltpDs);
         iotDao.setAnalyticDatasource(olapDs);
+        appDao = new com.signomix.common.tsdb.ApplicationDao();
+        appDao.setDatasource(oltpDs);
     }
 
     public void processPlainCommand(User user, Device device, String command) throws IotDatabaseException {
@@ -117,6 +124,7 @@ public class ActuatorLogic {
             if (eui != null) {
                 paidDevicesOnly = true;
             }
+            // Get all commands for the device and send them one by one
             iotDao.getCommands(eui, processAll, paidDevicesOnly).forEach((command) -> {
                 // Process command
                 logger.info("Processing command for device: " + command.getOrigin());
@@ -127,7 +135,16 @@ public class ActuatorLogic {
                     logger.info("Device type: " + device.getType());
                     //logger.info(device.)
                     if (device != null) {
-                        String apiKey = (String)device.getConfigurationMap().get("apiKey");
+                        HashMap<String, Object> config = device.getConfigurationMap();
+                        if (config == null || config.isEmpty()) {
+                            logger.warn("Device configuration is empty");
+                            /* Application app = appDao.getApplication(device.getApplicationID());
+                            if (app != null) {
+                                config = (HashMap<String,Object>)app.config.getAsMap();
+                            } */
+                            config = device.getApplicationConfig();
+                        }
+                        String apiKey = (String)config.get("apiKey");
                         String appId = device.getApplicationID();
                         String deviceId = device.getDeviceID();
                         String webhookId = (String)device.getConfigurationMap().get("webhookId");

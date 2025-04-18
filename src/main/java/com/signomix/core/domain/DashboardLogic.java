@@ -278,6 +278,7 @@ public class DashboardLogic {
     }
 
     public void removeDashboard(User user, String dashboardId) throws ServiceException {
+        //logger.warn("REMOVE_WARN: " + dashboardId);
         try {
             Dashboard dashboard = dashboardDao.getDashboard(dashboardId);
             if (null != dashboard) {

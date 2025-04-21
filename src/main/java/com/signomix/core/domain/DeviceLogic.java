@@ -8,6 +8,7 @@ import org.eclipse.microprofile.reactive.messaging.Channel;
 import org.eclipse.microprofile.reactive.messaging.Emitter;
 import org.jboss.logging.Logger;
 
+import com.signomix.common.Organization;
 import com.signomix.common.Tag;
 import com.signomix.common.Tenant;
 import com.signomix.common.User;
@@ -178,17 +179,19 @@ public class DeviceLogic {
             if (organizationId == null || organizationId == defaultOrganizationId) {
                 return iotDao.getUserDevices(user, searchStatus, searchLimit, searchOffset, search);
             } else {
-                //if (user.type == User.MANAGING_ADMIN && context != null && context > 0) {
-                //    return iotDao.getDevicesByPath(user.uid, user.organization, context, searchPath, search,
-                //            searchLimit,
-                //            searchOffset);
-                //} else if (user.tenant > 0) {
-                //    return iotDao.getDevicesByPath(user.uid, user.organization, user.tenant, user.path, search,
-                //            searchLimit,
-                //            searchOffset);
-                //} else {
-                    return iotDao.getOrganizationDevices(organizationId, searchStatus, searchLimit, searchOffset, path);
-                //}
+                // if (user.type == User.MANAGING_ADMIN && context != null && context > 0) {
+                // return iotDao.getDevicesByPath(user.uid, user.organization, context,
+                // searchPath, search,
+                // searchLimit,
+                // searchOffset);
+                // } else if (user.tenant > 0) {
+                // return iotDao.getDevicesByPath(user.uid, user.organization, user.tenant,
+                // user.path, search,
+                // searchLimit,
+                // searchOffset);
+                // } else {
+                return iotDao.getOrganizationDevices(organizationId, searchStatus, searchLimit, searchOffset, path);
+                // }
             }
         } catch (IotDatabaseException e) {
             throw new ServiceException(e.getMessage());
@@ -260,6 +263,13 @@ public class DeviceLogic {
      */
 
     public void deleteDevice(User user, String eui) throws ServiceException {
+        Organization org = organizationLogic.getOrganization(user, user.organization);
+        if (org == null) {
+            throw new ServiceException("Organization not found");
+        }
+        if (org.locked) {
+            throw new ServiceException("Organization is locked");
+        }
         Device device = getDevice(user, eui, false);
         if (null == device) {
             throw new ServiceException("Device not found");
@@ -302,6 +312,13 @@ public class DeviceLogic {
     }
 
     public void updateDevice(User user, String eui, Device device) throws ServiceException {
+        Organization org = organizationLogic.getOrganization(user, user.organization);
+        if (org == null) {
+            throw new ServiceException("Organization not found");
+        }
+        if (org.locked) {
+            throw new ServiceException("Organization is locked");
+        }
         Device updated = getDevice(user, eui, false);
         if (null == updated) {
             throw new ServiceException("Device not found");

@@ -12,6 +12,7 @@ import org.jboss.logging.Logger;
 import org.jsoup.Jsoup;
 import org.jsoup.safety.Safelist;
 
+import com.signomix.common.Organization;
 import com.signomix.common.Token;
 import com.signomix.common.TokenType;
 import com.signomix.common.User;
@@ -39,9 +40,12 @@ public class DashboardLogic {
     @Inject
     Logger logger;
 
-/*     @Inject
-    @DataSource("iot")
-    AgroalDataSource dataSource; */
+    /*
+     * @Inject
+     * 
+     * @DataSource("iot")
+     * AgroalDataSource dataSource;
+     */
     @Inject
     @DataSource("oltp")
     AgroalDataSource tsDs;
@@ -62,6 +66,9 @@ public class DashboardLogic {
     GroupLogic groupLogic;
 
     @Inject
+    OrganizationLogic organizationLogic;
+
+    @Inject
     EuiGenerator euiGenerator;
 
     long defaultOrganizationId = 0;
@@ -72,14 +79,16 @@ public class DashboardLogic {
     String databaseType;
 
     void onStart(@Observes StartupEvent ev) {
-        /* if ("h2".equalsIgnoreCase(databaseType)) {
-            dashboardDao = new DashboardDao();
-            dashboardDao.setDatasource(dataSource);
-            // iotDao = new IotDatabaseDao();
-            // iotDao.setDatasource(dataSource);
-            defaultOrganizationId = 0;
-        } else  */
-         if ("postgresql".equalsIgnoreCase(databaseType)) {
+        /*
+         * if ("h2".equalsIgnoreCase(databaseType)) {
+         * dashboardDao = new DashboardDao();
+         * dashboardDao.setDatasource(dataSource);
+         * // iotDao = new IotDatabaseDao();
+         * // iotDao.setDatasource(dataSource);
+         * defaultOrganizationId = 0;
+         * } else
+         */
+        if ("postgresql".equalsIgnoreCase(databaseType)) {
             dashboardDao = new com.signomix.common.tsdb.DashboardDao();
             dashboardDao.setDatasource(tsDs);
             // iotDao = new com.signomix.common.tsdb.IotDatabaseDao();
@@ -102,13 +111,15 @@ public class DashboardLogic {
         if (null != dashboardDao) {
             return dashboardDao;
         } else {
-           /*  if ("h2".equalsIgnoreCase(databaseType)) {
-                dashboardDao = new DashboardDao();
-                dashboardDao.setDatasource(dataSource);
-                // iotDao = new IotDatabaseDao();
-                // iotDao.setDatasource(dataSource);
-                defaultOrganizationId = 0;
-            } else  */if ("postgresql".equalsIgnoreCase(databaseType)) {
+            /*
+             * if ("h2".equalsIgnoreCase(databaseType)) {
+             * dashboardDao = new DashboardDao();
+             * dashboardDao.setDatasource(dataSource);
+             * // iotDao = new IotDatabaseDao();
+             * // iotDao.setDatasource(dataSource);
+             * defaultOrganizationId = 0;
+             * } else
+             */if ("postgresql".equalsIgnoreCase(databaseType)) {
                 dashboardDao = new com.signomix.common.tsdb.DashboardDao();
                 dashboardDao.setDatasource(tsDs);
                 // iotDao = new com.signomix.common.tsdb.IotDatabaseDao();
@@ -236,6 +247,13 @@ public class DashboardLogic {
     }
 
     public Dashboard updateDashboard(User user, Dashboard updatedDashboard) throws ServiceException {
+        Organization org = organizationLogic.getOrganization(user, user.organization);
+        if (org == null) {
+            throw new ServiceException("Organization not found");
+        }
+        if (org.locked) {
+            throw new ServiceException("Organization is locked");
+        }
         try {
             Dashboard dashboard = dashboardDao.getDashboard(updatedDashboard.getId());
             if (null != dashboard) {
@@ -262,7 +280,8 @@ public class DashboardLogic {
             if (null != dashboard) {
                 throw new ServiceException("Dashboard already exists");
             }
-            if(newDashboard.getId() == null || newDashboard.getId().isEmpty() || newDashboard.getId().equalsIgnoreCase("new")){
+            if (newDashboard.getId() == null || newDashboard.getId().isEmpty()
+                    || newDashboard.getId().equalsIgnoreCase("new")) {
                 newDashboard.setId(euiGenerator.createEui("S-"));
             }
             newDashboard.setUserID(user.uid);
@@ -278,7 +297,14 @@ public class DashboardLogic {
     }
 
     public void removeDashboard(User user, String dashboardId) throws ServiceException {
-        //logger.warn("REMOVE_WARN: " + dashboardId);
+        // logger.warn("REMOVE_WARN: " + dashboardId);
+        Organization org = organizationLogic.getOrganization(user, user.organization);
+        if (org == null) {
+            throw new ServiceException("Organization not found");
+        }
+        if (org.locked) {
+            throw new ServiceException("Organization is locked");
+        }
         try {
             Dashboard dashboard = dashboardDao.getDashboard(dashboardId);
             if (null != dashboard) {

@@ -1,5 +1,12 @@
 package com.signomix.core.adapter.in;
 
+import java.util.HashMap;
+import java.util.List;
+import java.util.Scanner;
+
+import org.eclipse.microprofile.config.inject.ConfigProperty;
+import org.jboss.logging.Logger;
+
 import com.signomix.common.User;
 import com.signomix.common.annotation.InboundAdapter;
 import com.signomix.common.db.IotDatabaseException;
@@ -8,9 +15,11 @@ import com.signomix.core.application.exception.ServiceException;
 import com.signomix.core.application.port.in.AuthPort;
 import com.signomix.core.application.port.in.DevicePort;
 import com.signomix.core.application.port.in.UserPort;
+
 import jakarta.inject.Inject;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.DELETE;
+import jakarta.ws.rs.FormParam;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.HeaderParam;
 import jakarta.ws.rs.POST;
@@ -19,10 +28,6 @@ import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.Response;
-import java.util.List;
-import java.util.Scanner;
-import org.eclipse.microprofile.config.inject.ConfigProperty;
-import org.jboss.logging.Logger;
 
 @InboundAdapter
 @Path("/api/core")
@@ -156,6 +161,53 @@ public class DeviceRestAdapter {
                 LOG.warn(e.getMessage());
                 e.printStackTrace();
                 throw new ServiceException(e.getMessage());
+            }
+            return Response.ok().entity("OK").build();
+        } catch (Exception e) {
+            LOG.warn(e.getMessage());
+            e.printStackTrace();
+            throw new ServiceException(e.getMessage());
+        }
+    }
+
+    @PUT
+    @Path("/deviceconfig")
+    public Response updateDeviceConfig(@HeaderParam("Authentication") String token, @FormParam("euis") String euis,
+            @FormParam("param") String param,
+            @FormParam("value") String value) {
+        try {
+            User user;
+            try {
+                user = userPort.getAuthorizing(authPort.getUserId(token));
+            } catch (IotDatabaseException e) {
+                LOG.warn(e.getMessage());
+                throw new ServiceException(unauthorizedException);
+            }
+            if (null == user) {
+                LOG.warn("User not found");
+                throw new ServiceException(unauthorizedException);
+            }
+            String[] euiList = euis.split(",");
+            Device device;
+            for (String eui : euiList) {
+                device = devicePort.getDevice(user, eui, false);
+                if (null == device) {
+                    LOG.warn("Device not found");
+                    throw new ServiceException("Device not found");
+                }
+                HashMap<String, Object> cfg = device.getConfigurationMap();
+                if (null == cfg) {
+                    cfg = new HashMap<>();
+                }
+                cfg.put(param, value);
+                device.setConfiguration(cfg);
+                try {
+                    devicePort.updateDevice(user, eui, device);
+                } catch (Exception e) {
+                    LOG.warn(e.getMessage());
+                    e.printStackTrace();
+                    throw new ServiceException(e.getMessage());
+                }
             }
             return Response.ok().entity("OK").build();
         } catch (Exception e) {
@@ -373,7 +425,6 @@ public class DeviceRestAdapter {
             throw new ServiceException(e.getMessage());
         }
     }
-
 
     private String getParam(String name, String[] paramNames, String[] values) {
         for (int i = 0; i < paramNames.length; i++) {

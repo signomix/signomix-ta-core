@@ -1,17 +1,18 @@
 package com.signomix.core.domain;
 
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 
 import org.eclipse.microprofile.rest.client.inject.RestClient;
 import org.jboss.logging.Logger;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.signomix.common.User;
 import com.signomix.common.db.ApplicationDaoIface;
 import com.signomix.common.db.IotDatabaseException;
 import com.signomix.common.db.IotDatabaseIface;
-import com.signomix.common.iot.Application;
 import com.signomix.common.iot.Device;
 import com.signomix.core.adapter.out.ChirpStackClient;
 import com.signomix.core.adapter.out.ChirpStackResponse;
@@ -49,8 +50,6 @@ public class ActuatorLogic {
     @DataSource("olap")
     AgroalDataSource olapDs;
 
-
-
     IotDatabaseIface iotDao;
     ApplicationDaoIface appDao;
 
@@ -78,7 +77,7 @@ public class ActuatorLogic {
         if (command.indexOf("@@@") > 0) {
             json = command.substring(0, command.indexOf("@@@"));
         }
-        if(json.startsWith("&") || json.startsWith("#")){
+        if (json.startsWith("&") || json.startsWith("#")) {
             json = json.substring(1);
         }
         if (!json.matches("^\\{.*\\}$")) {
@@ -100,7 +99,7 @@ public class ActuatorLogic {
         if (command.indexOf("@@@") > 0) {
             hexStr = command.substring(0, command.indexOf("@@@"));
         }
-        if(hexStr.startsWith("&") || hexStr.startsWith("#")){
+        if (hexStr.startsWith("&") || hexStr.startsWith("#")) {
             hexStr = hexStr.substring(1);
         }
         if (!hexStr.matches("^[0-9A-Fa-f]+$")) {
@@ -119,7 +118,8 @@ public class ActuatorLogic {
 
     public void sendWaitingCommands(String eui) {
         try {
-            boolean processAll = true; // Process all commands for each device, not only the first one as in the previous version
+            boolean processAll = true; // Process all commands for each device, not only the first one as in the
+                                       // previous version
             boolean paidDevicesOnly = false;
             if (eui != null) {
                 paidDevicesOnly = true;
@@ -133,27 +133,35 @@ public class ActuatorLogic {
                     Device device = iotDao.getDevice(command.getOrigin(), false);
                     boolean success = false;
                     logger.info("Device type: " + device.getType());
-                    //logger.info(device.)
+                    // logger.info(device.)
                     if (device != null) {
                         HashMap<String, Object> config = device.getConfigurationMap();
                         if (config == null || config.isEmpty()) {
                             logger.warn("Device configuration is empty");
-                            /* Application app = appDao.getApplication(device.getApplicationID());
-                            if (app != null) {
-                                config = (HashMap<String,Object>)app.config.getAsMap();
-                            } */
+                            /*
+                             * Application app = appDao.getApplication(device.getApplicationID());
+                             * if (app != null) {
+                             * config = (HashMap<String,Object>)app.config.getAsMap();
+                             * }
+                             */
                             config = device.getApplicationConfig();
                         }
-                        String apiKey = (String)config.get("apiKey");
+                        String apiKey = (String) config.get("apiKey");
                         String appId = device.getApplicationID();
                         String deviceId = device.getDeviceID();
-                        String webhookId = (String)device.getConfigurationMap().get("webhookId");
+                        String webhookId = (String) device.getConfigurationMap().get("webhookId");
                         if (device.getType() == Device.TTN) {
                             // Send command to TTN
-                            success = sendToTtn(appId, webhookId, deviceId, apiKey, command.getPayload(), command.getType());
+                            success = sendToTtn(appId, webhookId, deviceId, apiKey, command.getPayload(),
+                                    command.getType());
                         } else if (device.getType() == Device.CHIRPSTACK || device.getType().equals("LORA")) {
                             // Send command to ChirpStack
-                            success = sendToChirpstack(device.getEUI(), apiKey, command.getPayload(), command.getType());
+                            success = sendToChirpstack(device.getEUI(), apiKey, command.getPayload(),
+                                    command.getType());
+                        } else if (device.getType() == Device.VIRTUAL) {
+                            //
+                        } else {
+                            logger.info("Commands are not supported for device type: " + device.getType());
                         }
                         if (success) {
                             iotDao.removeCommand(command.getId());
@@ -193,7 +201,7 @@ public class ActuatorLogic {
             item.fPort = port;
             ObjectMapper mapper = new ObjectMapper();
             mapper.setSerializationInclusion(com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL);
-            
+
             // command is a JSON string, eg. {"led":1}
             item.object = mapper.readValue(command, Map.class);
 
@@ -205,23 +213,24 @@ public class ActuatorLogic {
             logger.info("Sending body: " + json);
 
             // Send command to ChirpStack
-            logger.info("eui: "+eui);
-            logger.info("key: "+"Bearer "+key);
-            ChirpStackResponse response = chirpStackClient.sendDownlink("Bearer "+key, eui, body);
-            if(response.id==null){
-                logger.warn("Error sending command to ChirpStack. Code: "+response.code);
-                logger.warn("Response message: "+response.message);
-                //TODO: save error message to command log?
+            logger.info("eui: " + eui);
+            logger.info("key: " + "Bearer " + key);
+            ChirpStackResponse response = chirpStackClient.sendDownlink("Bearer " + key, eui, body);
+            if (response.id == null) {
+                logger.warn("Error sending command to ChirpStack. Code: " + response.code);
+                logger.warn("Response message: " + response.message);
+                // TODO: save error message to command log?
             }
         } catch (Exception e) {
             e.printStackTrace();
-            logger.warn("Error sending command to ChirpStack. Message"+e.getMessage());
+            logger.warn("Error sending command to ChirpStack. Message" + e.getMessage());
             return false;
         }
         return true;
     }
 
-    private boolean sendToTtn(String appId, String webhookId, String deviceId, String key, Object payload, String commandType) {
+    private boolean sendToTtn(String appId, String webhookId, String deviceId, String key, Object payload,
+            String commandType) {
         // https://www.thethingsindustries.com/docs/integrations/webhooks/scheduling-downlinks/
         logger.info("Sending command to TTN (sandbox)");
         String command = payload.toString();
@@ -243,18 +252,18 @@ public class ActuatorLogic {
             TtnDownlink item = new TtnDownlink();
             item.f_port = port;
             item.priority = "NORMAL";
-            if(commandType.equals("ACTUATOR_HEXCMD")){
+            if (commandType.equals("ACTUATOR_HEXCMD")) {
                 TtnDecodedPayload decodedPayload = new TtnDecodedPayload();
-                decodedPayload.bytes = new byte[command.length()/2];
+                decodedPayload.bytes = new byte[command.length() / 2];
                 // convert hex string to byte array
                 for (int i = 0; i < command.length(); i += 2) {
                     decodedPayload.bytes[i / 2] = (byte) ((Character.digit(command.charAt(i), 16) << 4)
                             + Character.digit(command.charAt(i + 1), 16));
                 }
                 item.decoded_payload = decodedPayload;
-            //}else if(commandType.equals("ACTUATOR_CMD")){
-            //    item.decoded_payload = command;
-            }else if(commandType.equals("ACTUATOR_PLAINCMD")){
+                // }else if(commandType.equals("ACTUATOR_CMD")){
+                // item.decoded_payload = command;
+            } else if (commandType.equals("ACTUATOR_PLAINCMD")) {
                 item.frm_payload = command;
             }
             TtnDownlink[] downlinks = new TtnDownlink[1];
@@ -266,18 +275,77 @@ public class ActuatorLogic {
             logger.info("Sending body: " + json);
 
             // Send command to ChirpStack
-            logger.info("devId: "+deviceId);
-            logger.info("key: "+"Bearer "+key);
-            TtnResponse response = ttnClient.sendDownlink("Bearer "+key, "Signomix", appId, webhookId, deviceId, body);
-            if(response.id==null){
-                logger.warn("Error sending command to ChirpStack. Code: "+response.code);
-                logger.warn("Response message: "+response.message);
+            logger.info("devId: " + deviceId);
+            logger.info("key: " + "Bearer " + key);
+            TtnResponse response = ttnClient.sendDownlink("Bearer " + key, "Signomix", appId, webhookId, deviceId,
+                    body);
+            if (response.id == null) {
+                logger.warn("Error sending command to ChirpStack. Code: " + response.code);
+                logger.warn("Response message: " + response.message);
             }
         } catch (Exception e) {
             e.printStackTrace();
-            logger.warn("Error sending command to ChirpStack. Message"+e.getMessage());
+            logger.warn("Error sending command to ChirpStack. Message" + e.getMessage());
             return false;
         }
         return true;
     }
+
+    private boolean sendToVirtual(String eui, Object payload, String commandType) {
+        logger.debug("Sending command to Virtual device");
+        String command = payload.toString();
+        Device device = null;
+        try {
+            device = iotDao.getDevice(eui, true, true);
+        } catch (IotDatabaseException e) {
+            logger.warn("Error getting device: " + e.getMessage());
+            return false;
+        }
+        ObjectMapper mapper = new ObjectMapper();
+        mapper.setSerializationInclusion(com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL);
+
+        // command is a JSON string, eg. {"led":1}
+        HashMap<String, Object> map;
+        try {
+            map = (HashMap) mapper.readValue(command, Map.class);
+        } catch (JsonProcessingException e) {
+            logger.warn("Error parsing command: " + e.getMessage());
+            return false;
+        }
+
+        boolean neddsUpdate = false;
+        Iterator<String> it = map.keySet().iterator();
+        while (it.hasNext()) {
+            String key = it.next();
+            switch(key) {
+                case "status":
+                    device.setState((Double)map.get(key));
+                    neddsUpdate = true;
+                    break;
+                case "active":
+                    device.setActive((Boolean)map.get(key));
+                    neddsUpdate = true;
+                    break;
+                case "interval":
+                    device.setTransmissionInterval((Integer)map.get(key));
+                    neddsUpdate = true;
+                    break;
+                default:
+                    logger.warn("Unknown device command name: " + key);
+                    break;
+
+            }
+        }
+        if (neddsUpdate) {
+            try {
+                iotDao.updateDevice(device);
+            } catch (IotDatabaseException e) {
+                logger.warn("Error updating device: " + e.getMessage());
+                return false;
+            }
+        }
+
+        return true;
+    }
+
 }

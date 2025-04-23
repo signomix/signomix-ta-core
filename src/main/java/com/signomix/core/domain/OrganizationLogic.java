@@ -94,7 +94,11 @@ public class OrganizationLogic {
         if (!userLogic.isSystemAdmin(user)) {
             throw new ServiceException(userNotAuthorizedException);
         }
-        return userLogic.getOrganizations(limit, offset);
+        try {
+            return organizationDao.getOrganizations(limit, offset);
+        } catch (IotDatabaseException e) {
+            throw new ServiceException(userNotAuthorizedException);
+        }
     }
 
     /**
@@ -107,10 +111,15 @@ public class OrganizationLogic {
      * @throws ServiceException
      */
     public Organization getOrganization(User user, long organizationId) throws ServiceException {
+        logger.info("get user organization: "+user.uid+" "+organizationId);
         if (!(userLogic.isSystemAdmin(user) || userLogic.isOrganizationMember(user, organizationId))) {
             throw new ServiceException(userNotAuthorizedException);
         }
-        return userLogic.getOrganization(organizationId);
+        try {
+            return organizationDao.getOrganization(organizationId);
+        } catch (IotDatabaseException e) {
+            throw new ServiceException(userNotAuthorizedException);
+        }
     }
 
     /**
@@ -125,7 +134,11 @@ public class OrganizationLogic {
         if (!userLogic.isSystemAdmin(user)) {
             throw new ServiceException(userNotAuthorizedException);
         }
-        userLogic.addOrganization(organization);
+        try {
+            organizationDao.addOrganization(organization);
+        } catch (IotDatabaseException e) {
+            throw new ServiceException(userNotAuthorizedException);
+        }
     }
 
     /**
@@ -140,7 +153,11 @@ public class OrganizationLogic {
         if (!userLogic.isSystemAdmin(user)) {
             throw new ServiceException(userNotAuthorizedException);
         }
-        userLogic.updateOrganization(organization);
+        try {
+            organizationDao.updateOrganization(organization);
+        } catch (IotDatabaseException e) {
+            throw new ServiceException(userNotAuthorizedException);
+        }
     }
 
     /**
@@ -158,7 +175,11 @@ public class OrganizationLogic {
         if (organizationId == defaultOrganizationId) {
             throw new ServiceException("Unable to delete default organization");
         }
-        userLogic.deleteOrganization(organizationId);
+        try {
+            organizationDao.deleteOrganization(organizationId);
+        } catch (IotDatabaseException e) {
+            throw new ServiceException(userNotAuthorizedException);
+        }
     }
 
     public Tenant getTenant(User user, Integer tenantId) throws ServiceException {

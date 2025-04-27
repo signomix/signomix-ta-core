@@ -1,6 +1,8 @@
 package com.signomix.core.adapter.in;
 
 
+import org.eclipse.microprofile.reactive.messaging.Channel;
+import org.eclipse.microprofile.reactive.messaging.Emitter;
 import org.jboss.logging.Logger;
 
 import com.signomix.common.User;
@@ -31,6 +33,10 @@ public class ActuatorRestAdapter {
     AuthPort authPort;
     @Inject
     DevicePort devicePort;
+
+    @Inject
+    @Channel("command-created")
+    Emitter<String> commandCreatedEmitter;
 
     @GET
     public Response test() {
@@ -83,6 +89,7 @@ public class ActuatorRestAdapter {
                 logger.warn("Unknown command type: "+command);
                 return Response.status(Status.BAD_REQUEST).build();
         }
+        commandCreatedEmitter.send(device.getEUI()+";"+command);
         return Response.ok().build();
     }
 

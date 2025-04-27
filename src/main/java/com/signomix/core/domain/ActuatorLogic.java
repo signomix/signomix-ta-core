@@ -86,7 +86,12 @@ public class ActuatorLogic {
         }
         try {
             logger.info("Saving command");
-            iotDao.putDeviceCommand(device.getEUI(), "ACTUATOR_CMD", command, System.currentTimeMillis());
+            if(device.getType().equalsIgnoreCase(Device.VIRTUAL)){
+                sendToVirtual(device.getEUI(), json);
+                iotDao.putCommandLog(0, device.getEUI(), "ACTUATOR_CMD",command, System.currentTimeMillis());
+            }else{
+                iotDao.putDeviceCommand(device.getEUI(), "ACTUATOR_CMD", command, System.currentTimeMillis());
+            }
         } catch (IotDatabaseException e) {
             e.printStackTrace();
             throw new IotDatabaseException(IotDatabaseException.UNKNOWN, "Could not save command");
@@ -150,16 +155,17 @@ public class ActuatorLogic {
                         String appId = device.getApplicationID();
                         String deviceId = device.getDeviceID();
                         String webhookId = (String) device.getConfigurationMap().get("webhookId");
-                        if (device.getType() == Device.TTN) {
+                        if (device.getType().equalsIgnoreCase(Device.TTN)) {
                             // Send command to TTN
                             success = sendToTtn(appId, webhookId, deviceId, apiKey, command.getPayload(),
                                     command.getType());
-                        } else if (device.getType() == Device.CHIRPSTACK || device.getType().equals("LORA")) {
+                        } else if (device.getType().equalsIgnoreCase(Device.CHIRPSTACK) || device.getType().equals("LORA")) {
                             // Send command to ChirpStack
                             success = sendToChirpstack(device.getEUI(), apiKey, command.getPayload(),
                                     command.getType());
-                        } else if (device.getType() == Device.VIRTUAL) {
-                            //
+                        } else if (device.getType().equalsIgnoreCase(Device.VIRTUAL)) {
+                            sendToVirtual(device.getEUI(), command.getPayload());
+                            success = true;
                         } else {
                             logger.info("Commands are not supported for device type: " + device.getType());
                         }
@@ -291,9 +297,12 @@ public class ActuatorLogic {
         return true;
     }
 
-    private boolean sendToVirtual(String eui, Object payload, String commandType) {
+    private boolean sendToVirtual(String eui, Object payload) {
+        return sendToVirtual(eui, payload.toString());
+    }
+
+    private boolean sendToVirtual(String eui, String command) {
         logger.debug("Sending command to Virtual device");
-        String command = payload.toString();
         Device device = null;
         try {
             device = iotDao.getDevice(eui, true, true);

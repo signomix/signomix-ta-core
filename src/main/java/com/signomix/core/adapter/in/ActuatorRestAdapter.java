@@ -34,10 +34,6 @@ public class ActuatorRestAdapter {
     @Inject
     DevicePort devicePort;
 
-    @Inject
-    @Channel("command-created")
-    Emitter<String> commandCreatedEmitter;
-
     @GET
     public Response test() {
         return Response.ok().entity("OK").build();
@@ -89,7 +85,6 @@ public class ActuatorRestAdapter {
                 logger.warn("Unknown command type: "+command);
                 return Response.status(Status.BAD_REQUEST).build();
         }
-        commandCreatedEmitter.send(device.getEUI()+";"+command);
         return Response.ok().build();
     }
 

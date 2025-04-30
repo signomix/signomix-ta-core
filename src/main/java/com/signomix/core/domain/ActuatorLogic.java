@@ -4,6 +4,8 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 
+import org.eclipse.microprofile.reactive.messaging.Channel;
+import org.eclipse.microprofile.reactive.messaging.Emitter;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
 import org.jboss.logging.Logger;
 
@@ -53,6 +55,10 @@ public class ActuatorLogic {
     IotDatabaseIface iotDao;
     ApplicationDaoIface appDao;
 
+    @Inject
+    @Channel("command-created")
+    Emitter<String> commandCreatedEmitter;
+
     public void onStart(@Observes StartupEvent ev) {
         iotDao = new com.signomix.common.tsdb.IotDatabaseDao();
         iotDao.setDatasource(oltpDs);
@@ -88,10 +94,13 @@ public class ActuatorLogic {
             logger.info("Saving command");
             if(device.getType().equalsIgnoreCase(Device.VIRTUAL)){
                 sendToVirtual(device.getEUI(), json);
-                iotDao.putCommandLog(0, device.getEUI(), "ACTUATOR_CMD",command, System.currentTimeMillis());
+                long id= iotDao.getNextId("commands", "id");
+                iotDao.putCommandLog(id, device.getEUI(), "ACTUATOR_CMD",command, System.currentTimeMillis());
             }else{
                 iotDao.putDeviceCommand(device.getEUI(), "ACTUATOR_CMD", command, System.currentTimeMillis());
             }
+            commandCreatedEmitter.send(device.getEUI()+";"+command);
+            
         } catch (IotDatabaseException e) {
             e.printStackTrace();
             throw new IotDatabaseException(IotDatabaseException.UNKNOWN, "Could not save command");

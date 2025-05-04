@@ -190,7 +190,7 @@ public class DeviceLogic {
                 // searchLimit,
                 // searchOffset);
                 // } else {
-                return iotDao.getOrganizationDevices(organizationId, searchStatus, searchLimit, searchOffset, path);
+                return iotDao.getOrganizationDevices(organizationId, searchStatus, searchLimit, searchOffset, search);
                 // }
             }
         } catch (IotDatabaseException e) {

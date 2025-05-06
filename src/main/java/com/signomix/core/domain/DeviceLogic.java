@@ -74,6 +74,9 @@ public class DeviceLogic {
     OrganizationLogic organizationLogic;
 
     @Inject
+    ApplicationLogic applicationLogic;
+
+    @Inject
     DashboardPort dashboardPort;
 
     @Inject
@@ -319,7 +322,7 @@ public class DeviceLogic {
         if (org.locked) {
             throw new ServiceException("Organization is locked");
         }
-        Device updated = getDevice(user, eui, false);
+        Device updated = getDevice(user, eui, true);
         if (null == updated) {
             throw new ServiceException("Device not found");
         }
@@ -353,6 +356,8 @@ public class DeviceLogic {
                 if (device.getChannelsAsString() != null) {
                     device.setChannelsAsString(removeSpaces(device.getChannelsAsString()));
                 }
+
+                device.setStatusUsed(checkStatusUsage(user, device));
 
                 iotDao.updateDevice(user, device);
                 if (!updated.getChannelsAsString().equals(device.getChannelsAsString())) {
@@ -436,6 +441,7 @@ public class DeviceLogic {
             logger.info("Creating device: " + device.getEUI());
             device.setOrganizationId(user.organization);
             device.setPath(verifyDevicePath(user, device));
+            device.setStatusUsed(checkStatusUsage(user, device));
             iotDao.createDevice(user, device);
             iotDao.updateDeviceChannels(device.getEUI(), device.getChannelsAsString());
             iotDao.updateDeviceStatus(device.getEUI(), device.getTransmissionInterval(), 0.0, Device.ALERT_UNKNOWN);
@@ -459,6 +465,25 @@ public class DeviceLogic {
         } catch (IotDatabaseException e) {
             throw new ServiceException(e.getMessage(), e);
         }
+    }
+
+    private boolean checkStatusUsage(User user, Device device) {
+        String code = device.getCode();
+        if (code != null && code.length() > 0) {
+            if (code.indexOf("sgx.setStatus") >= 0) {
+                return true;
+            }
+        }
+        try {
+            code = applicationLogic.getApplication(user, device.getOrgApplicationId().intValue()).code;
+            if (code != null && code.length() > 0) {
+                if (code.indexOf("sgx.setStatus") >= 0) {
+                    return true;
+                }
+            }
+        } catch (Exception e) {
+        }
+        return false;
     }
 
     private String verifyDevicePath(User user, Device device) {

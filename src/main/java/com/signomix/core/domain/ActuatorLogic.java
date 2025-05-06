@@ -338,6 +338,7 @@ public class ActuatorLogic {
             switch(key) {
                 case "status":
                     device.setState((Double)map.get(key));
+                    device.setStatusUsed(true);
                     neddsUpdate = true;
                     break;
                 case "active":

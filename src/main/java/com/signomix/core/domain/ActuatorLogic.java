@@ -16,6 +16,7 @@ import com.signomix.common.db.ApplicationDaoIface;
 import com.signomix.common.db.IotDatabaseException;
 import com.signomix.common.db.IotDatabaseIface;
 import com.signomix.common.iot.Device;
+import com.signomix.common.iot.DeviceStatusDto;
 import com.signomix.core.adapter.out.ChirpStackClient;
 import com.signomix.core.adapter.out.ChirpStackResponse;
 import com.signomix.core.adapter.out.TtnClient;
@@ -358,6 +359,10 @@ public class ActuatorLogic {
         if (neddsUpdate) {
             try {
                 iotDao.updateDevice(device);
+                if(device.isStatusUsed()){
+                    DeviceStatusDto dstatus=iotDao.getDeviceStatus(eui);
+                    iotDao.updateDeviceStatus(eui, dstatus.transmissionInterval, device.getState(), dstatus.alert);
+                }
             } catch (IotDatabaseException e) {
                 logger.warn("Error updating device: " + e.getMessage());
                 return false;

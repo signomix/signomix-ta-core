@@ -208,7 +208,7 @@ public class DashboardLogic {
                 return dashboardDao.getUserDashboards(user.uid, withShared != null ? withShared : true, isAdmin,
                         limitInt, offsetInt, searchString);
             } else {
-                return dashboardDao.getOrganizationDashboards(user.organization, limitInt, offsetInt);
+                return dashboardDao.getOrganizationDashboards(user.organization, limitInt, offsetInt, searchString);
             }
         } catch (IotDatabaseException e) {
             logger.error(e.getMessage());

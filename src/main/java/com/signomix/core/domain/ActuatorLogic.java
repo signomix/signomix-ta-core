@@ -144,8 +144,14 @@ public class ActuatorLogic {
                 // Process command
                 logger.info("Processing command for device: " + command.getOrigin());
                 logger.info("Command: " + command.getPayload());
+                String targetEui;
+                if(command.getOrigin().indexOf("@")>0){
+                    targetEui=command.getOrigin().substring(command.getOrigin().indexOf("@")+1);
+                }else{
+                    targetEui=command.getOrigin();
+                }
                 try {
-                    Device device = iotDao.getDevice(command.getOrigin(), false);
+                    Device device = iotDao.getDevice(targetEui, false);
                     boolean success = false;
                     logger.info("Device type: " + device.getType());
                     // logger.info(device.)

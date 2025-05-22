@@ -20,6 +20,7 @@ import com.signomix.common.db.IotDatabaseIface;
 import com.signomix.common.db.NewsDaoIface;
 import com.signomix.common.db.OrganizationDaoIface;
 import com.signomix.common.db.ReportDaoIface;
+import com.signomix.common.db.SchedulerDaoIface;
 import com.signomix.common.db.SentinelDaoIface;
 import com.signomix.common.db.ShortenerDaoIface;
 import com.signomix.common.db.SignalDaoIface;
@@ -52,9 +53,12 @@ public class DatabaseUC {
     @DataSource("auth")
     AgroalDataSource authDataSource;
 
-/*     @Inject
-    @DataSource("iot")
-    AgroalDataSource iotDataSource; */
+    /*
+     * @Inject
+     * 
+     * @DataSource("iot")
+     * AgroalDataSource iotDataSource;
+     */
 
     @Inject
     @DataSource("oltp")
@@ -103,6 +107,7 @@ public class DatabaseUC {
     EventLogDaoIface qdbDao;
     EventLogDaoIface eventLogDao;
     NewsDaoIface newsDao;
+    SchedulerDaoIface schedulerDao;
 
     @ConfigProperty(name = "signomix.data.retention.demo", defaultValue = "1")
     int demoDataRetention;
@@ -130,40 +135,42 @@ public class DatabaseUC {
         LOG.info("Starting ...");
         LOG.info("AUTH DB URL: " + authDbUrl);
 
-        /* if ("h2".equalsIgnoreCase(databaseType)) {
-            tsDao = null;
-            authDao = new AuthDao();
-            authDao.setDatasource(authDataSource, questDbConfig);
-            applicationDao = new ApplicationDao();
-            applicationDao.setDatasource(iotDataSource);
-            userDao = new UserDao();
-            userDao.setDatasource(userDataSource);
-            iotDao = new com.signomix.common.db.IotDatabaseDao();
-            iotDao.setDatasource(iotDataSource);
-            dashboardDao = new DashboardDao();
-            dashboardDao.setDatasource(iotDataSource);
-            shortenerDao = new ShortenerDao();
-            shortenerDao.setDatasource(shortenerDataSource);
-        } else if ("both".equalsIgnoreCase(databaseType)) {
-            tsDao = new com.signomix.common.tsdb.IotDatabaseDao();
-            tsDao.setDatasource(tsDs);
-            tsDao.setAnalyticDatasource(olapDs);
-            tsDashboardDao = new com.signomix.common.tsdb.DashboardDao();
-            tsDashboardDao.setDatasource(tsDs);
-            authDao = new AuthDao();
-            authDao.setDatasource(authDataSource, questDbConfig);
-            applicationDao = new ApplicationDao();
-            applicationDao.setDatasource(iotDataSource);
-            userDao = new UserDao();
-            userDao.setDatasource(userDataSource);
-            iotDao = new com.signomix.common.db.IotDatabaseDao();
-            iotDao.setDatasource(iotDataSource);
-            dashboardDao = new DashboardDao();
-            dashboardDao.setDatasource(iotDataSource);
-            shortenerDao = new ShortenerDao();
-            shortenerDao.setDatasource(shortenerDataSource);
-        } else  */
-         if ("postgresql".equalsIgnoreCase(databaseType)) {
+        /*
+         * if ("h2".equalsIgnoreCase(databaseType)) {
+         * tsDao = null;
+         * authDao = new AuthDao();
+         * authDao.setDatasource(authDataSource, questDbConfig);
+         * applicationDao = new ApplicationDao();
+         * applicationDao.setDatasource(iotDataSource);
+         * userDao = new UserDao();
+         * userDao.setDatasource(userDataSource);
+         * iotDao = new com.signomix.common.db.IotDatabaseDao();
+         * iotDao.setDatasource(iotDataSource);
+         * dashboardDao = new DashboardDao();
+         * dashboardDao.setDatasource(iotDataSource);
+         * shortenerDao = new ShortenerDao();
+         * shortenerDao.setDatasource(shortenerDataSource);
+         * } else if ("both".equalsIgnoreCase(databaseType)) {
+         * tsDao = new com.signomix.common.tsdb.IotDatabaseDao();
+         * tsDao.setDatasource(tsDs);
+         * tsDao.setAnalyticDatasource(olapDs);
+         * tsDashboardDao = new com.signomix.common.tsdb.DashboardDao();
+         * tsDashboardDao.setDatasource(tsDs);
+         * authDao = new AuthDao();
+         * authDao.setDatasource(authDataSource, questDbConfig);
+         * applicationDao = new ApplicationDao();
+         * applicationDao.setDatasource(iotDataSource);
+         * userDao = new UserDao();
+         * userDao.setDatasource(userDataSource);
+         * iotDao = new com.signomix.common.db.IotDatabaseDao();
+         * iotDao.setDatasource(iotDataSource);
+         * dashboardDao = new DashboardDao();
+         * dashboardDao.setDatasource(iotDataSource);
+         * shortenerDao = new ShortenerDao();
+         * shortenerDao.setDatasource(shortenerDataSource);
+         * } else
+         */
+        if ("postgresql".equalsIgnoreCase(databaseType)) {
             iotDao = new com.signomix.common.tsdb.IotDatabaseDao();
             iotDao.setDatasource(tsDs);
             iotDao.setAnalyticDatasource(olapDs);
@@ -195,6 +202,8 @@ public class DatabaseUC {
             newsDao.setDatasource(tsDs);
             eventLogDao = new com.signomix.common.tsdb.EventLogDao();
             eventLogDao.setDatasource(tsDs);
+            schedulerDao = new com.signomix.common.tsdb.SchedulerDao();
+            schedulerDao.setDatasource(tsDs);
         } else {
             LOG.error("Database type not configured or not supported: " + databaseType);
         }
@@ -303,6 +312,12 @@ public class DatabaseUC {
             LOG.error(e.getMessage());
             e.printStackTrace();
         }
+        try {
+            schedulerDao.createStructure();
+        } catch (Exception e) {
+            LOG.error(e.getMessage());
+            e.printStackTrace();
+        }
 
         setSignomixParameters();
         setSignomixFeatures();
@@ -403,24 +418,105 @@ public class DatabaseUC {
 
     public void doBackup() {
         LOG.info("doBackup");
+        boolean backupError = false;
+        StringBuilder backupErrorMessage = new StringBuilder();
         try {
-            authDao.backupDb();
-            applicationDao.backupDb();
+            authDao.backupDb(); // tokens,ptokens
+        } catch (IotDatabaseException e) {
+            backupError = true;
+            backupErrorMessage.append("applicationDao: ").append(e.getMessage()).append("\n");
+
+        }
+        try {
+            applicationDao.backupDb(); // applications
+        } catch (IotDatabaseException e) {
+            backupError = true;
+            backupErrorMessage.append("applicationDao: ").append(e.getMessage()).append("\n");
+        }
+        try {
             iotDao.backupDb();
+        } catch (IotDatabaseException e) {
+            backupError = true;
+            backupErrorMessage.append("iotDao: ").append(e.getMessage()).append("\n");
+        }
+        try {
             dashboardDao.backupDb();
+        } catch (IotDatabaseException e) {
+            backupError = true;
+            backupErrorMessage.append("dashboardDao: ").append(e.getMessage()).append("\n");
+        }
+        try {
             sentinelDao.backupDb();
+        } catch (IotDatabaseException e) {
+            backupError = true;
+            backupErrorMessage.append("sentinelDao: ").append(e.getMessage()).append("\n");
+        }
+        try {
             shortenerDao.backupDb();
+        } catch (IotDatabaseException e) {
+            backupError = true;
+            backupErrorMessage.append("shortenerDao: ").append(e.getMessage()).append("\n");
+        }
+        try {
             signalDao.backupDb();
-            // cmsDao.backupDb();
+        } catch (IotDatabaseException e) {
+            backupError = true;
+            backupErrorMessage.append("signalDao: ").append(e.getMessage()).append("\n");
+        }
+        try {
             userDao.backupDb();
+        } catch (IotDatabaseException e) {
+            backupError = true;
+            backupErrorMessage.append("userDao: ").append(e.getMessage()).append("\n");
+        }
+        try {
             organizationDao.backupDb();
+        } catch (IotDatabaseException e) {
+            backupError = true;
+            backupErrorMessage.append("organizationDao: ").append(e.getMessage()).append("\n");
+        }
+        try {
             reportDao.backupDb();
+        } catch (IotDatabaseException e) {
+            backupError = true;
+            backupErrorMessage.append("reportDao: ").append(e.getMessage()).append("\n");
+        }
+        try {
             billingDao.backupDb();
+        } catch (IotDatabaseException e) {
+            backupError = true;
+            backupErrorMessage.append("billingDao: ").append(e.getMessage()).append("\n");
+        }
+/*         try {
             qdbDao.backupDb();
+        } catch (IotDatabaseException e) {
+            backupError = true;
+            backupErrorMessage.append("qdbDao: ").append(e.getMessage()).append("\n");
+        } */
+        try {
             eventLogDao.backupDb();
+        } catch (IotDatabaseException e) {
+            backupError = true;
+            backupErrorMessage.append("eventLogDao: ").append(e.getMessage()).append("\n");
+        }
+        try {
             newsDao.backupDb();
         } catch (IotDatabaseException e) {
-            LOG.error(e.getMessage());
+            backupError = true;
+            backupErrorMessage.append("newsDao: ").append(e.getMessage()).append("\n");
+        }
+        try {
+            schedulerDao.backupDb();
+        } catch (IotDatabaseException e) {
+            backupError = true;
+            backupErrorMessage.append("schedulerDao: ").append(e.getMessage()).append("\n");
+        }
+
+        if (backupError) {
+            LOG.error("Backup finished with errors");
+            //TODO: send backupErrorMessage to admin
+        } else {
+            LOG.info("Backup finished successfully.");
         }
     }
 
@@ -506,19 +602,19 @@ public class DatabaseUC {
         long ONE_DAY = 24 * 3600 * 1000;
         long tooOldPoint30 = System.currentTimeMillis() - 30 * ONE_DAY;
         // alerts
-        try{
-        iotDao.archiveAlerts(tooOldPoint30);
-        iotDao.removeAlerts(tooOldPoint30);
-        }catch(IotDatabaseException e){
+        try {
+            iotDao.archiveAlerts(tooOldPoint30);
+            iotDao.removeAlerts(tooOldPoint30);
+        } catch (IotDatabaseException e) {
             LOG.error(e.getMessage());
         }
         // signals
-        try{
-        signalDao.archiveSignals(tooOldPoint30);
-        signalDao.clearOldSignals(tooOldPoint30);
-        signalDao.archiveUserSignals(tooOldPoint30);
-        signalDao.clearOldUserSignals(tooOldPoint30);
-        }catch(IotDatabaseException e){
+        try {
+            signalDao.archiveSignals(tooOldPoint30);
+            signalDao.clearOldSignals(tooOldPoint30);
+            signalDao.archiveUserSignals(tooOldPoint30);
+            signalDao.clearOldUserSignals(tooOldPoint30);
+        } catch (IotDatabaseException e) {
             LOG.error(e.getMessage());
         }
     }
@@ -596,7 +692,7 @@ public class DatabaseUC {
     }
 
     private void createObjects() {
-        Organization organization = new Organization(0,"0123456789", "Demo Organization",
+        Organization organization = new Organization(0, "0123456789", "Demo Organization",
                 "Organization for demonstration purposes", "{}");
         try {
             organizationDao.addOrganization(organization);
@@ -735,7 +831,7 @@ public class DatabaseUC {
         User organizationAdmin = new User();
         organizationAdmin.uid = "admin_demo";
         organizationAdmin.email = "";
-        organizationAdmin.organization = (long)demoOrganization.id;
+        organizationAdmin.organization = (long) demoOrganization.id;
         organizationAdmin.password = HashMaker.md5Java("test123");
         organizationAdmin.type = User.MANAGING_ADMIN;
         organizationAdmin.confirmed = true;

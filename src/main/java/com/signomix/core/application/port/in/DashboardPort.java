@@ -1,17 +1,15 @@
 package com.signomix.core.application.port.in;
 
-import java.util.List;
-
-import org.jboss.logging.Logger;
-
 import com.signomix.common.User;
 import com.signomix.common.gui.Dashboard;
+import com.signomix.common.gui.DashboardTemplate;
 import com.signomix.common.iot.Device;
 import com.signomix.core.application.exception.ServiceException;
 import com.signomix.core.domain.DashboardLogic;
-
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import java.util.List;
+import org.jboss.logging.Logger;
 
 @ApplicationScoped
 public class DashboardPort {
@@ -44,4 +42,21 @@ public class DashboardPort {
     public void removeDashboard(User user, String dashboardId) throws ServiceException {
         dashboardLogic.removeDashboard(user, dashboardId);
     }
+
+    public DashboardTemplate getDashboardTemplate(User user, String templateId) throws ServiceException {
+        return dashboardLogic.getDashboardTemplate(user, templateId);
+    }
+    public List<DashboardTemplate> getDashboardTemplates(User user, Integer limit, Integer offset, String searchString) throws ServiceException {
+        return dashboardLogic.getDashboardTemplates(user, limit, offset, searchString);
+    }
+    public void addDashboardTemplate(User user, DashboardTemplate dashboardTemplate) throws ServiceException {
+        dashboardLogic.addDashboardTemplate(user, dashboardTemplate);
+    }
+    public void updateDashboardTemplate(User user, String templateId, DashboardTemplate dashboardTemplate) throws ServiceException {
+        dashboardLogic.updateDashboardTemplate(user, templateId, dashboardTemplate);
+    }
+    public void removeDashboardTemplate(User user, String templateId) throws ServiceException {
+        dashboardLogic.removeDashboardTemplate(user, templateId);
+    }
+
 }

@@ -1,19 +1,14 @@
 package com.signomix.core.adapter.in;
 
-import java.util.List;
-
-import org.eclipse.microprofile.config.inject.ConfigProperty;
-import org.jboss.logging.Logger;
-
 import com.signomix.common.User;
 import com.signomix.common.annotation.InboundAdapter;
 import com.signomix.common.db.IotDatabaseException;
 import com.signomix.common.gui.Dashboard;
+import com.signomix.common.gui.DashboardTemplate;
 import com.signomix.core.application.exception.ServiceException;
 import com.signomix.core.application.port.in.AuthPort;
 import com.signomix.core.application.port.in.DashboardPort;
 import com.signomix.core.application.port.in.UserPort;
-
 import jakarta.inject.Inject;
 import jakarta.ws.rs.DELETE;
 import jakarta.ws.rs.GET;
@@ -24,6 +19,9 @@ import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.Response;
+import java.util.List;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
+import org.jboss.logging.Logger;
 
 @InboundAdapter
 @Path("/api/core")
@@ -148,6 +146,90 @@ public class DashboardRestAdapter {
             throw new ServiceException(unauthorizedException);
         }
         dashboardPort.removeDashboard(user, id);
+        return Response.ok().entity("ok").build();
+    }
+
+    @GET
+    @Path("/templates")
+    public Response getDashboardTemplates(
+            @HeaderParam("Authentication") String token,
+            @QueryParam("limit") Integer limit,
+            @QueryParam("offset") Integer offset,
+            @QueryParam("search") String searchString) {
+        User user;
+        try {
+            user = userPort.getAuthorizing(authPort.getUserId(token));
+        } catch (IotDatabaseException e) {
+            throw new ServiceException(unauthorizedException);
+        }
+        if (null == user) {
+            throw new ServiceException(unauthorizedException);
+        }
+        try {
+            List<DashboardTemplate> templates = dashboardPort.getDashboardTemplates(user, limit, offset, searchString);
+            return Response.ok().entity(templates).build();
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new ServiceException(e.getMessage());
+        }
+    }
+
+    @GET
+    @Path("/templates/{id}")
+    public Response getDashboardTemplate(
+            @HeaderParam("Authentication") String token,
+            @PathParam("id") String id) {
+        User user;
+        try {
+            user = userPort.getAuthorizing(authPort.getUserId(token));
+        } catch (IotDatabaseException e) {
+            throw new ServiceException(unauthorizedException);
+        }
+        if (null == user) {
+            throw new ServiceException(unauthorizedException);
+        }
+        try {
+            DashboardTemplate template = dashboardPort.getDashboardTemplate(user, id);
+            return Response.ok().entity(template).build();
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new ServiceException(e.getMessage());
+        }
+    }
+
+    @POST
+    @Path("/templates")
+    public Response addDashboardTemplate(
+            @HeaderParam("Authentication") String token,
+            DashboardTemplate template) {
+        User user;
+        try {
+            user = userPort.getAuthorizing(authPort.getUserId(token));
+        } catch (IotDatabaseException e) {
+            throw new ServiceException(unauthorizedException);
+        }
+        if (null == user) {
+            throw new ServiceException(unauthorizedException);
+        }
+        dashboardPort.addDashboardTemplate(user, template);
+        return Response.ok().entity("ok").build();
+    }
+    @PUT
+    @Path("/templates/{id}")
+    public Response updateDashboardTemplate(
+            @HeaderParam("Authentication") String token,
+            @PathParam("id") String id,
+            DashboardTemplate template) {
+        User user;
+        try {
+            user = userPort.getAuthorizing(authPort.getUserId(token));
+        } catch (IotDatabaseException e) {
+            throw new ServiceException(unauthorizedException);
+        }
+        if (null == user) {
+            throw new ServiceException(unauthorizedException);
+        }
+        dashboardPort.updateDashboardTemplate(user, id, template);
         return Response.ok().entity("ok").build();
     }
 

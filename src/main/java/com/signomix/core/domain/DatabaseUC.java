@@ -1,12 +1,5 @@
 package com.signomix.core.domain;
 
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-
-import org.eclipse.microprofile.config.inject.ConfigProperty;
-import org.jboss.logging.Logger;
-
 import com.signomix.common.HashMaker;
 import com.signomix.common.Organization;
 import com.signomix.common.User;
@@ -35,13 +28,17 @@ import com.signomix.common.iot.DeviceTemplate;
 import com.signomix.common.tsdb.NewsDao;
 import com.signomix.core.application.port.in.DevicePort;
 import com.signomix.core.application.port.in.UserPort;
-
 import io.agroal.api.AgroalDataSource;
 import io.quarkus.agroal.DataSource;
 import io.quarkus.runtime.StartupEvent;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.Observes;
 import jakarta.inject.Inject;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
+import org.jboss.logging.Logger;
 
 @ApplicationScoped
 public class DatabaseUC {
@@ -210,6 +207,19 @@ public class DatabaseUC {
 
         // TODO: create DB structure
         try {
+            organizationDao.createStructure();
+        } catch (IotDatabaseException e) {
+            LOG.error(e.getMessage());
+            e.printStackTrace();
+        }
+        try {
+            LOG.info("Creating application structure");
+            applicationDao.createStructure();
+        } catch (IotDatabaseException e) {
+            LOG.error(e.getMessage());
+            e.printStackTrace();
+        }
+        try {
             iotDao.createStructure();
         } catch (IotDatabaseException e) {
             LOG.error(e.getMessage());
@@ -228,24 +238,12 @@ public class DatabaseUC {
             e.printStackTrace();
         }
         try {
-            organizationDao.createStructure();
-        } catch (IotDatabaseException e) {
-            LOG.error(e.getMessage());
-            e.printStackTrace();
-        }
-        try {
             authDao.createStructure();
         } catch (IotDatabaseException e) {
             LOG.error(e.getMessage());
             e.printStackTrace();
         }
-        try {
-            LOG.info("Creating application structure");
-            applicationDao.createStructure();
-        } catch (IotDatabaseException e) {
-            LOG.error(e.getMessage());
-            e.printStackTrace();
-        }
+        
         try {
             shortenerDao.createStructure();
         } catch (IotDatabaseException e) {
@@ -707,18 +705,19 @@ public class DatabaseUC {
         }
 
         // Application
-        // System application
+        // System application 
         ApplicationConfig config = new ApplicationConfig();
         config.put("refreshInterval", "60");
-        Application application = new Application(null, 1, 1, "system", "");
-        application.setConfig(config);
+        Application systemApplication;
+        Application demoApplication;
+        systemApplication = new Application(null, 1, 1, "system", "");
+        systemApplication.setConfig(config);
         try {
-            applicationDao.addApplication(application);
+            systemApplication=applicationDao.addApplication(systemApplication);
         } catch (IotDatabaseException e) {
             LOG.warn("Error inserting system application: " + e.getMessage());
             try {
-                application.id = 1;
-                applicationDao.updateApplication(application);
+                systemApplication=applicationDao.getApplication(1, "system");
             } catch (IotDatabaseException e2) {
                 // TODO Auto-generated catch block
                 e2.printStackTrace();
@@ -730,12 +729,25 @@ public class DatabaseUC {
         // Demo application
         config = new ApplicationConfig();
         config.put("refreshInterval", "60");
-        application = new Application(null, demoOrganization.id, 1, "demo", "");
-        application.setConfig(config);
+        demoApplication = new Application(null, demoOrganization.id, 1, "demo", "");
+        demoApplication.setConfig(config);
         try {
-            applicationDao.addApplication(application);
+            demoApplication=applicationDao.addApplication(demoApplication);
         } catch (IotDatabaseException e) {
             LOG.warn("Error inserting demo application: " + e.getMessage());
+            try {
+                demoApplication=applicationDao.getApplication(demoOrganization.id, "demo");
+            } catch (IotDatabaseException e2) {
+                // TODO Auto-generated catch block
+                e2.printStackTrace();
+            } catch (Exception e2) {
+                // TODO Auto-generated catch block
+                e2.printStackTrace();
+            }
+        }
+        if(null == demoApplication || null == systemApplication || null == demoOrganization.id || null == systemApplication.id) {
+            LOG.error("Applications not created - exiting");
+            System.exit(1);
         }
 
         // Users
@@ -868,7 +880,7 @@ public class DatabaseUC {
         device.setUserID("tester1");
         device.setKey("6022140857");
         device.setOrganizationId(1L);
-        device.setOrgApplicationId(1L);
+        device.setOrgApplicationId(Long.valueOf(systemApplication.id));
         device.setPath("");
         device.setActive(true);
         device.setAltitude(null);

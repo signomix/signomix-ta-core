@@ -11,6 +11,7 @@ import com.signomix.common.db.IotDatabaseException;
 import com.signomix.common.db.IotDatabaseIface;
 import com.signomix.common.db.UserDaoIface;
 import com.signomix.common.gui.Dashboard;
+import com.signomix.common.gui.DashboardTemplate;
 import com.signomix.common.iot.Device;
 import com.signomix.common.iot.DeviceGroup;
 import com.signomix.common.iot.sentinel.SentinelConfig;
@@ -283,6 +284,19 @@ public class UserLogic {
             // tenantId = dashboard.getTenantId();
             isPublic = dashboard.isShared();
             // path = dashboard.getPath();
+        } else if (accessedObject instanceof DashboardTemplate) {
+            DashboardTemplate dashboard = (DashboardTemplate) accessedObject;
+            organizationId = dashboard.getOrganizationId();
+            owner = "";
+            team = "";
+            admins = "";
+            // path = dashboard.getPath();
+            if(user.organization == dashboard.getOrganizationId()) {
+                return true;
+            }else{
+                logger.error("User " + user.uid +"in organization ("+user.organization+")"+ " has no access to dashboard template in organization " + dashboard.getOrganizationId());
+                return false;
+            }
         } else if (accessedObject instanceof Device) {
             Device device = (Device) accessedObject;
             team = device.getTeam();

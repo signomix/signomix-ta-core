@@ -1,5 +1,18 @@
 package com.signomix.core.domain;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.List;
+
+import org.eclipse.microprofile.config.inject.ConfigProperty;
+import org.jboss.logging.Logger;
+import org.jsoup.Jsoup;
+import org.jsoup.safety.Safelist;
+
 import com.signomix.common.Organization;
 import com.signomix.common.Token;
 import com.signomix.common.TokenType;
@@ -14,22 +27,13 @@ import com.signomix.common.iot.Channel;
 import com.signomix.common.iot.Device;
 import com.signomix.common.iot.DeviceGroup;
 import com.signomix.core.application.exception.ServiceException;
+
 import io.agroal.api.AgroalDataSource;
 import io.quarkus.agroal.DataSource;
 import io.quarkus.runtime.StartupEvent;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.Observes;
 import jakarta.inject.Inject;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.List;
-import org.eclipse.microprofile.config.inject.ConfigProperty;
-import org.jboss.logging.Logger;
-import org.jsoup.Jsoup;
-import org.jsoup.safety.Safelist;
 
 @ApplicationScoped
 public class DashboardLogic {
@@ -562,7 +566,9 @@ public class DashboardLogic {
                     || dashboardTemplate.getId().equalsIgnoreCase("new")) {
                 dashboardTemplate.setId(euiGenerator.createEui("T-"));
             }
-            dashboardTemplate.setOrganizationId(user.organization);
+            dashboardTemplate.setOrganizationId(user.organization);//
+            dashboardTemplate.parseVariables();
+
             dashboardDao.addDashboardTemplate(dashboardTemplate);
         } catch (IotDatabaseException e) {
             logger.error(e.getMessage());
@@ -594,6 +600,7 @@ public class DashboardLogic {
             if (!templateId.equals(template.getId())) {
                 throw new ServiceException("Dashboard template ID mismatch");
             }
+            dashboardTemplate.parseVariables();
             dashboardDao.updateDashboardTemplate(dashboardTemplate);
         } catch (IotDatabaseException e) {
             logger.error(e.getMessage());
@@ -602,6 +609,7 @@ public class DashboardLogic {
     }
 
     public void removeDashboardTemplate(User user, String templateId) throws ServiceException {
+
         Organization org = organizationLogic.getOrganization(user, user.organization);
         if (org == null) {
             throw new ServiceException("Organization not found");
@@ -623,5 +631,19 @@ public class DashboardLogic {
             logger.error(e.getMessage());
             throw new ServiceException(e.getMessage(), e);
         }
+    }
+
+    public static List<String> findBracedSubstrings(String input) {
+        List<String> result = new ArrayList<>();
+        int start = -1;
+        for (int i = 0; i < input.length(); i++) {
+            if (input.charAt(i) == '{') {
+                start = i;
+            } else if (input.charAt(i) == '}' && start != -1) {
+                result.add(input.substring(start, i + 1));
+                start = -1;
+            }
+        }
+        return result;
     }
 }

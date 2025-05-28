@@ -1,18 +1,5 @@
 package com.signomix.core.domain;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.List;
-
-import org.eclipse.microprofile.config.inject.ConfigProperty;
-import org.jboss.logging.Logger;
-import org.jsoup.Jsoup;
-import org.jsoup.safety.Safelist;
-
 import com.signomix.common.Organization;
 import com.signomix.common.Token;
 import com.signomix.common.TokenType;
@@ -27,13 +14,22 @@ import com.signomix.common.iot.Channel;
 import com.signomix.common.iot.Device;
 import com.signomix.common.iot.DeviceGroup;
 import com.signomix.core.application.exception.ServiceException;
-
 import io.agroal.api.AgroalDataSource;
 import io.quarkus.agroal.DataSource;
 import io.quarkus.runtime.StartupEvent;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.Observes;
 import jakarta.inject.Inject;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.List;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
+import org.jboss.logging.Logger;
+import org.jsoup.Jsoup;
+import org.jsoup.safety.Safelist;
 
 @ApplicationScoped
 public class DashboardLogic {
@@ -229,6 +225,16 @@ public class DashboardLogic {
                 logger.warn("Dashboard not found: " + dashboardId);
                 throw new ServiceException(exceptionApiUnauthorized);
             }
+            if(dashboard.getTemplateId() != null && !dashboard.getTemplateId().isEmpty()) {
+                DashboardTemplate template = dashboardDao.getDashboardTemplate(dashboard.getTemplateId());
+                if (null != template) {
+                    dashboard.setWidgets(template.getWidgets());
+                    dashboard.setItems(template.getItems());
+                    dashboard.replaceVariables(template.getVariables(), dashboard.getVariables());
+                } else {
+                    logger.warn("Dashboard template not found: " + dashboard.getTemplateId());
+                }
+            }
             if (null == dashboard.getItems() || dashboard.getItems().isEmpty()) {
                 ArrayList<DashboardItem> items = new ArrayList<>();
                 ArrayList widgets = dashboard.getWidgets();
@@ -275,6 +281,12 @@ public class DashboardLogic {
                 throw new ServiceException(exceptionApiUnauthorized);
             }
             updatedDashboard = updateToken(updatedDashboard, user);
+            if(updatedDashboard.getTemplateId() != null){
+                updatedDashboard.setTemplateId(updatedDashboard.getTemplateId().trim());
+            }
+            if(updatedDashboard.getVariables() != null) {
+                updatedDashboard.setVariables(updatedDashboard.getVariables().trim());
+            }
             dashboardDao.updateDashboard(sanitizeWidgets(updatedDashboard));
             boolean sharedAttributeChanged = dashboard.isShared() != updatedDashboard.isShared();
             updateDevicesAndGroups(updatedDashboard, user, sharedAttributeChanged);

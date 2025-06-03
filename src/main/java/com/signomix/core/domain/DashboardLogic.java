@@ -39,7 +39,7 @@ public class DashboardLogic {
 
     /*
      * @Inject
-     * 
+     *
      * @DataSource("iot")
      * AgroalDataSource dataSource;
      */
@@ -48,6 +48,7 @@ public class DashboardLogic {
     AgroalDataSource tsDs;
 
     DashboardIface dashboardDao;
+
     // IotDatabaseIface iotDao;
 
     @Inject
@@ -70,8 +71,12 @@ public class DashboardLogic {
 
     long defaultOrganizationId = 0;
 
-    @ConfigProperty(name = "signomix.exception.api.unauthorized", defaultValue = "")
+    @ConfigProperty(
+        name = "signomix.exception.api.unauthorized",
+        defaultValue = ""
+    )
     String exceptionApiUnauthorized;
+
     @ConfigProperty(name = "signomix.database.type")
     String databaseType;
 
@@ -193,19 +198,43 @@ public class DashboardLogic {
         }
     }
 
-    public List<Dashboard> getUserDashboards(User user, Boolean withShared, Boolean isAdmin, Integer limit,
-            Integer offset, String searchString) throws ServiceException {
+    public List<Dashboard> getUserDashboards(
+        User user,
+        Boolean withShared,
+        Boolean isAdmin,
+        Integer limit,
+        Integer offset,
+        String searchString
+    ) throws ServiceException {
         int limitInt = limit != null ? limit : 100;
         int offsetInt = offset != null ? offset : 0;
         try {
             if (user.uid.equalsIgnoreCase("public")) {
-                return dashboardDao.getUserDashboards(user.uid, true, false, limit, offset, searchString);
+                return dashboardDao.getUserDashboards(
+                    user.uid,
+                    true,
+                    false,
+                    limit,
+                    offset,
+                    searchString
+                );
             }
             if (user.organization == defaultOrganizationId) {
-                return dashboardDao.getUserDashboards(user.uid, withShared != null ? withShared : true, isAdmin,
-                        limitInt, offsetInt, searchString);
+                return dashboardDao.getUserDashboards(
+                    user.uid,
+                    withShared != null ? withShared : true,
+                    isAdmin,
+                    limitInt,
+                    offsetInt,
+                    searchString
+                );
             } else {
-                return dashboardDao.getOrganizationDashboards(user.organization, limitInt, offsetInt, searchString);
+                return dashboardDao.getOrganizationDashboards(
+                    user.organization,
+                    limitInt,
+                    offsetInt,
+                    searchString
+                );
             }
         } catch (IotDatabaseException e) {
             logger.error(e.getMessage());
@@ -213,29 +242,52 @@ public class DashboardLogic {
         }
     }
 
-    public Dashboard getDashboard(User user, String dashboardId) throws ServiceException {
+    public Dashboard getDashboard(User user, String dashboardId)
+        throws ServiceException {
         try {
             Dashboard dashboard = getDashboardDao().getDashboard(dashboardId);
             if (null != dashboard) {
-                if (!userLogic.hasObjectAccess(user, false, defaultOrganizationId, dashboard)) {
-                    logger.warn("Dashboard found but no access: " + dashboardId);
+                if (
+                    !userLogic.hasObjectAccess(
+                        user,
+                        false,
+                        defaultOrganizationId,
+                        dashboard
+                    )
+                ) {
+                    logger.warn(
+                        "Dashboard found but no access: " + dashboardId
+                    );
                     throw new ServiceException(exceptionApiUnauthorized);
                 }
             } else {
                 logger.warn("Dashboard not found: " + dashboardId);
                 throw new ServiceException(exceptionApiUnauthorized);
             }
-            if(dashboard.getTemplateId() != null && !dashboard.getTemplateId().isEmpty()) {
-                DashboardTemplate template = dashboardDao.getDashboardTemplate(dashboard.getTemplateId());
+            if (
+                dashboard.getTemplateId() != null &&
+                !dashboard.getTemplateId().isEmpty()
+            ) {
+                DashboardTemplate template = dashboardDao.getDashboardTemplate(
+                    dashboard.getTemplateId()
+                );
                 if (null != template) {
                     dashboard.setWidgets(template.getWidgets());
                     dashboard.setItems(template.getItems());
-                    dashboard.replaceVariables(template.getVariables(), dashboard.getVariables());
+                    dashboard.replaceVariables(
+                        template.getVariables(),
+                        dashboard.getVariables()
+                    );
                 } else {
-                    logger.warn("Dashboard template not found: " + dashboard.getTemplateId());
+                    logger.warn(
+                        "Dashboard template not found: " +
+                        dashboard.getTemplateId()
+                    );
                 }
             }
-            if (null == dashboard.getItems() || dashboard.getItems().isEmpty()) {
+            if (
+                null == dashboard.getItems() || dashboard.getItems().isEmpty()
+            ) {
                 ArrayList<DashboardItem> items = new ArrayList<>();
                 ArrayList widgets = dashboard.getWidgets();
                 for (int i = 0; i < widgets.size(); i++) {
@@ -246,16 +298,16 @@ public class DashboardLogic {
             } else {
                 dashboard.setVersion(2);
             }
-            if (null != dashboard.getTemplateId() && !dashboard.getTemplateId().isEmpty()) {
-                DashboardTemplate template = dashboardDao.getDashboardTemplate(dashboard.getTemplateId());
-                if (null == template) {
-                    logger.warn("Dashboard not found: " + dashboardId);
-                    throw new ServiceException(exceptionApiUnauthorized);
-                }
-                dashboard.setWidgets(template.getWidgets());
-                dashboard.setItems(template.getItems());
-                dashboard.replaceVariables(template.getVariables(), dashboard.getVariables());
-            }
+            // if (null != dashboard.getTemplateId() && !dashboard.getTemplateId().isEmpty()) {
+            //     DashboardTemplate template = dashboardDao.getDashboardTemplate(dashboard.getTemplateId());
+            //     if (null == template) {
+            //         logger.warn("Dashboard not found: " + dashboardId);
+            //         throw new ServiceException(exceptionApiUnauthorized);
+            //     }
+            //     dashboard.setWidgets(template.getWidgets());
+            //     dashboard.setItems(template.getItems());
+            //     dashboard.replaceVariables(template.getVariables(), dashboard.getVariables());
+            // }
             return dashboard;
         } catch (IotDatabaseException e) {
             logger.error(e.getMessage());
@@ -263,8 +315,12 @@ public class DashboardLogic {
         }
     }
 
-    public Dashboard updateDashboard(User user, Dashboard updatedDashboard) throws ServiceException {
-        Organization org = organizationLogic.getOrganization(user, user.organization);
+    public Dashboard updateDashboard(User user, Dashboard updatedDashboard)
+        throws ServiceException {
+        Organization org = organizationLogic.getOrganization(
+            user,
+            user.organization
+        );
         if (org == null) {
             throw new ServiceException("Organization not found");
         }
@@ -272,24 +328,42 @@ public class DashboardLogic {
             throw new ServiceException("Organization is locked");
         }
         try {
-            Dashboard dashboard = dashboardDao.getDashboard(updatedDashboard.getId());
+            Dashboard dashboard = dashboardDao.getDashboard(
+                updatedDashboard.getId()
+            );
             if (null != dashboard) {
-                if (!userLogic.hasObjectAccess(user, true, defaultOrganizationId, dashboard)) {
+                if (
+                    !userLogic.hasObjectAccess(
+                        user,
+                        true,
+                        defaultOrganizationId,
+                        dashboard
+                    )
+                ) {
                     throw new ServiceException(exceptionApiUnauthorized);
                 }
             } else {
                 throw new ServiceException(exceptionApiUnauthorized);
             }
             updatedDashboard = updateToken(updatedDashboard, user);
-            if(updatedDashboard.getTemplateId() != null){
-                updatedDashboard.setTemplateId(updatedDashboard.getTemplateId().trim());
+            if (updatedDashboard.getTemplateId() != null) {
+                updatedDashboard.setTemplateId(
+                    updatedDashboard.getTemplateId().trim()
+                );
             }
-            if(updatedDashboard.getVariables() != null) {
-                updatedDashboard.setVariables(updatedDashboard.getVariables().trim());
+            if (updatedDashboard.getVariables() != null) {
+                updatedDashboard.setVariables(
+                    updatedDashboard.getVariables().trim()
+                );
             }
             dashboardDao.updateDashboard(sanitizeWidgets(updatedDashboard));
-            boolean sharedAttributeChanged = dashboard.isShared() != updatedDashboard.isShared();
-            updateDevicesAndGroups(updatedDashboard, user, sharedAttributeChanged);
+            boolean sharedAttributeChanged =
+                dashboard.isShared() != updatedDashboard.isShared();
+            updateDevicesAndGroups(
+                updatedDashboard,
+                user,
+                sharedAttributeChanged
+            );
             return updatedDashboard;
         } catch (IotDatabaseException e) {
             logger.error(e.getMessage());
@@ -297,14 +371,20 @@ public class DashboardLogic {
         }
     }
 
-    public Dashboard saveDashboard(User user, Dashboard newDashboard) throws ServiceException {
+    public Dashboard saveDashboard(User user, Dashboard newDashboard)
+        throws ServiceException {
         try {
-            Dashboard dashboard = dashboardDao.getDashboard(newDashboard.getId());
+            Dashboard dashboard = dashboardDao.getDashboard(
+                newDashboard.getId()
+            );
             if (null != dashboard) {
                 throw new ServiceException("Dashboard already exists");
             }
-            if (newDashboard.getId() == null || newDashboard.getId().isEmpty()
-                    || newDashboard.getId().equalsIgnoreCase("new")) {
+            if (
+                newDashboard.getId() == null ||
+                newDashboard.getId().isEmpty() ||
+                newDashboard.getId().equalsIgnoreCase("new")
+            ) {
                 newDashboard.setId(euiGenerator.createEui("S-"));
             }
             newDashboard.setUserID(user.uid);
@@ -319,9 +399,13 @@ public class DashboardLogic {
         }
     }
 
-    public void removeDashboard(User user, String dashboardId) throws ServiceException {
+    public void removeDashboard(User user, String dashboardId)
+        throws ServiceException {
         // logger.warn("REMOVE_WARN: " + dashboardId);
-        Organization org = organizationLogic.getOrganization(user, user.organization);
+        Organization org = organizationLogic.getOrganization(
+            user,
+            user.organization
+        );
         if (org == null) {
             throw new ServiceException("Organization not found");
         }
@@ -331,7 +415,14 @@ public class DashboardLogic {
         try {
             Dashboard dashboard = dashboardDao.getDashboard(dashboardId);
             if (null != dashboard) {
-                if (!userLogic.hasObjectAccess(user, true, defaultOrganizationId, dashboard)) {
+                if (
+                    !userLogic.hasObjectAccess(
+                        user,
+                        true,
+                        defaultOrganizationId,
+                        dashboard
+                    )
+                ) {
                     throw new ServiceException(exceptionApiUnauthorized);
                 }
             } else {
@@ -411,7 +502,11 @@ public class DashboardLogic {
             description = (String) map.get("description");
             type = (String) map.get("type");
             // System.out.println("widget type = " + type);
-            if (null != description && !description.isEmpty() && !"plan".equalsIgnoreCase(type)) {
+            if (
+                null != description &&
+                !description.isEmpty() &&
+                !"plan".equalsIgnoreCase(type)
+            ) {
                 String safe = Jsoup.clean(description, Safelist.basic());
                 map.put("description", safe);
             }
@@ -435,13 +530,23 @@ public class DashboardLogic {
         return dashboard;
     }
 
-    private Dashboard updateToken(Dashboard dashboard, User user) throws IotDatabaseException {
+    private Dashboard updateToken(Dashboard dashboard, User user)
+        throws IotDatabaseException {
         Token token;
         logger.info(
-                "updateToken: " + dashboard.getId() + " " + dashboard.isShared() + " " + dashboard.getSharedToken());
+            "updateToken: " +
+            dashboard.getId() +
+            " " +
+            dashboard.isShared() +
+            " " +
+            dashboard.getSharedToken()
+        );
         if (dashboard.isShared()) {
             long lifetime = 20 * 365 * 24 * 60; // 20 years in minutes
-            if (dashboard.getSharedToken() == null || dashboard.getSharedToken().isEmpty()) {
+            if (
+                dashboard.getSharedToken() == null ||
+                dashboard.getSharedToken().isEmpty()
+            ) {
                 // TODO: create shared token
                 token = new Token("public", lifetime, true);
                 token.setIssuer(user.uid);
@@ -475,12 +580,15 @@ public class DashboardLogic {
         return dashboard;
     }
 
-    private void updateDevicesAndGroups(Dashboard dashboard, User user, boolean sharedAttributeChanged)
-            throws IotDatabaseException {
+    private void updateDevicesAndGroups(
+        Dashboard dashboard,
+        User user,
+        boolean sharedAttributeChanged
+    ) throws IotDatabaseException {
         HashSet<String> deviceIds = dashboard.getDeviceEuis();
         HashSet<String> groupIds = dashboard.getGroupEuis();
         dashboard.isShared();
-        deviceIds.forEach((deviceId) -> {
+        deviceIds.forEach(deviceId -> {
             try {
                 String team;
                 Device device = deviceLogic.getDevice(user, deviceId, false);
@@ -505,7 +613,7 @@ public class DashboardLogic {
                 logger.error(e.getMessage());
             }
         });
-        groupIds.forEach((groupId) -> {
+        groupIds.forEach(groupId -> {
             try {
                 DeviceGroup group = groupLogic.getGroup(null, groupId);
                 if (group != null) {
@@ -529,12 +637,24 @@ public class DashboardLogic {
         });
     }
 
-    public DashboardTemplate getDashboardTemplate(User user, String templateId) throws ServiceException {
+    public DashboardTemplate getDashboardTemplate(User user, String templateId)
+        throws ServiceException {
         try {
-            DashboardTemplate template = dashboardDao.getDashboardTemplate(templateId);
+            DashboardTemplate template = dashboardDao.getDashboardTemplate(
+                templateId
+            );
             if (null != template) {
-                if (!userLogic.hasObjectAccess(user, false, defaultOrganizationId, template)) {
-                    logger.warn("Dashboard template found but no access: " + templateId);
+                if (
+                    !userLogic.hasObjectAccess(
+                        user,
+                        false,
+                        defaultOrganizationId,
+                        template
+                    )
+                ) {
+                    logger.warn(
+                        "Dashboard template found but no access: " + templateId
+                    );
                     throw new ServiceException(exceptionApiUnauthorized);
                 }
             } else {
@@ -548,16 +668,29 @@ public class DashboardLogic {
         }
     }
 
-    public List<DashboardTemplate> getDashboardTemplates(User user, Integer limit, Integer offset,
-            String searchString) throws ServiceException {
+    public List<DashboardTemplate> getDashboardTemplates(
+        User user,
+        Integer limit,
+        Integer offset,
+        String searchString
+    ) throws ServiceException {
         int limitInt = limit != null ? limit : 100;
         int offsetInt = offset != null ? offset : 0;
         try {
             if (user.organization == defaultOrganizationId) {
-                return dashboardDao.getUserDashboardTemplates(user.uid, limitInt, offsetInt, searchString);
+                return dashboardDao.getUserDashboardTemplates(
+                    user.uid,
+                    limitInt,
+                    offsetInt,
+                    searchString
+                );
             } else {
-                return dashboardDao.getOrganizationDashboardTemplates(user.organization, limitInt, offsetInt,
-                        searchString);
+                return dashboardDao.getOrganizationDashboardTemplates(
+                    user.organization,
+                    limitInt,
+                    offsetInt,
+                    searchString
+                );
             }
         } catch (IotDatabaseException e) {
             logger.error(e.getMessage());
@@ -565,8 +698,14 @@ public class DashboardLogic {
         }
     }
 
-    public void addDashboardTemplate(User user, DashboardTemplate dashboardTemplate) throws ServiceException {
-        Organization org = organizationLogic.getOrganization(user, user.organization);
+    public void addDashboardTemplate(
+        User user,
+        DashboardTemplate dashboardTemplate
+    ) throws ServiceException {
+        Organization org = organizationLogic.getOrganization(
+            user,
+            user.organization
+        );
         if (org == null) {
             throw new ServiceException("Organization not found");
         }
@@ -574,11 +713,14 @@ public class DashboardLogic {
             throw new ServiceException("Organization is locked");
         }
         try {
-            if (dashboardTemplate.getId() == null || dashboardTemplate.getId().isEmpty()
-                    || dashboardTemplate.getId().equalsIgnoreCase("new")) {
+            if (
+                dashboardTemplate.getId() == null ||
+                dashboardTemplate.getId().isEmpty() ||
+                dashboardTemplate.getId().equalsIgnoreCase("new")
+            ) {
                 dashboardTemplate.setId(euiGenerator.createEui("T-"));
             }
-            dashboardTemplate.setOrganizationId(user.organization);//
+            dashboardTemplate.setOrganizationId(user.organization); //
             dashboardTemplate.parseVariables();
 
             dashboardDao.addDashboardTemplate(dashboardTemplate);
@@ -588,9 +730,15 @@ public class DashboardLogic {
         }
     }
 
-    public void updateDashboardTemplate(User user, String templateId, DashboardTemplate dashboardTemplate)
-            throws ServiceException {
-        Organization org = organizationLogic.getOrganization(user, user.organization);
+    public void updateDashboardTemplate(
+        User user,
+        String templateId,
+        DashboardTemplate dashboardTemplate
+    ) throws ServiceException {
+        Organization org = organizationLogic.getOrganization(
+            user,
+            user.organization
+        );
         if (org == null) {
             throw new ServiceException("Organization not found");
         }
@@ -598,12 +746,21 @@ public class DashboardLogic {
             throw new ServiceException("Organization is locked");
         }
         try {
-            DashboardTemplate template = dashboardDao.getDashboardTemplate(templateId);
+            DashboardTemplate template = dashboardDao.getDashboardTemplate(
+                templateId
+            );
             if (null == template) {
                 throw new ServiceException("Dashboard template not found");
             }
             if (null != template) {
-                if (!userLogic.hasObjectAccess(user, true, defaultOrganizationId, template)) {
+                if (
+                    !userLogic.hasObjectAccess(
+                        user,
+                        true,
+                        defaultOrganizationId,
+                        template
+                    )
+                ) {
                     throw new ServiceException(exceptionApiUnauthorized);
                 }
             } else {
@@ -620,9 +777,12 @@ public class DashboardLogic {
         }
     }
 
-    public void removeDashboardTemplate(User user, String templateId) throws ServiceException {
-
-        Organization org = organizationLogic.getOrganization(user, user.organization);
+    public void removeDashboardTemplate(User user, String templateId)
+        throws ServiceException {
+        Organization org = organizationLogic.getOrganization(
+            user,
+            user.organization
+        );
         if (org == null) {
             throw new ServiceException("Organization not found");
         }
@@ -630,9 +790,18 @@ public class DashboardLogic {
             throw new ServiceException("Organization is locked");
         }
         try {
-            DashboardTemplate template = dashboardDao.getDashboardTemplate(templateId);
+            DashboardTemplate template = dashboardDao.getDashboardTemplate(
+                templateId
+            );
             if (null != template) {
-                if (!userLogic.hasObjectAccess(user, true, defaultOrganizationId, template)) {
+                if (
+                    !userLogic.hasObjectAccess(
+                        user,
+                        true,
+                        defaultOrganizationId,
+                        template
+                    )
+                ) {
                     throw new ServiceException(exceptionApiUnauthorized);
                 }
             } else {

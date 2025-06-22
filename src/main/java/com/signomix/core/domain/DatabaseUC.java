@@ -1,5 +1,12 @@
 package com.signomix.core.domain;
 
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+
+import org.eclipse.microprofile.config.inject.ConfigProperty;
+import org.jboss.logging.Logger;
+
 import com.signomix.common.HashMaker;
 import com.signomix.common.Organization;
 import com.signomix.common.User;
@@ -28,17 +35,13 @@ import com.signomix.common.iot.DeviceTemplate;
 import com.signomix.common.tsdb.NewsDao;
 import com.signomix.core.application.port.in.DevicePort;
 import com.signomix.core.application.port.in.UserPort;
+
 import io.agroal.api.AgroalDataSource;
 import io.quarkus.agroal.DataSource;
 import io.quarkus.runtime.StartupEvent;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.Observes;
 import jakarta.inject.Inject;
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import org.eclipse.microprofile.config.inject.ConfigProperty;
-import org.jboss.logging.Logger;
 
 @ApplicationScoped
 public class DatabaseUC {
@@ -690,7 +693,7 @@ public class DatabaseUC {
     }
 
     private void createObjects() {
-        Organization organization = new Organization(0, "0123456789", "Demo Organization",
+        Organization organization = new Organization(0, "demo","0123456789", "Demo Organization",
                 "Organization for demonstration purposes", "{}");
         try {
             organizationDao.addOrganization(organization);
@@ -699,7 +702,7 @@ public class DatabaseUC {
         }
         Organization demoOrganization = null;
         try {
-            demoOrganization = organizationDao.getOrganization("0123456789");
+            demoOrganization = organizationDao.getOrganization("demo");
         } catch (IotDatabaseException e) {
             LOG.error("Unable to read demo organization: " + e.getMessage());
         }
@@ -745,10 +748,23 @@ public class DatabaseUC {
                 e2.printStackTrace();
             }
         }
-        if(null == demoApplication || null == systemApplication || null == demoOrganization.id || null == systemApplication.id) {
-            LOG.error("Applications not created - exiting");
+        if(null == demoOrganization.id) {
+            LOG.error("Demo organization not created - exiting");
             System.exit(1);
         }
+        if(null == demoApplication) {
+            LOG.error("Demo application not created - exiting");
+            System.exit(1);
+        }
+        if(null == systemApplication) {
+            LOG.error("System application not created - exiting");
+            System.exit(1);
+        }
+        if(systemApplication.id==null) {
+            LOG.error("System application id is null - exiting");
+            System.exit(1);
+        }
+        
 
         // Users
         User user = new User();

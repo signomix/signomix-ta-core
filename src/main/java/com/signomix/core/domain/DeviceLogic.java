@@ -16,6 +16,7 @@ import com.signomix.common.db.IotDatabaseException;
 import com.signomix.common.db.IotDatabaseIface;
 import com.signomix.common.event.IotEvent;
 import com.signomix.common.iot.Device;
+import com.signomix.common.iot.DeviceStatusDto;
 import com.signomix.core.adapter.out.MessageService;
 import com.signomix.core.application.exception.ServiceException;
 import com.signomix.core.application.port.in.DashboardPort;
@@ -157,6 +158,13 @@ public class DeviceLogic {
                         tagString = tagString.substring(0, tagString.length() - 1);
                     }
                     device.setTags(tagString);
+                }
+                if(withStatus){
+                    // get device status
+                    DeviceStatusDto status = iotDao.getDeviceStatus(device.getEUI());
+                    device.setLastSeen(status.lastSeen);
+                    device.setState(status.status);
+                    device.setAlertStatus(status.alert);
                 }
                 return device;
             } else {

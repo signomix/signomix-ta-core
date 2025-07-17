@@ -26,8 +26,25 @@ public class MqttClient {
     @Incoming("commands")
     public void processCommand(byte[] bytes) {
         logger.info("Command event received: " + new String(bytes));
-        String msg = new String(bytes);
-        switch (msg.toLowerCase()) {
+        String msg = new String(bytes).toLowerCase();
+        if(msg.startsWith("backup")) {
+            commandLogic.runBackup();
+        } else if(msg.startsWith("archive")) {
+            commandLogic.runArchive();
+        } else if(msg.startsWith("clean") || msg.startsWith("datacleaner")) {
+            commandLogic.runClean();
+        } else if(msg.startsWith("check") || msg.startsWith("devicechecker")) {
+            devicePort.checkDevices(false);
+        } else if(msg.startsWith("devicechecker-paid")) {
+            devicePort.checkDevices(true);
+        } else if(msg.startsWith("devicecommands")) {
+            actuatorPort.sendWaitingCommands(null);
+        } else if(msg.startsWith("system-monitor")) {  
+            // TODO: implement system monitor
+        } else {
+            logger.debug("Unknown command: " + msg); 
+        }
+        /* switch (msg.toLowerCase()) {
             case "backup":
                 commandLogic.runBackup();
                 break;
@@ -53,7 +70,7 @@ public class MqttClient {
                 break;
             default:
                 logger.debug("Unknown command: " + msg);
-        }
+        } */
     }
 
     @Incoming("command-ready")

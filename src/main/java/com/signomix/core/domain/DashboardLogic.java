@@ -1,5 +1,17 @@
 package com.signomix.core.domain;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.List;
+
+import org.eclipse.microprofile.config.inject.ConfigProperty;
+import org.jboss.logging.Logger;
+import org.jsoup.Jsoup;
+import org.jsoup.safety.Safelist;
+
 import com.signomix.common.Organization;
 import com.signomix.common.Token;
 import com.signomix.common.TokenType;
@@ -14,22 +26,13 @@ import com.signomix.common.iot.Channel;
 import com.signomix.common.iot.Device;
 import com.signomix.common.iot.DeviceGroup;
 import com.signomix.core.application.exception.ServiceException;
+
 import io.agroal.api.AgroalDataSource;
 import io.quarkus.agroal.DataSource;
 import io.quarkus.runtime.StartupEvent;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.Observes;
 import jakarta.inject.Inject;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.List;
-import org.eclipse.microprofile.config.inject.ConfigProperty;
-import org.jboss.logging.Logger;
-import org.jsoup.Jsoup;
-import org.jsoup.safety.Safelist;
 
 @ApplicationScoped
 public class DashboardLogic {
@@ -231,6 +234,7 @@ public class DashboardLogic {
             } else {
                 return dashboardDao.getOrganizationDashboards(
                     user.organization,
+                    user.uid,
                     limitInt,
                     offsetInt,
                     searchString

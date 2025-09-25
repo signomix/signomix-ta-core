@@ -25,8 +25,12 @@ public class MqttClient {
 
     @Incoming("commands")
     public void processCommand(byte[] bytes) {
-        logger.info("Command event received: " + new String(bytes));
         String msg = new String(bytes).toLowerCase();
+        if(msg.startsWith("type=")) {
+            msg= msg.substring(5);
+        }
+        logger.info("Command event received: " + msg);
+        
         if(msg.startsWith("backup")) {
             commandLogic.runBackup();
         } else if(msg.startsWith("archive")) {

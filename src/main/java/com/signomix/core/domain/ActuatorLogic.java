@@ -2,6 +2,7 @@ package com.signomix.core.domain;
 
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 
 import org.eclipse.microprofile.reactive.messaging.Channel;
@@ -15,6 +16,7 @@ import com.signomix.common.User;
 import com.signomix.common.db.ApplicationDaoIface;
 import com.signomix.common.db.IotDatabaseException;
 import com.signomix.common.db.IotDatabaseIface;
+import com.signomix.common.event.IotEvent;
 import com.signomix.common.iot.Device;
 import com.signomix.common.iot.DeviceStatusDto;
 import com.signomix.core.adapter.out.ChirpStackClient;
@@ -139,8 +141,12 @@ public class ActuatorLogic {
             if (eui != null) {
                 paidDevicesOnly = true;
             }
+            logger.info("Searching for waiting commands for device " + (eui != null ? eui : "(all devices)"));  
             // Get all commands for the device and send them one by one
-            iotDao.getCommands(eui, processAll, paidDevicesOnly).forEach((command) -> {
+            List<IotEvent> commands= iotDao.getCommands(eui, processAll, paidDevicesOnly);
+            logger.info("Found " + commands.size() + " commands to process for device " + (eui!=null?eui:"(all devices)"));
+            //iotDao.getCommands(eui, processAll, paidDevicesOnly).forEach((command) -> {
+            commands.forEach((command) -> {
                 // Process command
                 logger.info("Processing command for device: " + command.getOrigin());
                 logger.info("Command: " + command.getPayload());
@@ -196,6 +202,9 @@ public class ActuatorLogic {
                 }
             });
         } catch (IotDatabaseException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        } catch (Exception e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
         }

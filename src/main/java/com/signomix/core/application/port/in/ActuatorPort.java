@@ -39,7 +39,7 @@ public class ActuatorPort {
     }
 
     public void sendWaitingCommands(String eui) {
-        logger.debug("sendWaitingCommands for " + eui);
+        logger.info("sendWaitingCommands for " + eui);
         actuatorLogic.sendWaitingCommands(eui);
     }
 }

@@ -213,10 +213,23 @@ public class ActuatorLogic {
     @SuppressWarnings("unchecked")
     private boolean sendToChirpstack(String eui, String key, Object payload, String commandType) {
         logger.info("Sending command to ChirpStack");
+        //TODO: handle errors
+        if(key==null || key.isEmpty()){
+            logger.warn("API key is not set for device " + eui);
+            return true;
+        }
+        if(payload==null){
+            logger.warn("Payload is null");
+            return true;
+        }
+        if(eui==null || eui.isEmpty()){
+            logger.warn("Device EUI is not set for device " + eui);
+            return true;
+        }
         String command = payload.toString();
         if (command.indexOf("@@@") < 0) {
             logger.warn("Invalid command format");
-            return false;
+            return true;
         }
         String sPort = command.substring(command.indexOf("@@@") + 3);
         Integer port;
@@ -224,7 +237,7 @@ public class ActuatorLogic {
             port = Integer.parseInt(sPort);
         } catch (NumberFormatException e) {
             logger.warn("Invalid port number: " + sPort);
-            return false;
+            return true;
         }
         try {
             command = command.substring(0, command.indexOf("@@@"));
@@ -251,11 +264,13 @@ public class ActuatorLogic {
                 logger.warn("Error sending command to ChirpStack. Code: " + response.code);
                 logger.warn("Response message: " + response.message);
                 // TODO: save error message to command log?
+            }else{
+                logger.info("Command sent to ChirpStack. ID: " + response.id + ", message: " + response.message);
             }
         } catch (Exception e) {
             e.printStackTrace();
             logger.warn("Error sending command to ChirpStack. Message" + e.getMessage());
-            return false;
+            return true;
         }
         return true;
     }
@@ -264,6 +279,26 @@ public class ActuatorLogic {
             String commandType) {
         // https://www.thethingsindustries.com/docs/integrations/webhooks/scheduling-downlinks/
         logger.info("Sending command to TTN (sandbox)");
+        if(key==null || key.isEmpty()){
+            logger.warn("API key is not set for device " + deviceId);
+            return false;
+        }
+        if(webhookId==null || webhookId.isEmpty()){
+            logger.warn("Webhook ID is not set for device " + deviceId);
+            return false;
+        }
+        if(appId==null || appId.isEmpty()){
+            logger.warn("Application ID is not set for device " + deviceId);
+            return false;
+        }   
+        if(deviceId==null || deviceId.isEmpty()){
+            logger.warn("Device ID is not set for device " + deviceId);
+            return false;
+        }
+        if(payload==null){
+            logger.warn("Payload is null");
+            return false;
+        }
         String command = payload.toString();
         if (command.indexOf("@@@") < 0) {
             logger.warn("Invalid command format");

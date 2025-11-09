@@ -1,15 +1,18 @@
 package com.signomix.core.application.port.in;
 
+import java.util.List;
+
+import org.jboss.logging.Logger;
+
 import com.signomix.common.User;
 import com.signomix.common.gui.Dashboard;
 import com.signomix.common.gui.DashboardTemplate;
 import com.signomix.common.iot.Device;
 import com.signomix.core.application.exception.ServiceException;
 import com.signomix.core.domain.DashboardLogic;
+
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
-import java.util.List;
-import org.jboss.logging.Logger;
 
 @ApplicationScoped
 public class DashboardPort {
@@ -27,8 +30,12 @@ public class DashboardPort {
         return dashboardLogic.getUserDashboards(user, withShared, isAdmin, limit, offset, searchString);
     }
 
+    public Dashboard getPublicDashboard(String dashboardId) throws ServiceException {
+        return dashboardLogic.getPublicDashboard(dashboardId);
+    }
+
     public Dashboard getUserDashboard(User user, String dashboardId) throws ServiceException {
-        return dashboardLogic.getDashboard(user, dashboardId);
+        return dashboardLogic.getDashboard(user, dashboardId, false);
     }
 
     public void updateDashboard(User user, Dashboard dashboard) throws ServiceException {

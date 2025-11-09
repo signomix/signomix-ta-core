@@ -71,6 +71,19 @@ public class DashboardRestAdapter {
     public Response getDashboard(
             @HeaderParam("Authentication") String token,
             @PathParam("id") String id) {
+
+        // shortcut for public dashboards
+        if (id.startsWith("~~")) {
+            try {
+                Dashboard dashboard = dashboardPort.getPublicDashboard(id);
+                return Response.ok().entity(dashboard).build();
+            } catch (Exception e) {
+                e.printStackTrace();
+                throw new ServiceException(e.getMessage());
+            }
+        }
+
+
         User user;
         try {
             user = userPort.getAuthorizing(authPort.getUserId(token));
@@ -214,6 +227,7 @@ public class DashboardRestAdapter {
         dashboardPort.addDashboardTemplate(user, template);
         return Response.ok().entity("ok").build();
     }
+
     @PUT
     @Path("/templates/{id}")
     public Response updateDashboardTemplate(

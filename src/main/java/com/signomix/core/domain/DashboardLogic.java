@@ -246,12 +246,27 @@ public class DashboardLogic {
         }
     }
 
-    public Dashboard getDashboard(User user, String dashboardId)
+    public Dashboard getPublicDashboard(String token){
+        try {
+            Token t = authLogic.getToken(token);
+            if(t==null){
+                return null;
+            }
+            if(!TokenType.DASHBOARD.equals(t.getType())){
+                return null;
+            }
+            String dashboardId = t.getPayload();
+            return getDashboard(null, dashboardId, true);
+        } catch (Exception e) {
+            throw new ServiceException(e.getMessage(), e);
+        }   
+    }
+    public Dashboard getDashboard(User user, String dashboardId, boolean publicDashboard)
         throws ServiceException {
         try {
             Dashboard dashboard = getDashboardDao().getDashboard(dashboardId);
             if (null != dashboard) {
-                if (
+                if (!publicDashboard &&
                     !userLogic.hasObjectAccess(
                         user,
                         false,

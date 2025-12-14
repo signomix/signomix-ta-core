@@ -246,7 +246,7 @@ public class DatabaseUC {
             LOG.error(e.getMessage());
             e.printStackTrace();
         }
-        
+
         try {
             shortenerDao.createStructure();
         } catch (IotDatabaseException e) {
@@ -488,12 +488,14 @@ public class DatabaseUC {
             backupError = true;
             backupErrorMessage.append("billingDao: ").append(e.getMessage()).append("\n");
         }
-/*         try {
-            qdbDao.backupDb();
-        } catch (IotDatabaseException e) {
-            backupError = true;
-            backupErrorMessage.append("qdbDao: ").append(e.getMessage()).append("\n");
-        } */
+        /*
+         * try {
+         * qdbDao.backupDb();
+         * } catch (IotDatabaseException e) {
+         * backupError = true;
+         * backupErrorMessage.append("qdbDao: ").append(e.getMessage()).append("\n");
+         * }
+         */
         try {
             eventLogDao.backupDb();
         } catch (IotDatabaseException e) {
@@ -515,7 +517,7 @@ public class DatabaseUC {
 
         if (backupError) {
             LOG.error("Backup finished with errors");
-            //TODO: send backupErrorMessage to admin
+            // TODO: send backupErrorMessage to admin
         } else {
             LOG.info("Backup finished successfully.");
         }
@@ -538,7 +540,7 @@ public class DatabaseUC {
             long standardRetention = ONE_DAY * standardDataRetention;
             long primaryRetention = ONE_DAY * primaryDataRetention;
             long superuserRetention = ONE_DAY * superDataRetention;
-            List<User> users = userDao.getAll();
+            List<User> users = userDao.getUsers(null, null, null,null);
             List<Device> devices;
             long now = System.currentTimeMillis();
             long tooOldPoint = now - 2 * ONE_DAY;
@@ -552,8 +554,14 @@ public class DatabaseUC {
             boolean demoMode = false;
 
             User user;
+            //LOG.info("Starting old data removal process for " + users.size() + " users.");
             for (int i = 0; i < users.size(); i++) {
                 user = users.get(i);
+                //LOG.info("Processing user: " + user.uid + " (" + (i + 1) + "/" + users.size() + ")");
+                if (user.organization != null && user.organization.longValue() != DEFAULT_ORGANIZATION_ID.longValue()) {
+                    // skip organization users
+                    continue;
+                }
                 if (!demoMode) {
                     switch (user.type) {
                         case User.DEMO:
@@ -579,22 +587,25 @@ public class DatabaseUC {
 
                 List<Device> protectedDevices = iotDao.getDevicesByTag(user.uid, DEFAULT_ORGANIZATION_ID, "protected",
                         "true");
-                /*
-                 * devices = iotDao.getUserDevices(user.uid, -1, false);
-                 * for (int j = 0; j < devices.size(); j++) {
-                 * if (protectedDevices.contains(devices.get(j))) {
-                 * continue;
-                 * }
-                 * iotDao.clearAllChannels(devices.get(j).getEUI(), tooOldPoint);
-                 * try {
-                 * iotDao.removeCommands(devices.get(j).getEUI(), tooOldPoint);
-                 * } catch (Exception e) {
-                 * e.printStackTrace();
-                 * }
-                 * }
-                 */
+
+                devices = iotDao.getUserDevices(user, false, null, null , null);
+                //LOG.info("  User has " + devices.size() + " devices.");
+                for (int j = 0; j < devices.size(); j++) {
+                    if (protectedDevices.contains(devices.get(j))) {
+                        continue;
+                    }
+                    iotDao.removeOldData(devices.get(j).getEUI(), tooOldPoint);
+                    //try {
+                    //    iotDao.removeCommands(devices.get(j).getEUI(), tooOldPoint);
+                    //} catch (Exception e) {
+                    //    e.printStackTrace();
+                    //}
+                }
+
             }
         } catch (IotDatabaseException ex) {
+            LOG.error(ex.getMessage());
+            //ex.printStackTrace();
         }
 
     }
@@ -693,7 +704,7 @@ public class DatabaseUC {
     }
 
     private void createObjects() {
-        Organization organization = new Organization(0, "demo","0123456789", "Demo Organization",
+        Organization organization = new Organization(0, "demo", "0123456789", "Demo Organization",
                 "Organization for demonstration purposes", "{}");
         try {
             organizationDao.addOrganization(organization);
@@ -708,7 +719,7 @@ public class DatabaseUC {
         }
 
         // Application
-        // System application 
+        // System application
         ApplicationConfig config = new ApplicationConfig();
         config.put("refreshInterval", "60");
         Application systemApplication;
@@ -716,11 +727,11 @@ public class DatabaseUC {
         systemApplication = new Application(null, 1, 1, "system", "");
         systemApplication.setConfig(config);
         try {
-            systemApplication=applicationDao.addApplication(systemApplication);
+            systemApplication = applicationDao.addApplication(systemApplication);
         } catch (IotDatabaseException e) {
             LOG.warn("Error inserting system application: " + e.getMessage());
             try {
-                systemApplication=applicationDao.getApplication(1, "system");
+                systemApplication = applicationDao.getApplication(1, "system");
             } catch (IotDatabaseException e2) {
                 // TODO Auto-generated catch block
                 e2.printStackTrace();
@@ -735,11 +746,11 @@ public class DatabaseUC {
         demoApplication = new Application(null, demoOrganization.id, 1, "demo", "");
         demoApplication.setConfig(config);
         try {
-            demoApplication=applicationDao.addApplication(demoApplication);
+            demoApplication = applicationDao.addApplication(demoApplication);
         } catch (IotDatabaseException e) {
             LOG.warn("Error inserting demo application: " + e.getMessage());
             try {
-                demoApplication=applicationDao.getApplication(demoOrganization.id, "demo");
+                demoApplication = applicationDao.getApplication(demoOrganization.id, "demo");
             } catch (IotDatabaseException e2) {
                 // TODO Auto-generated catch block
                 e2.printStackTrace();
@@ -748,23 +759,22 @@ public class DatabaseUC {
                 e2.printStackTrace();
             }
         }
-        if(null == demoOrganization.id) {
+        if (null == demoOrganization.id) {
             LOG.error("Demo organization not created - exiting");
             System.exit(1);
         }
-        if(null == demoApplication) {
+        if (null == demoApplication) {
             LOG.error("Demo application not created - exiting");
             System.exit(1);
         }
-        if(null == systemApplication) {
+        if (null == systemApplication) {
             LOG.error("System application not created - exiting");
             System.exit(1);
         }
-        if(systemApplication.id==null) {
+        if (systemApplication.id == null) {
             LOG.error("System application id is null - exiting");
             System.exit(1);
         }
-        
 
         // Users
         User user = new User();

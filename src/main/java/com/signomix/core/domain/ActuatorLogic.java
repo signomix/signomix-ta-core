@@ -73,7 +73,7 @@ public class ActuatorLogic {
     public void processPlainCommand(User user, Device device, String command) throws IotDatabaseException {
         try {
             logger.info("Saving command");
-            iotDao.putDeviceCommand(device.getEUI(), "ACTUATOR_PLAINCMD", command, System.currentTimeMillis());
+            iotDao.putDeviceCommand(device.getEUI(), "ACTUATOR_PLAINCMD", command, System.currentTimeMillis(), false);
         } catch (IotDatabaseException e) {
             e.printStackTrace();
             throw new IotDatabaseException(IotDatabaseException.UNKNOWN, "Could not save command");
@@ -100,7 +100,7 @@ public class ActuatorLogic {
                 long id= iotDao.getNextId("commands", "id");
                 iotDao.putCommandLog(id, device.getEUI(), "ACTUATOR_CMD",command, System.currentTimeMillis());
             }else{
-                iotDao.putDeviceCommand(device.getEUI(), "ACTUATOR_CMD", command, System.currentTimeMillis());
+                iotDao.putDeviceCommand(device.getEUI(), "ACTUATOR_CMD", command, System.currentTimeMillis(), false);
             }
             commandCreatedEmitter.send(device.getEUI()+";"+command);
             
@@ -125,7 +125,7 @@ public class ActuatorLogic {
         }
         try {
             logger.info("Saving command");
-            iotDao.putDeviceCommand(device.getEUI(), "ACTUATOR_HEXCMD", command, System.currentTimeMillis());
+            iotDao.putDeviceCommand(device.getEUI(), "ACTUATOR_HEXCMD", command, System.currentTimeMillis(), false);
         } catch (IotDatabaseException e) {
             e.printStackTrace();
             throw new IotDatabaseException(IotDatabaseException.UNKNOWN, "Could not save command");

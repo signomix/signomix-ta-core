@@ -133,7 +133,7 @@ public class DatabaseUC {
 
     void onStart(@Observes StartupEvent ev) {
         LOG.info("Starting ...");
-        LOG.info("AUTH DB URL: " + authDbUrl);
+        LOG.debug("AUTH DB URL: " + authDbUrl);
 
         /*
          * if ("h2".equalsIgnoreCase(databaseType)) {

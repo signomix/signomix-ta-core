@@ -547,7 +547,7 @@ public class DeviceLogic {
     }
 
     private String removeSpaces(String str) {
-        logger.info("Removing spaces from: " + str);
+        //logger.debug("Removing spaces from: " + str);
         return str.trim().replaceAll("\\s", "");
     }
 

@@ -67,7 +67,7 @@
     <dependency>
       <groupId>com.signomix</groupId>
       <artifactId>signomix-common</artifactId>
-      <version>1.44.5</version>
+      <version>1.44.8</version>
     </dependency>
     <dependency>
       <groupId>com.signomix</groupId>

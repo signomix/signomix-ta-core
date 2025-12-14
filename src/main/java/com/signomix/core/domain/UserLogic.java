@@ -239,9 +239,11 @@ public class UserLogic {
      * @return
      */
     public boolean isOrganizationMember(User user, long organizationId) {
-        logger.info("user " + user);
-        logger.info("user.organization: " + user.organization);
-        logger.info("organizationId: " + organizationId);
+        if(logger.isDebugEnabled()){
+            logger.debug("user " + user);
+            logger.debug("user.organization: " + (user!=null?user.organization:"null"));
+            logger.debug("organizationId: " + organizationId);
+        }
         return user != null && user.organization == organizationId;
     }
 
@@ -328,8 +330,10 @@ public class UserLogic {
             logger.error("Unknown object type: " + accessedObject.getClass().getName());
             return false;
         }
-        logger.info("hasObjectAccess: " + user.uid + " " + owner + " " + team + " " + admins + " " + organizationId + " "
+        if(logger.isDebugEnabled()){
+        logger.debug("hasObjectAccess: " + user.uid + " " + owner + " " + team + " " + admins + " " + organizationId + " "
                 + tenantId + " " + isPublic + " " + path + " " + writeAccess + " " + user.path);
+        }
         // object owner has read/write access
         if (owner.equals(user.uid)) {
             return true;

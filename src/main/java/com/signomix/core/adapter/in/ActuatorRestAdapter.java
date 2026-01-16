@@ -11,6 +11,7 @@ import com.signomix.core.application.port.in.AuthPort;
 import com.signomix.core.application.port.in.DevicePort;
 import com.signomix.core.domain.MultiCommand;
 
+import io.smallrye.common.annotation.Blocking;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.HeaderParam;
@@ -94,6 +95,7 @@ public class ActuatorRestAdapter {
 
     @POST
     @Path("/actuators")
+    @Blocking
     public Response processCommands(
             @HeaderParam("Authentication") String token, MultiCommand multiCommand) {
         logger.info("Authentication: " + token);
@@ -102,16 +104,17 @@ public class ActuatorRestAdapter {
         if (null == user) {
             return Response.status(Status.FORBIDDEN).build();
         }
-        for (int i = 0; i < multiCommand.euis.length; i++) {
-            Device device = devicePort.getDevice(user, multiCommand.euis[i], false, false);
+        String[] euisArray = multiCommand.euis.split(",");
+        for (int i = 0; i < euisArray.length; i++) {
+            Device device = devicePort.getDevice(user, euisArray[i], false, false);
             if (null == device) {
-                logger.warn("Device not found: " + multiCommand.euis[i]);
+                logger.warn("Device not found: " + euisArray[i]);
                 continue;
             }
             try {
                 processCommand(user, device, multiCommand.command, multiCommand.type);
             } catch (IotDatabaseException e) {
-                logger.warn("Error processing command for device: " + multiCommand.euis[i], e);
+                logger.warn("Error processing command for device: " + euisArray[i], e);
             }
         }
         return Response.ok().build();

@@ -533,79 +533,66 @@ public class DatabaseUC {
     private void clearOldData() {
         // data retention
         // how long data is kept in signomix depends on user userType
-        long ONE_DAY = 24 * 3600 * 1000;
+        // long ONE_DAY = 24 * 3600 * 1000;
         try {
-            long freeRetention = ONE_DAY * freeDataRetention;
-            long extendedRetention = ONE_DAY * extendedDataRetention;
-            long standardRetention = ONE_DAY * standardDataRetention;
-            long primaryRetention = ONE_DAY * primaryDataRetention;
-            long superuserRetention = ONE_DAY * superDataRetention;
-            List<User> users = userDao.getUsers(null, null, null,null);
-            List<Device> devices;
-            long now = System.currentTimeMillis();
-            long tooOldPoint = now - 2 * ONE_DAY;
-            long tooOldPointDemo = now - ONE_DAY;
-            long tooOldPointFree = now - freeRetention;
-            long tooOldPointExtended = now - extendedRetention;
-            long tooOldPointStandard = now - standardRetention;
-            long tooOldPointPrimary = now - primaryRetention;
-            long tooOldPointSuperuser = now - superuserRetention;
-            long tooOldPoint30 = now - 30 * ONE_DAY;
-            boolean demoMode = false;
-
+            List<User> users = userDao.getUsers(null, null, null, null);
+            int retentionDays = 30;
+            int removed = 0;
             User user;
-            //LOG.info("Starting old data removal process for " + users.size() + " users.");
             for (int i = 0; i < users.size(); i++) {
                 user = users.get(i);
-                //LOG.info("Processing user: " + user.uid + " (" + (i + 1) + "/" + users.size() + ")");
                 if (user.organization != null && user.organization.longValue() != DEFAULT_ORGANIZATION_ID.longValue()) {
-                    // skip organization users
-                    continue;
-                }
-                if (!demoMode) {
+                    Organization org = organizationDao.getOrganization(user.organization);
+                    if (org == null) {
+                        LOG.warn("  Organization " + user.organization + " not found for user " + user.uid + "- skipping");
+                        continue;
+                    } else {
+                        LOG.debug("  User " + user.uid + " belongs to organization " + org.name);
+                        Integer orgRetentionDays = (Integer) org.getConfigurationMap().get("dataRetention");
+                        if (orgRetentionDays != null) {
+                            retentionDays = orgRetentionDays.intValue();
+                            LOG.debug("Organization data retention: " + retentionDays + " days");
+                        } else {
+                            retentionDays = 365; // default for organization users
+                            LOG.debug("Organization data retention (default): " + retentionDays + " days");
+                        }
+                    }
+                } else {
                     switch (user.type) {
                         case User.DEMO:
-                            tooOldPoint = tooOldPointDemo;
+                            // tooOldPoint = tooOldPointDemo;
+                            retentionDays = demoDataRetention;
                             break;
                         case User.OWNER:
                         case User.PRIMARY:
-                            tooOldPoint = tooOldPointPrimary;
+                            // tooOldPoint = tooOldPointPrimary;
+                            retentionDays = primaryDataRetention;
                             break;
                         case User.USER:
-                            tooOldPoint = tooOldPointStandard;
+                            // tooOldPoint = tooOldPointStandard;
+                            retentionDays = standardDataRetention;
                             break;
                         case User.EXTENDED:
-                            tooOldPoint = tooOldPointExtended;
+                            // tooOldPoint = tooOldPointExtended;
+                            retentionDays = extendedDataRetention;
                             break;
                         case User.SUPERUSER:
-                            tooOldPoint = tooOldPointSuperuser;
+                            // tooOldPoint = tooOldPointSuperuser;
+                            retentionDays = superDataRetention;
                             break;
                         default:
-                            tooOldPoint = tooOldPointFree;
+                            // tooOldPoint = tooOldPointFree;
+                            retentionDays = freeDataRetention;
                     }
                 }
 
-                List<Device> protectedDevices = iotDao.getDevicesByTag(user.uid, DEFAULT_ORGANIZATION_ID, "protected",
-                        "true");
-
-                devices = iotDao.getUserDevices(user, false, null, null , null);
-                //LOG.info("  User has " + devices.size() + " devices.");
-                for (int j = 0; j < devices.size(); j++) {
-                    if (protectedDevices.contains(devices.get(j))) {
-                        continue;
-                    }
-                    iotDao.removeOldData(devices.get(j).getEUI(), tooOldPoint);
-                    //try {
-                    //    iotDao.removeCommands(devices.get(j).getEUI(), tooOldPoint);
-                    //} catch (Exception e) {
-                    //    e.printStackTrace();
-                    //}
-                }
+                removed = removed + iotDao.removeOutdatedData(user.uid, retentionDays, true);
+                iotDao.removeOutdatedCommands(user.uid, retentionDays);
 
             }
+            LOG.info("Cleared " + removed + " outdated data rows");
         } catch (IotDatabaseException ex) {
             LOG.error(ex.getMessage());
-            //ex.printStackTrace();
         }
 
     }

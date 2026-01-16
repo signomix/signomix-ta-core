@@ -7,6 +7,7 @@ import com.signomix.core.application.port.in.ActuatorPort;
 import com.signomix.core.application.port.in.CommandPort;
 import com.signomix.core.application.port.in.DevicePort;
 
+import io.smallrye.common.annotation.Blocking;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 
@@ -24,6 +25,7 @@ public class MqttClient {
     ActuatorPort actuatorPort;
 
     @Incoming("commands")
+    @Blocking
     public void processCommand(byte[] bytes) {
         String msg = new String(bytes).toLowerCase();
         if(msg.startsWith("type=")) {

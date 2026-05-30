@@ -1,12 +1,5 @@
 package com.signomix.core.domain;
 
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-
-import org.eclipse.microprofile.config.inject.ConfigProperty;
-import org.jboss.logging.Logger;
-
 import com.signomix.common.HashMaker;
 import com.signomix.common.Organization;
 import com.signomix.common.User;
@@ -35,16 +28,21 @@ import com.signomix.common.iot.DeviceTemplate;
 import com.signomix.common.tsdb.NewsDao;
 import com.signomix.core.application.port.in.DevicePort;
 import com.signomix.core.application.port.in.UserPort;
-
 import io.agroal.api.AgroalDataSource;
 import io.quarkus.agroal.DataSource;
 import io.quarkus.runtime.StartupEvent;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.Observes;
 import jakarta.inject.Inject;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
+import org.jboss.logging.Logger;
 
 @ApplicationScoped
 public class DatabaseUC {
+
     private static final Logger LOG = Logger.getLogger(DatabaseUC.class);
 
     private static Long DEFAULT_ORGANIZATION_ID = 1L;
@@ -55,7 +53,7 @@ public class DatabaseUC {
 
     /*
      * @Inject
-     * 
+     *
      * @DataSource("iot")
      * AgroalDataSource iotDataSource;
      */
@@ -82,6 +80,7 @@ public class DatabaseUC {
 
     @Inject
     DevicePort devicePort;
+
     @Inject
     UserPort userPort;
 
@@ -111,25 +110,51 @@ public class DatabaseUC {
 
     @ConfigProperty(name = "signomix.data.retention.demo", defaultValue = "1")
     int demoDataRetention;
+
     @ConfigProperty(name = "signomix.data.retention.free", defaultValue = "5")
     int freeDataRetention;
-    @ConfigProperty(name = "signomix.data.retention.extended", defaultValue = "30")
+
+    @ConfigProperty(
+        name = "signomix.data.retention.extended",
+        defaultValue = "30"
+    )
     int extendedDataRetention;
-    @ConfigProperty(name = "signomix.data.retention.standard", defaultValue = "30")
+
+    @ConfigProperty(
+        name = "signomix.data.retention.standard",
+        defaultValue = "30"
+    )
     int standardDataRetention;
-    @ConfigProperty(name = "signomix.data.retention.primary", defaultValue = "30")
+
+    @ConfigProperty(
+        name = "signomix.data.retention.primary",
+        defaultValue = "30"
+    )
     int primaryDataRetention;
-    @ConfigProperty(name = "signomix.data.retention.super", defaultValue = "365")
+
+    @ConfigProperty(
+        name = "signomix.data.retention.super",
+        defaultValue = "365"
+    )
     int superDataRetention;
-    @ConfigProperty(name = "quarkus.datasource.auth.jdbc.url", defaultValue = "not configured")
+
+    @ConfigProperty(
+        name = "quarkus.datasource.auth.jdbc.url",
+        defaultValue = "not configured"
+    )
     String authDbUrl;
+
     @ConfigProperty(name = "signomix.database.type")
     String databaseType;
+
     @ConfigProperty(name = "signomix.database.migration")
     boolean migration;
 
     @ConfigProperty(name = "questdb.client.config")
     String questDbConfig;
+
+    @ConfigProperty(name = "signomix.restore.database")
+    boolean restoreDatabase;
 
     void onStart(@Observes StartupEvent ev) {
         LOG.info("Starting ...");
@@ -205,7 +230,9 @@ public class DatabaseUC {
             schedulerDao = new com.signomix.common.tsdb.SchedulerDao();
             schedulerDao.setDatasource(tsDs);
         } else {
-            LOG.error("Database type not configured or not supported: " + databaseType);
+            LOG.error(
+                "Database type not configured or not supported: " + databaseType
+            );
         }
 
         // TODO: create DB structure
@@ -320,6 +347,14 @@ public class DatabaseUC {
             e.printStackTrace();
         }
 
+        if (restoreDatabase) {
+            LOG.info("Restoring database from backup");
+            restoreDb();
+            LOG.info("Database restore finished - exiting");
+            LOG.info("\r\n\r\nSTOP THE SERIVICE BY PRESSING CTRL-C\r\n\r\n");
+            System.exit(0);
+        }
+
         setSignomixParameters();
         setSignomixFeatures();
 
@@ -381,7 +416,10 @@ public class DatabaseUC {
 
         ArrayList<DashboardTemplate> dashboardTemplates = new ArrayList<>();
         try {
-            dashboardTemplates = (ArrayList) dashboardDao.getDashboardTemplates(10000, 0);
+            dashboardTemplates = (ArrayList) dashboardDao.getDashboardTemplates(
+                10000,
+                0
+            );
         } catch (IotDatabaseException e) {
             LOG.error(e.getMessage());
         }
@@ -425,68 +463,100 @@ public class DatabaseUC {
             authDao.backupDb(); // tokens,ptokens
         } catch (IotDatabaseException e) {
             backupError = true;
-            backupErrorMessage.append("applicationDao: ").append(e.getMessage()).append("\n");
-
+            backupErrorMessage
+                .append("applicationDao: ")
+                .append(e.getMessage())
+                .append("\n");
         }
         try {
             applicationDao.backupDb(); // applications
         } catch (IotDatabaseException e) {
             backupError = true;
-            backupErrorMessage.append("applicationDao: ").append(e.getMessage()).append("\n");
+            backupErrorMessage
+                .append("applicationDao: ")
+                .append(e.getMessage())
+                .append("\n");
         }
         try {
             iotDao.backupDb();
         } catch (IotDatabaseException e) {
             backupError = true;
-            backupErrorMessage.append("iotDao: ").append(e.getMessage()).append("\n");
+            backupErrorMessage
+                .append("iotDao: ")
+                .append(e.getMessage())
+                .append("\n");
         }
         try {
             dashboardDao.backupDb();
         } catch (IotDatabaseException e) {
             backupError = true;
-            backupErrorMessage.append("dashboardDao: ").append(e.getMessage()).append("\n");
+            backupErrorMessage
+                .append("dashboardDao: ")
+                .append(e.getMessage())
+                .append("\n");
         }
         try {
             sentinelDao.backupDb();
         } catch (IotDatabaseException e) {
             backupError = true;
-            backupErrorMessage.append("sentinelDao: ").append(e.getMessage()).append("\n");
+            backupErrorMessage
+                .append("sentinelDao: ")
+                .append(e.getMessage())
+                .append("\n");
         }
         try {
             shortenerDao.backupDb();
         } catch (IotDatabaseException e) {
             backupError = true;
-            backupErrorMessage.append("shortenerDao: ").append(e.getMessage()).append("\n");
+            backupErrorMessage
+                .append("shortenerDao: ")
+                .append(e.getMessage())
+                .append("\n");
         }
         try {
             signalDao.backupDb();
         } catch (IotDatabaseException e) {
             backupError = true;
-            backupErrorMessage.append("signalDao: ").append(e.getMessage()).append("\n");
+            backupErrorMessage
+                .append("signalDao: ")
+                .append(e.getMessage())
+                .append("\n");
         }
         try {
             userDao.backupDb();
         } catch (IotDatabaseException e) {
             backupError = true;
-            backupErrorMessage.append("userDao: ").append(e.getMessage()).append("\n");
+            backupErrorMessage
+                .append("userDao: ")
+                .append(e.getMessage())
+                .append("\n");
         }
         try {
             organizationDao.backupDb();
         } catch (IotDatabaseException e) {
             backupError = true;
-            backupErrorMessage.append("organizationDao: ").append(e.getMessage()).append("\n");
+            backupErrorMessage
+                .append("organizationDao: ")
+                .append(e.getMessage())
+                .append("\n");
         }
         try {
             reportDao.backupDb();
         } catch (IotDatabaseException e) {
             backupError = true;
-            backupErrorMessage.append("reportDao: ").append(e.getMessage()).append("\n");
+            backupErrorMessage
+                .append("reportDao: ")
+                .append(e.getMessage())
+                .append("\n");
         }
         try {
             billingDao.backupDb();
         } catch (IotDatabaseException e) {
             backupError = true;
-            backupErrorMessage.append("billingDao: ").append(e.getMessage()).append("\n");
+            backupErrorMessage
+                .append("billingDao: ")
+                .append(e.getMessage())
+                .append("\n");
         }
         /*
          * try {
@@ -500,19 +570,28 @@ public class DatabaseUC {
             eventLogDao.backupDb();
         } catch (IotDatabaseException e) {
             backupError = true;
-            backupErrorMessage.append("eventLogDao: ").append(e.getMessage()).append("\n");
+            backupErrorMessage
+                .append("eventLogDao: ")
+                .append(e.getMessage())
+                .append("\n");
         }
         try {
             newsDao.backupDb();
         } catch (IotDatabaseException e) {
             backupError = true;
-            backupErrorMessage.append("newsDao: ").append(e.getMessage()).append("\n");
+            backupErrorMessage
+                .append("newsDao: ")
+                .append(e.getMessage())
+                .append("\n");
         }
         try {
             schedulerDao.backupDb();
         } catch (IotDatabaseException e) {
             backupError = true;
-            backupErrorMessage.append("schedulerDao: ").append(e.getMessage()).append("\n");
+            backupErrorMessage
+                .append("schedulerDao: ")
+                .append(e.getMessage())
+                .append("\n");
         }
 
         if (backupError) {
@@ -522,6 +601,8 @@ public class DatabaseUC {
             LOG.info("Backup finished successfully.");
         }
     }
+
+    private void restoreDb() {}
 
     public void clearData() {
         authDao.clearExpiredTokens();
@@ -541,20 +622,47 @@ public class DatabaseUC {
             User user;
             for (int i = 0; i < users.size(); i++) {
                 user = users.get(i);
-                if (user.organization != null && user.organization.longValue() != DEFAULT_ORGANIZATION_ID.longValue()) {
-                    Organization org = organizationDao.getOrganization(user.organization);
+                if (
+                    user.organization != null &&
+                    user.organization.longValue() !=
+                        DEFAULT_ORGANIZATION_ID.longValue()
+                ) {
+                    Organization org = organizationDao.getOrganization(
+                        user.organization
+                    );
                     if (org == null) {
-                        LOG.warn("  Organization " + user.organization + " not found for user " + user.uid + "- skipping");
+                        LOG.warn(
+                            "  Organization " +
+                                user.organization +
+                                " not found for user " +
+                                user.uid +
+                                "- skipping"
+                        );
                         continue;
                     } else {
-                        LOG.debug("  User " + user.uid + " belongs to organization " + org.name);
-                        Integer orgRetentionDays = (Integer) org.getConfigurationMap().get("dataRetention");
+                        LOG.debug(
+                            "  User " +
+                                user.uid +
+                                " belongs to organization " +
+                                org.name
+                        );
+                        Integer orgRetentionDays = (Integer) org
+                            .getConfigurationMap()
+                            .get("dataRetention");
                         if (orgRetentionDays != null) {
                             retentionDays = orgRetentionDays.intValue();
-                            LOG.debug("Organization data retention: " + retentionDays + " days");
+                            LOG.debug(
+                                "Organization data retention: " +
+                                    retentionDays +
+                                    " days"
+                            );
                         } else {
                             retentionDays = 365; // default for organization users
-                            LOG.debug("Organization data retention (default): " + retentionDays + " days");
+                            LOG.debug(
+                                "Organization data retention (default): " +
+                                    retentionDays +
+                                    " days"
+                            );
                         }
                     }
                 } else {
@@ -586,15 +694,15 @@ public class DatabaseUC {
                     }
                 }
 
-                removed = removed + iotDao.removeOutdatedData(user.uid, retentionDays, true);
+                removed =
+                    removed +
+                    iotDao.removeOutdatedData(user.uid, retentionDays, true);
                 iotDao.removeOutdatedCommands(user.uid, retentionDays);
-
             }
             LOG.info("Cleared " + removed + " outdated data rows");
         } catch (IotDatabaseException ex) {
             LOG.error(ex.getMessage());
         }
-
     }
 
     public void doArchive() {
@@ -633,10 +741,20 @@ public class DatabaseUC {
             iotDao.setParameter("notifications", User.FREE, 0, "SMTP,WEBHOOK"); // SMTP,SLACK,PUSHOVER,TELEGRAM,DISCORD,WEBHOOK
 
             iotDao.setParameter("collectionLimit", User.EXTENDED, 144, ""); // 24h X 6 transmission/hour
-            iotDao.setParameter("collectionLimitMonthly", User.EXTENDED, 4464, "");
+            iotDao.setParameter(
+                "collectionLimitMonthly",
+                User.EXTENDED,
+                4464,
+                ""
+            );
             iotDao.setParameter("dataRetention", User.EXTENDED, 61, "");
             iotDao.setParameter("devicesLimit", User.EXTENDED, 20, "");
-            iotDao.setParameter("notifications", User.EXTENDED, 0, "SMTP,WEBHOOK"); // SMTP,SLACK,PUSHOVER,TELEGRAM,DISCORD,WEBHOOK
+            iotDao.setParameter(
+                "notifications",
+                User.EXTENDED,
+                0,
+                "SMTP,WEBHOOK"
+            ); // SMTP,SLACK,PUSHOVER,TELEGRAM,DISCORD,WEBHOOK
 
             // Standard account
             iotDao.setParameter("collectionLimit", User.USER, 2160, ""); // 24h X 6 transmission/hour
@@ -647,32 +765,60 @@ public class DatabaseUC {
 
             // Professional account
             iotDao.setParameter("collectionLimit", User.PRIMARY, 14400, ""); // 24h X 6 transmission/hour
-            iotDao.setParameter("collectionLimitMonthly", User.PRIMARY, 432000, "");
+            iotDao.setParameter(
+                "collectionLimitMonthly",
+                User.PRIMARY,
+                432000,
+                ""
+            );
             iotDao.setParameter("dataRetention", User.PRIMARY, 365, "");
             iotDao.setParameter("devicesLimit", User.PRIMARY, 100, "");
-            iotDao.setParameter("notifications", User.PRIMARY, 0, "SMTP,WEBHOOK,SMS"); // SMTP,SLACK,PUSHOVER,TELEGRAM,DISCORD,WEBHOOK
+            iotDao.setParameter(
+                "notifications",
+                User.PRIMARY,
+                0,
+                "SMTP,WEBHOOK,SMS"
+            ); // SMTP,SLACK,PUSHOVER,TELEGRAM,DISCORD,WEBHOOK
 
             // Superuser account: high limit - for specific contracts - should be managed
             // manually
             iotDao.setParameter("collectionLimit", User.SUPERUSER, 720000, ""); // TODO: 24h X 6 transmission/hour
-            iotDao.setParameter("collectionLimitMonthly", User.SUPERUSER, 21600000, "");
+            iotDao.setParameter(
+                "collectionLimitMonthly",
+                User.SUPERUSER,
+                21600000,
+                ""
+            );
             iotDao.setParameter("dataRetention", User.SUPERUSER, 365, "");
             iotDao.setParameter("devicesLimit", User.SUPERUSER, 10000, "");
-            iotDao.setParameter("notifications", User.SUPERUSER, 0, "SMTP,WEBHOOK,SMS"); // SMTP,SLACK,PUSHOVER,TELEGRAM,DISCORD,WEBHOOK
+            iotDao.setParameter(
+                "notifications",
+                User.SUPERUSER,
+                0,
+                "SMTP,WEBHOOK,SMS"
+            ); // SMTP,SLACK,PUSHOVER,TELEGRAM,DISCORD,WEBHOOK
 
             iotDao.setParameter("collectionLimit", User.ADMIN, 720000, ""); // 24h X 6 transmission/hour
-            iotDao.setParameter("collectionLimitMonthly", User.ADMIN, 21600000, "");
+            iotDao.setParameter(
+                "collectionLimitMonthly",
+                User.ADMIN,
+                21600000,
+                ""
+            );
             iotDao.setParameter("dataRetention", User.ADMIN, 365, "");
             iotDao.setParameter("devicesLimit", User.ADMIN, 10000, "");
-            iotDao.setParameter("notifications", User.ADMIN, 0, "SMTP,WEBHOOK,SMS"); // SMTP,SLACK,PUSHOVER,TELEGRAM,DISCORD,WEBHOOK
+            iotDao.setParameter(
+                "notifications",
+                User.ADMIN,
+                0,
+                "SMTP,WEBHOOK,SMS"
+            ); // SMTP,SLACK,PUSHOVER,TELEGRAM,DISCORD,WEBHOOK
 
             iotDao.setParameter("system.default.organization", User.ANY, 0, "");
-
         } catch (IotDatabaseException e) {
             e.printStackTrace();
             LOG.error(e.getMessage());
         }
-
     }
 
     private void setSignomixFeatures() {
@@ -687,12 +833,17 @@ public class DatabaseUC {
         } catch (IotDatabaseException e) {
             LOG.error(e.getMessage());
         }
-
     }
 
     private void createObjects() {
-        Organization organization = new Organization(0, "demo", "0123456789", "Demo Organization",
-                "Organization for demonstration purposes", "{}");
+        Organization organization = new Organization(
+            0,
+            "demo",
+            "0123456789",
+            "Demo Organization",
+            "Organization for demonstration purposes",
+            "{}"
+        );
         try {
             organizationDao.addOrganization(organization);
         } catch (IotDatabaseException e) {
@@ -714,7 +865,9 @@ public class DatabaseUC {
         systemApplication = new Application(null, 1, 1, "system", "");
         systemApplication.setConfig(config);
         try {
-            systemApplication = applicationDao.addApplication(systemApplication);
+            systemApplication = applicationDao.addApplication(
+                systemApplication
+            );
         } catch (IotDatabaseException e) {
             LOG.warn("Error inserting system application: " + e.getMessage());
             try {
@@ -730,14 +883,23 @@ public class DatabaseUC {
         // Demo application
         config = new ApplicationConfig();
         config.put("refreshInterval", "60");
-        demoApplication = new Application(null, demoOrganization.id, 1, "demo", "");
+        demoApplication = new Application(
+            null,
+            demoOrganization.id,
+            1,
+            "demo",
+            ""
+        );
         demoApplication.setConfig(config);
         try {
             demoApplication = applicationDao.addApplication(demoApplication);
         } catch (IotDatabaseException e) {
             LOG.warn("Error inserting demo application: " + e.getMessage());
             try {
-                demoApplication = applicationDao.getApplication(demoOrganization.id, "demo");
+                demoApplication = applicationDao.getApplication(
+                    demoOrganization.id,
+                    "demo"
+                );
             } catch (IotDatabaseException e2) {
                 // TODO Auto-generated catch block
                 e2.printStackTrace();
@@ -924,57 +1086,72 @@ public class DatabaseUC {
             reportDao.saveReport(className, 0L, null, null, null);
         } catch (IotDatabaseException e) {
             e.printStackTrace();
-            LOG.warn("Error saving report " + className + ": " + e.getMessage());
+            LOG.warn(
+                "Error saving report " + className + ": " + e.getMessage()
+            );
         }
         className = "com.signomix.reports.pre.DummyReport";
         try {
             reportDao.saveReport(className, 0L, null, null, null);
         } catch (IotDatabaseException e) {
             e.printStackTrace();
-            LOG.warn("Error saving report " + className + ": " + e.getMessage());
+            LOG.warn(
+                "Error saving report " + className + ": " + e.getMessage()
+            );
         }
         className = "com.signomix.reports.pre.LoginReportExample";
         try {
             reportDao.saveReport(className, 0L, null, null, null);
         } catch (IotDatabaseException e) {
             e.printStackTrace();
-            LOG.warn("Error saving report " + className + ": " + e.getMessage());
+            LOG.warn(
+                "Error saving report " + className + ": " + e.getMessage()
+            );
         }
         className = "com.signomix.reports.pre.DeviceInfo";
         try {
             reportDao.saveReport(className, 0L, null, null, null);
         } catch (IotDatabaseException e) {
             e.printStackTrace();
-            LOG.warn("Error saving report " + className + ": " + e.getMessage());
+            LOG.warn(
+                "Error saving report " + className + ": " + e.getMessage()
+            );
         }
         className = "com.signomix.reports.pre.UserLoginReport";
         try {
             reportDao.saveReport(className, 0L, null, null, null);
         } catch (IotDatabaseException e) {
             e.printStackTrace();
-            LOG.warn("Error saving report " + className + ": " + e.getMessage());
+            LOG.warn(
+                "Error saving report " + className + ": " + e.getMessage()
+            );
         }
         className = "com.signomix.reports.pre.DqlReport";
         try {
             reportDao.saveReport(className, 0L, null, null, null);
         } catch (IotDatabaseException e) {
             e.printStackTrace();
-            LOG.warn("Error saving report " + className + ": " + e.getMessage());
+            LOG.warn(
+                "Error saving report " + className + ": " + e.getMessage()
+            );
         }
         className = "com.signomix.reports.pre.DqlTvReport";
         try {
             reportDao.saveReport(className, 0L, null, null, null);
         } catch (IotDatabaseException e) {
             e.printStackTrace();
-            LOG.warn("Error saving report " + className + ": " + e.getMessage());
+            LOG.warn(
+                "Error saving report " + className + ": " + e.getMessage()
+            );
         }
         className = "com.signomix.reports.pre.GroupReport";
         try {
             reportDao.saveReport(className, 0L, null, null, null);
         } catch (IotDatabaseException e) {
             e.printStackTrace();
-            LOG.warn("Error saving report " + className + ": " + e.getMessage());
+            LOG.warn(
+                "Error saving report " + className + ": " + e.getMessage()
+            );
         }
     }
-
 }

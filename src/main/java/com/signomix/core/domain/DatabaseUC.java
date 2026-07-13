@@ -602,7 +602,27 @@ public class DatabaseUC {
         }
     }
 
-    private void restoreDb() {}
+    private void restoreDb() {
+        try {
+            userDao.restoreDb();
+            organizationDao.restoreDb();
+            applicationDao.restoreDb();
+            iotDao.restoreDb();
+            reportDao.restoreDb();
+            authDao.restoreDb();
+            dashboardDao.restoreDb();
+            sentinelDao.restoreDb();
+            shortenerDao.restoreDb();
+            signalDao.restoreDb();
+            billingDao.restoreDb();
+            qdbDao.restoreDb();
+            eventLogDao.restoreDb();
+            newsDao.restoreDb();
+            schedulerDao.restoreDb();
+        } catch (IotDatabaseException e) {
+            LOG.error(e.getMessage());
+        }
+    }
 
     public void clearData() {
         authDao.clearExpiredTokens();
